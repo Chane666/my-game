@@ -8,53 +8,52 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#050510;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:none;font-family:Arial,sans-serif}
 canvas{display:block}
+#err{color:#ff4444;position:fixed;top:10px;left:10px;font-size:12px;max-width:90%;word-break:break-all;z-index:999}
 </style>
 </head>
 <body>
+<div id="err"></div>
 <div id="gw"></div>
 <script src="./phaser.min.js"></script>
 <script>
-var GW=480,GH=720;
-var S_Boot={
-  preload:function(){
-    var g=this.add.graphics();
-    g.fillStyle(0x00ff88);
-    g.fillCircle(16,16,14);
-    g.generateTexture("player",32,32);
-    g.clear();
-    g.fillStyle(0xff3344);
-    g.fillRoundedRect(4,4,28,28,6);
-    g.generateTexture("obs",36,36);
-    g.clear();
-    g.fillStyle(0xffcc00);
-    g.fillCircle(12,12,10);
-    g.generateTexture("coin",24,24);
-    g.clear();
-    g.destroy();
-  },
-  create:function(){this.scene.start("S_Menu")}
-};
+window.onerror=function(e){document.getElementById("err").innerText="ERROR: "+e};
+var GW=480,GH=720,BEST_KEY="dodgeMasterHS",REC_KEY="dodgeMasterRC";
+var gPlayer,gObs,gCoin;
+
+function makeTextures(game){
+  // player - green circle
+  var c=document.createElement("canvas");c.width=32;c.height=32;
+  var x=c.getContext("2d");x.fillStyle="#00ff88";x.beginPath();x.arc(16,16,14,0,Math.PI*2);x.fill();
+  game.textures.addCanvas("player",c);
+  // obstacle - red rounded rect
+  var c2=document.createElement("canvas");c2.width=36;c2.height=36;
+  var x2=c2.getContext("2d");x2.fillStyle="#ff3344";x2.beginPath();
+  x2.moveTo(8,4);x2.lineTo(28,4);x2.quadraticCurveTo(34,4,34,10);x2.lineTo(34,26);x2.quadraticCurveTo(34,32,28,32);x2.lineTo(8,32);x2.quadraticCurveTo(2,32,2,26);x2.lineTo(2,10);x2.quadraticCurveTo(2,4,8,4);x2.fill();
+  game.textures.addCanvas("obs",c2);
+  // coin - yellow circle
+  var c3=document.createElement("canvas");c3.width=24;c3.height=24;
+  var x3=c3.getContext("2d");x3.fillStyle="#ffcc00";x3.beginPath();x3.arc(12,12,10,0,Math.PI*2);x3.fill();
+  game.textures.addCanvas("coin",c3);
+}
+
 var S_Menu={
+  init:function(){if(!this.textures.exists("player"))makeTextures(this)},
   create:function(){
-    var me=this;
-    var cx=GW/2,cy=GH/2;
-    var title=me.add.text(cx,cy-120,"DODGE MASTER",{fontSize:"36px",fill:"#00ff88",fontStyle:"bold"}).setOrigin(0.5);
-    me.add.text(cx,cy-55,"A simple dodge game",{fontSize:"12px",fill:"#667788"}).setOrigin(0.5);
+    var me=this;var cx=GW/2,cy=GH/2;
+    me.add.text(cx,cy-120,"DODGE MASTER",{fontSize:"36px",fill:"#00ff88",fontStyle:"bold"}).setOrigin(0.5);
+    me.add.text(cx,cy-55,"v8 - simple",{fontSize:"12px",fill:"#667788"}).setOrigin(0.5);
     function btn(x,y,txt,col,fn){
-      var bg=me.add.graphics();
-      bg.fillStyle(col);
-      bg.fillRoundedRect(x-70,y-14,140,30,12);
+      var bg=me.add.graphics();bg.fillStyle(col,1);bg.fillRoundedRect(x-70,y-14,140,30,12);
       me.add.text(x,y,txt,{fontSize:"14px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
-      var z=me.add.zone(x,y,140,30).setInteractive({useHandCursor:true});
-      z.on("pointerdown",function(){me.time.delayedCall(100,fn)});
+      me.add.zone(x,y,140,30).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.time.delayedCall(100,fn)});
     }
     btn(cx,cy+20,"START GAME",0x00ff88,function(){me.scene.start("S_Play")});
     btn(cx,cy+65,"RECORDS",0xffcc00,function(){me.scene.start("S_Records")});
     btn(cx,cy+110,"SHARE",0x5588ff,function(){
-      var url=window.location.href;
-      if(navigator.share){navigator.share({title:"Dodge Master",url:url})}
-      else if(navigator.clipboard){navigator.clipboard.writeText(url);alert("Link copied!")}
-      else{alert("Share: "+url)}
+      var u=window.location.href;
+      if(navigator.share)navigator.share({title:"Dodge Master",url:u});
+      else if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){me.add.text(cx,cy+150,"LINK COPIED!",{fontSize:"12px",fill:"#00ff88"}).setOrigin(0.5)});
+      else prompt("Copy this link:",u);
     });
   }
 };
@@ -63,32 +62,34 @@ var S_Records={
     var me=this;
     me.add.rectangle(GW/2,GH/2,280,360,0x0a1a2e);
     me.add.text(GW/2,GH/2-140,"RECORDS",{fontSize:"20px",fill:"#ffcc00",fontStyle:"bold"}).setOrigin(0.5);
-    try{
-      var r=JSON.parse(localStorage.getItem("dodgeMasterRC"))||[];
-      if(r.length===0){me.add.text(GW/2,GH/2,"No records",{fontSize:"14px",fill:"#556677"}).setOrigin(0.5)}
-      else{for(var i=0;i<r.length;i++){me.add.text(GW/2,GH/2-80+i*35,(i+1)+". "+r[i].s+" pts",{fontSize:"14px",fill:"#00ff88"}).setOrigin(0.5)}}
+    try{var r=JSON.parse(localStorage.getItem(REC_KEY))||[];
+      if(r.length===0)me.add.text(GW/2,GH/2,"No records",{fontSize:"14px",fill:"#556677"}).setOrigin(0.5);
+      else for(var i=0;i<r.length;i++)me.add.text(GW/2,GH/2-80+i*35,(i+1)+". "+r[i].s+" pts",{fontSize:"14px",fill:"#00ff88"}).setOrigin(0.5);
     }catch(e){me.add.text(GW/2,GH/2,"No records",{fontSize:"14px",fill:"#556677"}).setOrigin(0.5)}
-    var bg=me.add.graphics();
-    bg.fillStyle(0xff4444);bg.fillRoundedRect(GW/2-50,GH/2+140,100,32,12);
+    var bg=me.add.graphics();bg.fillStyle(0xff4444,1);bg.fillRoundedRect(GW/2-50,GH/2+140,100,32,12);
     me.add.text(GW/2,GH/2+156,"BACK",{fontSize:"14px",fill:"#fff"}).setOrigin(0.5);
     me.add.zone(GW/2,GH/2+156,100,32).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.scene.start("S_Menu")});
   }
 };
 var S_Play={
-  init:function(){this.score=0;this.lives=3;this.speed=100;this.obs=[];this.gameOver=false},
+  init:function(){this.score=0;this.lives=3;this.speed=120;this.obs=[];this.gameOver=false},
   create:function(){
     var me=this;
     me.physics.world.setBounds(0,0,GW,GH);
     me.player=me.physics.add.sprite(GW/2,GH-80,"player");
-    me.player.setCollideWorldBounds(true);
-    me.player.body.setCircle(14);
+    me.player.setCollideWorldBounds(true);me.player.body.setCircle(14);
     me.scoreT=me.add.text(10,8,"SCORE: 0",{fontSize:"13px",fill:"#aabbcc"});
     me.timer=me.time.addEvent({delay:1000,callback:function(){me.score++;me.scoreT.setText("SCORE: "+me.score)},loop:true});
-    me.time.delayedCall(800,function spawn(){if(me.gameOver)return;var x=Phaser.Math.Between(30,GW-30);var o=me.physics.add.sprite(x,-20,"obs");o.setVelocityY(me.speed);me.obs.push(o);me.time.delayedCall(900,spawn)});
+    me.time.delayedCall(800,function spawn(){
+      if(me.gameOver)return;
+      var x=Phaser.Math.Between(30,GW-30);
+      var o=me.physics.add.sprite(x,-20,"obs");o.setVelocityY(me.speed);
+      me.obs.push(o);
+      me.time.delayedCall(900,spawn);
+    });
   },
   update:function(){
-    if(this.gameOver)return;
-    var me=this;
+    if(this.gameOver)return;var me=this;
     if(me.input.keyboard){
       var k=me.input.keyboard.createCursorKeys();
       if(k.left.isDown)me.player.x-=4;
@@ -96,31 +97,27 @@ var S_Play={
       me.player.x=Phaser.Math.Clamp(me.player.x,16,GW-16);
     }
     for(var i=me.obs.length-1;i>=0;i--){
-      var o=me.obs[i];
-      if(!o.active)continue;
+      var o=me.obs[i];if(!o.active)continue;
       if(Phaser.Math.Distance.Between(me.player.x,me.player.y,o.x,o.y)<26){
-        me.lives--;
-        o.destroy();
-        me.obs.splice(i,1);
-        if(me.lives<=0){doGO(me)}
-        return;
+        me.lives--;o.destroy();me.obs.splice(i,1);
+        if(me.lives<=0){doGO(me)}return;
       }
       if(o.y>GH+20){o.destroy();me.obs.splice(i,1)}
     }
   }
 };
 function doGO(sc){
-  sc.gameOver=true;
-  sc.physics.pause();
+  sc.gameOver=true;sc.physics.pause();
   sc.add.rectangle(GW/2,GH/2,240,200,0x0a1a2e);
   sc.add.text(GW/2,GH/2-50,"GAME OVER",{fontSize:"22px",fill:"#ff3344",fontStyle:"bold"}).setOrigin(0.5);
   sc.add.text(GW/2,GH/2,"SCORE: "+sc.score,{fontSize:"18px",fill:"#fff"}).setOrigin(0.5);
-  var bg=sc.add.graphics();
-  bg.fillStyle(0x00ff88);bg.fillRoundedRect(GW/2-55,GH/2+50,110,32,12);
+  var bg=sc.add.graphics();bg.fillStyle(0x00ff88,1);bg.fillRoundedRect(GW/2-55,GH/2+50,110,32,12);
   sc.add.text(GW/2,GH/2+66,"RETRY",{fontSize:"14px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
   sc.add.zone(GW/2,GH/2+66,110,32).setInteractive({useHandCursor:true}).on("pointerdown",function(){sc.scene.restart()});
 }
-new Phaser.Game({width:GW,height:GH,parent:"gw",backgroundColor:"#050510",scene:[S_Boot,S_Menu,S_Records,S_Play],physics:{default:"arcade",arcade:{debug:false}}});
+try{
+  new Phaser.Game({width:GW,height:GH,parent:"gw",backgroundColor:"#050510",scene:[S_Menu,S_Records,S_Play],physics:{default:"arcade",arcade:{debug:false}}});
+}catch(e){document.getElementById("err").innerText="Phaser init error: "+e}
 </script>
 </body>
 </html>
