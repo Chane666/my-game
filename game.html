@@ -3,13 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Dodge Master - Dodge Master</title>
-<meta property="og:title" content="Dodge Master - Can you survive?">
-<meta property="og:description" content="Test your reflexes! Dodge obstacles, collect coins, beat the high score!">
-<meta property="og:type" content="website">
+<title>Dodge Master</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a2e;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:none;font-family:'Segoe UI',Arial,sans-serif}
+body{background:#0a0a2e;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:none;font-family:Arial,sans-serif}
 canvas{display:block;border-radius:8px;box-shadow:0 0 40px rgba(0,255,136,0.15)}
 </style>
 </head>
@@ -20,387 +17,505 @@ var GW = Math.min(window.innerWidth, 480);
 var GH = Math.min(window.innerHeight, 720);
 var HIGH_KEY = 'dodgeMasterHS';
 
-class BootScene extends Phaser.Scene {
-    constructor(){super('Boot')}
-    preload(){
-        var g=this.add.graphics();
-        g.fillStyle(0x00ff88);g.fillCircle(16,16,14);g.generateTexture('player',32,32);g.clear();
-        g.fillStyle(0xff3344);g.fillRoundedRect(4,4,28,28,6);g.generateTexture('obstacle',36,36);g.clear();
-        g.fillStyle(0xffcc00);g.fillCircle(12,12,10);
-        g.lineStyle(2,0xff9900);g.strokeCircle(12,12,10);g.generateTexture('coin',24,24);g.clear();
-        g.fillStyle(0xffffff);g.fillCircle(4,4,3);g.generateTexture('particle',8,8);g.clear();
-        g.fillStyle(0x00ff88,0.3);g.fillCircle(16,16,20);g.generateTexture('glow',32,32);g.clear();
-        g.fillStyle(0xffcc00,0.2);g.fillCircle(12,12,14);g.generateTexture('coinGlow',24,24);g.clear();
+/* ========== BOOT SCENE ========== */
+var BootScene = {
+    preload: function() {
+        var g = this.add.graphics();
+        g.fillStyle(0x00ff88); g.fillCircle(16, 16, 14); g.generateTexture('player', 32, 32); g.clear();
+        g.fillStyle(0xff3344); g.fillRoundedRect(4, 4, 28, 28, 6); g.generateTexture('obstacle', 36, 36); g.clear();
+        g.fillStyle(0xffcc00); g.fillCircle(12, 12, 10);
+        g.lineStyle(2, 0xff9900); g.strokeCircle(12, 12, 10);
+        g.generateTexture('coin', 24, 24); g.clear();
+        g.fillStyle(0xffffff); g.fillCircle(4, 4, 3); g.generateTexture('particle', 8, 8); g.clear();
+        g.fillStyle(0x00ff88, 0.3); g.fillCircle(16, 16, 20); g.generateTexture('glow', 32, 32); g.clear();
         g.destroy();
-        this.load.on('complete',()=>this.scene.start('Menu'));
+    },
+    create: function() {
+        this.scene.start('MenuScene');
     }
-}
+};
 
-class MenuScene extends Phaser.Scene {
-    constructor(){super('Menu')}
-    create(){
-        var cx=GW/2,cy=GH/2;
-        this.cameras.main.setBackgroundColor('#0a0a2e');
+/* ========== MENU SCENE ========== */
+var MenuScene = {
+    create: function() {
+        var self = this;
+        var cx = GW / 2;
+        var cy = GH / 2;
 
-        // Animated bg stars
-        for(var i=0;i<40;i++){
-            var s=this.add.circle(Phaser.Math.Between(0,GW),Phaser.Math.Between(0,GH),Phaser.Math.Between(1,2),0xffffff,Phaser.Math.FloatBetween(0.1,0.5));
-            this.tweens.add({targets:s,alpha:Phaser.Math.FloatBetween(0.1,0.6),duration:Phaser.Math.Between(1000,3000),yoyo:true,repeat:-1,delay:Phaser.Math.Between(0,2000)});
+        // Starfield
+        for (var i = 0; i < 40; i++) {
+            var sx = Phaser.Math.Between(0, GW);
+            var sy = Phaser.Math.Between(0, GH);
+            var sr = Phaser.Math.Between(1, 2);
+            var sa = Phaser.Math.FloatBetween(0.1, 0.5);
+            var star = self.add.circle(sx, sy, sr, 0xffffff, sa);
+            self.tweens.add({
+                targets: star,
+                alpha: Phaser.Math.FloatBetween(0.1, 0.6),
+                duration: Phaser.Math.Between(1000, 3000),
+                yoyo: true, repeat: -1, delay: Phaser.Math.Between(0, 2000)
+            });
         }
 
-        // Floating obstacles decoration
-        for(var i=0;i<5;i++){
-            var o=this.add.sprite(Phaser.Math.Between(50,GW-50),Phaser.Math.Between(100,GH-150),'obstacle').setAlpha(0.15).setScale(0.6+Math.random()*0.4);
-            this.tweens.add({targets:o:{x:o.x,y:o.y-20},duration:1500+Math.random()*1000,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+        // Floating obstacles
+        for (var i = 0; i < 5; i++) {
+            var fo = self.add.sprite(
+                Phaser.Math.Between(50, GW - 50),
+                Phaser.Math.Between(100, GH - 150),
+                'obstacle'
+            ).setAlpha(0.15).setScale(0.6 + Math.random() * 0.4);
+            self.tweens.add({
+                targets: fo,
+                y: fo.y - 20,
+                duration: 1500 + Math.random() * 1000,
+                yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+            });
         }
 
-        // Title with glow
-        var titleStyle={fontSize:'38px',fill:'#00ff88',fontFamily:'Arial Black,Arial',fontStyle:'bold'};
-        var title=this.add.text(cx,cy-140,'DODGE\nMASTER',titleStyle).setOrigin(0.5).setAlign('center');
-        // Glow effect under title
-        var titleGlow=this.add.text(cx,cy-140,'DODGE\nMASTER',{...titleStyle,fill:'#00ff88',blur:10}).setOrigin(0.5).setAlign('center').setAlpha(0.3);
-        this.tweens.add({targets:[title,titleGlow],scale:{from:1,to:1.04},duration:800,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+        // Title
+        var title = self.add.text(cx, cy - 140, 'DODGE\nMASTER', {
+            fontSize: '38px', fill: '#00ff88',
+            fontFamily: 'Arial Black, Arial', fontStyle: 'bold'
+        }).setOrigin(0.5).setAlign('center');
+
+        self.tweens.add({
+            targets: title, scale: { from: 1, to: 1.04 },
+            duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
 
         // Subtitle
-        this.add.text(cx,cy-40,'Dodge . Collect . Survive',{fontSize:'13px',fill:'#8888aa',fontFamily:'Arial'}).setOrigin(0.5);
+        self.add.text(cx, cy - 40, 'Dodge . Collect . Survive', {
+            fontSize: '13px', fill: '#8888aa'
+        }).setOrigin(0.5);
 
-        // High score display
-        var hs=localStorage.getItem(HIGH_KEY)||0;
-        if(hs>0){
-            var hsBox=this.add.container(cx,cy+10);
-            hsBox.add(this.add.rectangle(0,0,200,36,0xffffff,0.06).setStrokeStyle(1,0x333355));
-            hsBox.add(this.add.text(0,1,'\u2605 BEST: '+hs,{fontSize:'15px',fill:'#ffcc00',fontFamily:'Arial'}).setOrigin(0.5));
-            this.tweens.add({targets:hsBox,alpha:{from:0.6,to:1},duration:1000,yoyo:true,repeat:-1});
+        // High score
+        var hsVal = localStorage.getItem(HIGH_KEY) || 0;
+        if (hsVal > 0) {
+            var hsBox = self.add.container(cx, cy + 10);
+            hsBox.add(self.add.rectangle(0, 0, 200, 36, 0xffffff, 0.06).setStrokeStyle(1, 0x333355));
+            hsBox.add(self.add.text(0, 1, '\u2605 BEST: ' + hsVal, {
+                fontSize: '15px', fill: '#ffcc00'
+            }).setOrigin(0.5));
         }
 
-        // Play button
-        this.makeBtn(cx,cy+70,'\u25B6  START GAME','#00ff88',()=>{
-            this.scene.start('Game');
+        // START button
+        makeBtn(self, cx, cy + 70, '\u25B6  START GAME', '#00ff88', function() {
+            self.scene.start('GameScene');
         });
 
-        // How to play
-        this.add.text(cx,cy+130,'Drag or Arrow Keys to move',{fontSize:'11px',fill:'#555577',fontFamily:'Arial'}).setOrigin(0.5);
+        // Hint text
+        self.add.text(cx, cy + 130, 'Drag or Arrow Keys to move', {
+            fontSize: '11px', fill: '#555577'
+        }).setOrigin(0.5);
 
-        // Share button
-        this.makeBtn(cx,cy+170,'\u2770  SHARE','#6699ff',()=>{
-            shareGame(this);
-        },0.75);
-
-        // Version
-        this.add.text(GW-10,GH-10,'v2.0',{fontSize:'10px',fill:'#333355',fontFamily:'Arial'}).setOrigin(1,1);
+        // SHARE button
+        makeBtn(self, cx, cy + 170, '\u2770  SHARE', '#6699ff', function() {
+            doShare(self, 0);
+        }, 0.75);
 
         // Ambient particles
-        this.ambientP=this.add.particles(0,0,'particle',{
-            x:{min:0,max:GW},y:-10,speedY:{min:30,max:80},
-            speedX:{min:-15,max:15},scale:{start:0.3,end:0},
-            lifespan:6000,quantity:1,frequency:400,
-            tint:[0x4466ff,0x00ff88,0xff66aa],
-            blendMode:'ADD'
+        self.add.particles(0, 0, 'particle', {
+            x: { min: 0, max: GW }, y: -10,
+            speedY: { min: 30, max: 80 }, speedX: { min: -15, max: 15 },
+            scale: { start: 0.3, end: 0 }, lifespan: 6000,
+            quantity: 1, frequency: 400,
+            tint: [0x4466ff, 0x00ff88, 0xff66aa],
+            blendMode: 'ADD'
         });
     }
-    makeBtn(x,y,text,color,callback,scaleVal){
-        if(!scaleVal)scaleVal=1;
-        var bw=220*scaleVal,bh=48*scaleVal;
-        var btn=this.add.container(x,y).setSize(bw,bh).setInteractive({useHandCursor:true});
-        var bg=this.add.rectangle(0,0,bw,bh,color,0.12).setStrokeStyle(1.5,color);
-        var label=this.add.text(0,0,text,{fontSize:String(Math.round(18*scaleVal))+'px',fill:color,fontFamily:'Arial',fontStyle:'bold'}).setOrigin(0.5);
-        btn.add([bg,label]);
-        btn.on('pointerover',function(){bg.setFillStyle(color,0.25);btn.setScale(1.05)});
-        btn.on('pointerout',function(){bg.setFillStyle(color,0.12);btn.setScale(1)});
-        btn.on('pointerdown',callback);
-        return btn;
-    }
-}
+};
 
-class GameScene extends Phaser.Scene {
-    constructor(){super('Game')}
-    create(){
-        this.isPaused=false;
-        this.isGameOver=false;
-        this.score=0;
-        this.spawnTimer=0;this.coinTimer=0;this.diffTimer=0;
-        this.spawnInt=1200;this.coinInt=2000;this.gameSpeed=3;
+/* ========== GAME SCENE ========== */
+var GameScene = {
+    isPaused: false, isGameOver: false, score: 0,
+    spawnTimer: 0, coinTimer: 0, diffTimer: 0,
+    spawnInt: 1200, coinInt: 2000, gameSpeed: 3,
 
-        this.cameras.main.setBackgroundColor('#0a0a2e');
+    create: function() {
+        var self = this;
+        self.isPaused = false;
+        self.isGameOver = false;
+        self.score = 0;
+        self.spawnTimer = 0; self.coinTimer = 0; self.diffTimer = 0;
+        self.spawnInt = 1200; self.coinInt = 2000; self.gameSpeed = 3;
 
-        // Grid lines (subtle)
-        var gridG=this.add.graphics();
-        gridG.lineStyle(1,0x1a1a3e,0.5);
-        for(var i=0;i<GW;i+=40){gridG.moveTo(i,0);gridG.lineTo(i,GH)}
-        for(var j=0;j<GH;j+=40){gridG.moveTo(0,j);gridG.lineTo(GW,j)}
+        // Grid background
+        var gg = self.add.graphics();
+        gg.lineStyle(1, 0x1a1a3e, 0.5);
+        for (var i = 0; i < GW; i += 40) { gg.moveTo(i, 0); gg.lineTo(i, GH); }
+        for (var j = 0; j < GH; j += 40) { gg.moveTo(0, j); gg.lineTo(GW, j); }
 
-        this.obstacles=this.physics.add.group();
-        this.coins=this.physics.add.group();
+        // Groups
+        self.obstacles = self.physics.add.group();
+        self.coins = self.physics.add.group();
 
-        // Player with glow trail
-        this.playerGlow=this.add.sprite(GW/2,GH-100,'glow').setAlpha(0.4).setDepth(0);
-        this.player=this.physics.add.sprite(GW/2,GH-100,'player').setDepth(1).setCollideWorldBounds(true);
-        this.player.body.setSize(26,26);
+        // Player with glow
+        self.playerGlow = self.add.sprite(GW / 2, GH - 100, 'glow').setAlpha(0.4).setDepth(0);
+        self.player = self.physics.add.sprite(GW / 2, GH - 100, 'player').setDepth(1);
+        self.player.setCollideWorldBounds(true);
+        self.player.body.setSize(26, 26);
 
-        // Glow follow tween
-        this.tweens.add({
-            targets:this.playerGlow,{x:this.player.x,y:this.player.y},
-            duration:80,repeat:-1,onUpdate:function(){this.targets[0].x=this.player.x;this.targets[0].y=this.player.y}.bind({targets:[this.playerGlow]})
-        });
-
-        // Input
-        this.cursors=this.input.keyboard.createCursorKeys();
-        this.input.keyboard.on('keydown-SPACE',()=>{if(this.isGameOver)this.restartGame();else if(!this.isPaused)this.togglePause()});
-        this.input.keyboard.on('keydown-ESC|keydown-P',()=>this.togglePause());
-        this.input.on('pointermove',(p)=>{
-            if(!this.isPaused&&!this.isGameOver&&p.isDown){
-                this.player.x=Phaser.Math.Clamp(p.x,20,GW-20);
-                this.player.y=Phaser.Math.Clamp(p.y,20,GH-20);
+        // Glow follow
+        self.glowTween = self.tweens.add({
+            targets: self.playerGlow,
+            duration: 60, repeat: -1,
+            onUpdate: function() {
+                if (self.playerGlow && self.player && self.player.active) {
+                    self.playerGlow.x = self.player.x;
+                    self.playerGlow.y = self.player.y;
+                }
             }
         });
 
-        this.physics.add.overlap(this.player,this.obstacles,this.hitObs,null,this);
-        this.physics.add.overlap(this.player,this.coins,this.collectCoin,null,this);
+        // Input
+        self.cursors = self.input.keyboard.createCursorKeys();
 
-        // HUD
-        this.hudBg=this.add.rectangle(GW/2,22,GW,44,0x000000,0.4).setScrollFactor(0).setDepth(100);
-        this.scoreTxt=this.add.text(14,10,'Score: 0',{fontSize:'20px',fill:'#ffffff',fontFamily:'Arial',fontStyle:'bold'}).setScrollFactor(0).setDepth(101);
-        this.hsTxt=this.add.text(GW-14,10,'Best: '+localStorage.getItem(HIGH_KEY)||0,{fontSize:'13px',fill:'#aaaacc',fontFamily:'Arial'}).setOrigin(1,0).setScrollFactor(0).setDepth(101);
+        self.input.keyboard.on('keydown-SPACE', function() {
+            if (self.isGameOver) { restartGame(self); }
+            else { togglePause(self); }
+        });
 
-        // Pause button (top-right area)
-        this.pauseBtn=this.add.container(GW-30,55).setDepth(101).setInteractive({useHandCursor:true}).setSize(36,36);
-        var pBg=this.add.rectangle(0,0,32,32,0xffffff,0.06).setStrokeStyle(1,0x444466);
-        var pLabel=this.add.text(0,0,'\u275A\u275A',{fontSize:'14px',fill:'#888899',fontFamily:'Arial'}).setOrigin(0.5);
-        this.pauseBtn.add([pBg,pLabel]);
-        this.pauseBtn.on('pointerdown',()=>this.togglePause());
-        this.pauseBtn.on('pointerover',()=>pBg.setFillStyle(0xffffff,0.12));
-        this.pauseBtn.on('pointerout',()=>pBg.setFillStyle(0xffffff,0.06));
+        self.input.keyboard.on('keydown-ESC', function() { togglePause(self); });
+        self.input.keyboard.on('keydown-P', function() { togglePause(self); });
+
+        self.input.on('pointermove', function(pointer) {
+            if (!self.isPaused && !self.isGameOver && pointer.isDown) {
+                self.player.x = Phaser.Math.Clamp(pointer.x, 20, GW - 20);
+                self.player.y = Phaser.Math.Clamp(pointer.y, 20, GH - 20);
+            }
+        });
+
+        // Collisions
+        self.physics.add.overlap(self.player, self.obstacles, hitObs, null, self);
+        self.physics.add.overlap(self.player, self.coins, collectCoin, null, self);
+
+        // HUD bg
+        self.hudBg = self.add.rectangle(GW / 2, 22, GW, 44, 0x000000, 0.4)
+            .setScrollFactor(0).setDepth(100);
+
+        self.scoreTxt = self.add.text(14, 10, 'Score: 0', {
+            fontSize: '20px', fill: '#ffffff', fontStyle: 'bold'
+        }).setScrollFactor(0).setDepth(101);
+
+        self.hsTxt = self.add.text(GW - 14, 10, 'Best: ' + (localStorage.getItem(HIGH_KEY) || 0), {
+            fontSize: '13px', fill: '#aaaacc'
+        }).setOrigin(1, 0).setScrollFactor(0).setDepth(101);
+
+        // Pause btn
+        self.pauseBtn = self.add.container(GW - 30, 55).setDepth(101)
+            .setInteractive({ useHandCursor: true }).setSize(36, 36);
+        var pbg = self.add.rectangle(0, 0, 32, 32, 0xffffff, 0.06).setStrokeStyle(1, 0x444466);
+        var plbl = self.add.text(0, 0, '\u275A\u275A', {
+            fontSize: '14px', fill: '#888899'
+        }).setOrigin(0.5);
+        self.pauseBtn.add([pbg, plbl]);
+        self.pauseBtn.on('pointerdown', function() { togglePause(self); });
+        self.pauseBtn.on('pointerover', function() { pbg.setFillStyle(0xffffff, 0.12); });
+        self.pauseBtn.on('pointerout', function() { pbg.setFillStyle(0xffffff, 0.06); });
 
         // Particles
-        this.particles=this.add.particles(0,0,'particle',{
-            speed:{min:60,max:180},scale:{start:1,end:0},
-            lifespan:350,blendMode:'ADD'
+        self.parts = self.add.particles(0, 0, 'particle', {
+            speed: { min: 60, max: 180 }, scale: { start: 1, end: 0 },
+            lifespan: 350, blendMode: 'ADD'
         }).stop();
 
-        // Coin particles
-        this.coinParts=this.add.particles(0,0,'particle',{
-            speed:{min:40,max:100},scale:{start:0.6,end:0},
-            lifespan:300,tint:0xffcc00,blendMode:'ADD'
+        self.coinParts = self.add.particles(0, 0, 'particle', {
+            speed: { min: 40, max: 100 }, scale: { start: 0.6, end: 0 },
+            lifespan: 300, tint: 0xffcc00, blendMode: 'ADD'
         }).stop();
 
         // Flash overlay
-        this.flashOv=this.add.rectangle(GW/2,GH/2,GW,GH,0xff0000,0).setDepth(90);
+        self.flashOv = self.add.rectangle(GW / 2, GH / 2, GW, GH, 0xff0000, 0).setDepth(90);
 
-        // Pause overlay (hidden)
-        this.pauseOverlay=this.add.rectangle(GW/2,GH/2,GW,GH,0x000033,0.7).setDepth(200).setVisible(false).setInteractive();
-        this.pauseText=this.add.text(GW/2,GH/2-30,'PAUSED',{fontSize:'42px',fill:'#00ff88',fontFamily:'Arial Black',fontStyle:'bold'}).setOrigin(0.5).setDepth(201).setVisible(false);
-        this.pauseSub=this.add.text(GW/2,GH/2+20,'Tap or press SPACE to resume',{fontSize:'14px',fill:'#8888aa',fontFamily:'Arial'}).setOrigin(0.5).setDepth(201).setVisible(false);
-        this.makePauseBtn(GW/2,GH/80,'\u25B6 RESUME',()=>this.togglePause(),false);
-        this.makePauseBtn(GW/2,GH/2+80,'\u274C QUIT TO MENU',()=>{this.scene.start('Menu')},true);
+        // Pause overlay (hidden initially)
+        self.pauseOv = self.add.rectangle(GW / 2, GH / 2, GW, GH, 0x000033, 0.7)
+            .setDepth(200).setVisible(false).setInteractive();
+        self.pauseTxt = self.add.text(GW / 2, GH / 2 - 30, 'PAUSED', {
+            fontSize: '42px', fill: '#00ff88', fontFamily: 'Arial Black', fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(201).setVisible(false);
+        self.pauseSub = self.add.text(GW / 2, GH / 2 + 20, 'Tap or press SPACE to resume', {
+            fontSize: '14px', fill: '#8888aa'
+        }).setOrigin(0.5).setDepth(201).setVisible(false);
 
-        // Screen shake on start
-        this.cameras.main.shake(200,0.003);
+        // Pause buttons
+        self.pbtns = [];
+        addPBtn(self, GW / 2, GH / 2 + 65, '\u25B6 RESUME', '#00ff88', function() { togglePause(self); });
+        addPBtn(self, GW / 2, GH / 2 + 115, '\u25C0 QUIT TO MENU', '#ff4466', function() { self.scene.start('MenuScene'); });
 
-        // Entry animation
-        this.player.setAlpha(0).setScale(2);
-        this.tweens.add({targets:this.player,alpha:1,scale:1,duration:500,ease:'Back.easeOut'});
-    }
-    makePauseBtn(x,y,text,callback,isQuit){
-        var btn=this.add.container(x,y).setDepth(201).setVisible(false).setInteractive({useHandCursor:true}).setSize(200,42);
-        var color=isQuit?'#ff4466':'#00ff88';
-        var bg=this.add.rectangle(0,0,200,42,color,0.1).setStrokeStyle(1,color);
-        var lbl=this.add.text(0,0,text,{fontSize:'15px',fill:color,fontFamily:'Arial',fontStyle:'bold'}).setOrigin(0.5);
-        btn.add([bg,lbl]);
-        btn.on('pointerover',()=>bg.setFillStyle(color,0.22));btn.on('pointerout',()=>bg.setFillStyle(color,0.1));
-        btn.on('pointerdown',callback);
-        if(!this._pauseBtns)this._pauseBtns=[];
-        this._pauseBtns.push(btn);
-    }
-    togglePause(){
-        if(this.isGameOver)return;
-        this.isPaused=!this.isPaused;
-        var v=!this.isPaused;
-        this.pauseOverlay.setVisible(!v);
-        this.pauseText.setVisible(!v);
-        this.pauseSub.setVisible(!v);
-        this._pauseBtns.forEach(function(b){b.setVisible(!b.visible)});
-        if(this.isPaused){
-            this.physics.pause();
-        } else {
-            this.physics.resume();
-        }
-    }
-    update(time,delta){
-        if(this.isPaused||this.isGameOver)return;
-        var spd=6.5;
-        if(this.cursors.left.isDown)this.player.x-=spd;
-        if(this.cursors.right.isDown)this.player.x+=spd;
-        if(this.cursors.up.isDown)this.player.y-=spd;
-        if(this.cursors.down.isDown)this.player.y+=spd;
+        // Entry anim
+        self.player.setAlpha(0).setScale(2);
+        self.tweens.add({ targets: self.player, alpha: 1, scale: 1, duration: 500, ease: 'Back.easeOut' });
+        self.cameras.main.shake(200, 0.003);
+    },
 
-        // Player pulse
-        var sc=1+Math.sin(time/150)*0.05;
-        this.playerGlow.setScale(sc*1.3);
+    update: function(time, delta) {
+        var self = this;
+        if (self.isPaused || self.isGameOver) return;
 
-        this.spawnTimer+=delta;
-        if(this.spawnTimer>=this.spawnInt){
-            this.spawnTimer=0;
-            var obs=this.obstacles.create(Phaser.Math.Between(35,GW-35),-40,'obstacle');
-            obs.setVelocityY(this.gameSpeed*60+Phaser.Math.Between(-20,20));
-            obs.setVelocityX(Phaser.Math.Between(-90,90));
-            obs.body.setSize(28,28);
-            obs.setRotation(Phaser.Math.FloatBetween(-0.1,0.1));
-            // Spin animation
-            this.tweens.add({targets:obs,rotation:obs.rotation+Phaser.Math.FloatBetween(-3,3),duration:Phaser.Math.Between(1000,2500),repeat:-1});
+        var spd = 6.5;
+        if (self.cursors.left.isDown) self.player.x -= spd;
+        if (self.cursors.right.isDown) self.player.x += spd;
+        if (self.cursors.up.isDown) self.player.y -= spd;
+        if (self.cursors.down.isDown) self.player.y += spd;
+
+        // Player glow pulse
+        var sc = 1 + Math.sin(time / 150) * 0.05;
+        if (self.playerGlow.active) self.playerGlow.setScale(sc * 1.3);
+
+        // Spawn obstacles
+        self.spawnTimer += delta;
+        if (self.spawnTimer >= self.spawnInt) {
+            self.spawnTimer = 0;
+            var obs = self.obstacles.create(
+                Phaser.Math.Between(35, GW - 35), -40, 'obstacle'
+            );
+            obs.setVelocityY(self.gameSpeed * 60 + Phaser.Math.Between(-20, 20));
+            obs.setVelocityX(Phaser.Math.Between(-90, 90));
+            obs.body.setSize(28, 28);
+            self.tweens.add({
+                targets: obs,
+                rotation: Phaser.Math.FloatBetween(-3, 3),
+                duration: Phaser.Math.Between(1000, 2500), repeat: -1
+            });
         }
 
-        this.coinTimer+=delta;
-        if(this.coinTimer>=this.coinInt){
-            this.coinTimer=0;
-            var c=this.coins.create(Phaser.Math.Between(35,GW-35),-30,'coin');
-            c.setVelocityY(this.gameSpeed*40+Phaser.Math.Between(0,20));
-            c.body.setSize(18,18);
-            // Float + glow
-            cg=this.add.sprite(c.x,c.y,'coinGlow').setAlpha(0.3).setDepth(-1);
-            this.tweens.add({targets:cg,{x:c.x,y:c.y},duration:50,repeat:-1,onUpdate:function(){this.targets[0].x=c.x;this.targets[0].y=c.y}.bind({targets:[cg]})});
-            c.updateGlow=cg;
-            // Pulse coin
-            this.tweens.add({targets:c,scale:{from:0.8,to:1.15},duration:350,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+        // Spawn coins
+        self.coinTimer += delta;
+        if (self.coinTimer >= self.coinInt) {
+            self.coinTimer = 0;
+            var c = self.coins.create(
+                Phaser.Math.Between(35, GW - 35), -30, 'coin'
+            );
+            c.setVelocityY(self.gameSpeed * 40 + Phaser.Math.Between(0, 20));
+            c.body.setSize(18, 18);
+            self.tweens.add({
+                targets: c, scale: { from: 0.8, to: 1.15 },
+                duration: 350, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+            });
         }
 
-        this.diffTimer+=delta;
-        if(this.diffTimer>=5000){
-            this.diffTimer=0;
-            this.gameSpeed+=0.3;
-            this.spawnInt=Math.max(350,this.spawnInt-70);
-            this.coinInt=Math.max(700,this.coinInt-90);
-            // Speed up indicator flash
-            var spTxt=this.add.text(GW/2,GH/2,'SPEED UP!',{fontSize:'18px',fill:'#ff6644',fontFamily:'Arial',fontStyle:'bold'}).setOrigin(0.5).setDepth(80).setAlpha(0);
-            this.tweens.add({targets:spTxt,alpha:{from:0,to:1},y:GH/2-20,duration:300,yoyo:true,repeat:1,onComplete:function(){spTxt.destroy()}});
+        // Difficulty ramp
+        self.diffTimer += delta;
+        if (self.diffTimer >= 5000) {
+            self.diffTimer = 0;
+            self.gameSpeed += 0.3;
+            self.spawnInt = Math.max(350, self.spawnInt - 70);
+            self.coinInt = Math.max(700, self.coinInt - 90);
+            var spTxt = self.add.text(GW / 2, GH / 2, 'SPEED UP!', {
+                fontSize: '18px', fill: '#ff6644', fontStyle: 'bold'
+            }).setOrigin(0.5).setDepth(80).setAlpha(0);
+            self.tweens.add({
+                targets: spTxt, alpha: 1, y: GH / 2 - 20,
+                duration: 300, yoyo: true, repeat: 1,
+                onComplete: function() { spTxt.destroy(); }
+            });
         }
 
-        // Cleanup
-        this.obstacles.children.each(function(o){
-            if(o.y>GH+60||o.y<-200||o.x<-60||o.x>GW+60)o.destroy();
-        }.bind(this));
-        this.coins.children.each(function(c){
-            if(c.y>GH+50){c.destroy();if(c.updateGlow)c.updateGlow.destroy()}
-        }.bind(this));
+        // Cleanup off-screen
+        self.obstacles.children.each(function(o) {
+            if (o.y > GH + 60 || o.y < -200 || o.x < -60 || o.x > GW + 60) o.destroy();
+        });
+        self.coins.children.each(function(c) {
+            if (c.y > GH + 50) c.destroy();
+        });
 
-        // Player engine trail
-        if(time%60<20){
-            this.particles.emitParticleAt(this.player.x+Phaser.Math.FloatBetween(-8,8),this.player.y+12,1);
+        // Engine trail
+        if (time % 60 < 20) {
+            self.parts.emitParticleAt(
+                self.player.x + Phaser.Math.FloatBetween(-8, 8),
+                self.player.y + 12, 1
+            );
         }
     }
-    hitObs(player,obs){
-        if(this.isGameOver)return;
-        this.isGameOver=true;
+};
 
-        // Big explosion
-        this.particles.emitParticleAt(player.x,player.y,30);
-        this.cameras.main.shake(300,0.02);
-        this.cameras.main.flash(200,255,0,0,false);
+/* ========== HELPER FUNCTIONS ========== */
 
-        player.setVisible(false);
-        this.playerGlow.setVisible(false);
-
-        this.obstacles.clear(true,true);
-        this.coins.clear(true,true);
-
-        // Game Over panel
-        var panel=this.add.container(GW/2,GH/2).setDepth(150);
-        panel.add(this.add.rectangle(0,0,280,240,0x0a0a2e,0.92).setStrokeStyle(2,0xff3344));
-        panel.add(this.add.text(0,-80,'GAME OVER',{fontSize:'34px',fill:'#ff3344',fontFamily:'Arial Black',fontStyle:'bold'}).setOrigin(0.5));
-        panel.add(this.add.text(0,-35,'Score: '+this.score,{fontSize:'24px',fill:'#ffffff',fontFamily:'Arial',fontStyle:'bold'}).setOrigin(0.5));
-
-        var hs=parseInt(localStorage.getItem(HIGH_KEY)||0);
-        var isNew=false;
-        if(this.score>hs){
-            hs=this.score;
-            localStorage.setItem(HIGH_KEY,String(hs));
-            isNew=true;
-            panel.add(this.add.text(0,5,'\u2605 NEW RECORD! \u2605',{fontSize:'18px',fill:'#ffcc00',fontFamily:'Arial',fontStyle:'bold'}).setOrigin(0.5));
-            this.tweens.add({targets:panel.getChildren()[3],scale:{from:1.2,to:1},duration:500,yoyo:true,repeat:2});
-        } else {
-            panel.add(this.add.text(0,5,'Best: '+hs,{fontSize:'16px',fill:'#888899',fontFamily:'Arial'}).setOrigin(0.5));
-        }
-
-        // Buttons in panel
-        this.makePanelBtn(panel,0,55,'\u25B6 PLAY AGAIN','#00ff88',()=>this.restartGame());
-        this.makePanelBtn(panel,0,100,'\u25C0 MENU','#6699ff',()=>this.scene.start('Menu'));
-        this.makePanelBtn(panel,0,145,'\u2770 SHARE','#9966ff',()=>shareGame(this));
-
-        // Panel entry anim
-        panel.setScale(0.3).setAlpha(0);
-        this.tweens.add({targets:panel,scale:1,alpha:1,duration:450,ease:'Back.easeOut'});
-
-        // Hide pause button
-        this.pauseBtn.setVisible(false);
-    }
-    makePanelBtn(parent,x,y,text,color,callback){
-        var btn=this.add.container(x,y).setInteractive({useHandCursor:true}).setSize(180,38);
-        var bg=this.add.rectangle(0,0,180,38,color,0.12).setStrokeStyle(1,color);
-        var lbl=this.add.text(0,0,text,{fontSize:'14px',fill:color,fontFamily:'Arial',fontStyle:'bold'}).setOrigin(0.5);
-        btn.add([bg,lbl]);
-        parent.add(btn);
-        btn.on('pointerover',()=>bg.setFillStyle(color,0.25));btn.on('pointerout',()=>bg.setFillStyle(color,0.12));
-        btn.on('pointerdown',callback);
-    }
-    collectCoin(player,coin){
-        coin.destroy();
-        if(coin.updateGlow)coin.updateGlow.destroy();
-        this.score+=10;
-        this.scoreTxt.setText('Score: '+this.score);
-
-        this.coinParts.emitParticleAt(coin.x,coin.y,8);
-
-        var txt=this.add.text(coin.x,coin.y-10,'+10',{fontSize:'17px',fill:'#ffcc00',fontFamily:'Arial',fontStyle:'bold'}).setOrigin(0.5).setDepth(50);
-        this.tweens.add({targets:txt,{y:coin.y-40,alpha:0},duration:550,ease:'Cubic.easeOut',onComplete:function(){txt.destroy()}});
-
-        // Score bump effect
-        this.tweens.add({targets:this.scoreTxt,scale:{from:1.15,to:1},duration:150});
-    }
-    restartGame(){
-        this.scene.restart();
-    }
+function makeBtn(scene, x, y, text, color, callback, scl) {
+    if (!scl) scl = 1;
+    var bw = 220 * scl, bh = 48 * scl;
+    var btn = scene.add.container(x, y).setSize(bw, bh)
+        .setInteractive({ useHandCursor: true });
+    var bg = scene.add.rectangle(0, 0, bw, bh, color, 0.12).setStrokeStyle(1.5, color);
+    var lbl = scene.add.text(0, 0, text, {
+        fontSize: String(Math.round(18 * scl)) + 'px', fill: color, fontStyle: 'bold'
+    }).setOrigin(0.5);
+    btn.add([bg, lbl]);
+    btn.on('pointerover', function() { bg.setFillStyle(color, 0.25); btn.setScale(1.05); });
+    btn.on('pointerout', function() { bg.setFillStyle(color, 0.12); btn.setScale(1); });
+    btn.on('pointerdown', callback);
+    return btn;
 }
 
-// Share function (global)
-function shareGame(scene){
-    var url=window.location.href;
-    var score=scene instanceof GameScene?scene.score:(localStorage.getItem(HIGH_KEY)||0);
-    var text='Dodge Master - I scored '+score+' points! Can you beat me? Play free: '+url;
+function addPBtn(scene, x, y, text, color, callback) {
+    var btn = scene.add.container(x, y).setDepth(201).setVisible(false)
+        .setInteractive({ useHandCursor: true }).setSize(200, 42);
+    var bg = scene.add.rectangle(0, 0, 200, 42, color, 0.1).setStrokeStyle(1, color);
+    var lbl = scene.add.text(0, 0, text, {
+        fontSize: '15px', fill: color, fontStyle: 'bold'
+    }).setOrigin(0.5);
+    btn.add([bg, lbl]);
+    btn.on('pointerover', function() { bg.setFillStyle(color, 0.22); });
+    btn.on('pointerout', function() { bg.setFillStyle(color, 0.1); });
+    btn.on('pointerdown', callback);
+    scene.pbtns.push(btn);
+}
 
-    if(navigator.share){
-        navigator.share({title:'Dodge Master',text:text,url:url}).catch(()=>{copyToClipboard(url,scene)});
+function togglePause(scene) {
+    if (scene.isGameOver) return;
+    scene.isPaused = !scene.isPaused;
+    var hide = !scene.isPaused; // true when resuming (hide pause UI)
+
+    scene.pauseOv.setVisible(!hide);
+    scene.pauseTxt.setVisible(!hide);
+    scene.pauseSub.setVisible(!hide);
+    for (var i = 0; i < scene.pbtns.length; i++) {
+        scene.pbtns[i].setVisible(!hide);
+    }
+
+    if (scene.isPaused) {
+        scene.physics.pause();
     } else {
-        copyToClipboard(url,scene);
+        scene.physics.resume();
     }
 }
 
-function copyToClipboard(url,scene){
-    if(navigator.clipboard){
-        navigator.clipboard.writeText(url).then(function(){
-            showShareFeedback(scene,'Link copied! Paste & send \u2705');
+function hitObs(player, obs) {
+    var scene = this;
+    if (scene.isGameOver) return;
+    scene.isGameOver = true;
+
+    // Explosion effects
+    scene.parts.emitParticleAt(scene.player.x, scene.player.y, 30);
+    scene.cameras.main.shake(300, 0.02);
+    scene.cameras.main.flash(200, 255, 0, 0, false);
+
+    scene.player.setVisible(false);
+    if (scene.playerGlow.active) scene.playerGlow.setVisible(false);
+
+    scene.obstacles.clear(true, true);
+    scene.coins.clear(true, true);
+
+    // Hide pause btn
+    scene.pauseBtn.setVisible(false);
+
+    // Game Over panel
+    var panel = scene.add.container(GW / 2, GH / 2).setDepth(150);
+    panel.add(scene.add.rectangle(0, 0, 280, 240, 0x0a0a2e, 0.92).setStrokeStyle(2, 0xff3344));
+    panel.add(scene.add.text(0, -80, 'GAME OVER', {
+        fontSize: '34px', fill: '#ff3344', fontFamily: 'Arial Black', fontStyle: 'bold'
+    }).setOrigin(0.5));
+    panel.add(scene.add.text(0, -35, 'Score: ' + scene.score, {
+        fontSize: '24px', fill: '#ffffff', fontStyle: 'bold'
+    }).setOrigin(0.5));
+
+    var hs = parseInt(localStorage.getItem(HIGH_KEY) || 0);
+    if (scene.score > hs) {
+        localStorage.setItem(HIGH_KEY, String(scene.score));
+        var nr = scene.add.text(0, 5, '\u2605 NEW RECORD! \u2605', {
+            fontSize: '18px', fill: '#ffcc00', fontStyle: 'bold'
+        }).setOrigin(0.5);
+        panel.add(nr);
+        scene.tweens.add({ targets: nr, scale: { from: 1.2, to: 1 }, duration: 500, yoyo: true, repeat: 2 });
+    } else {
+        panel.add(scene.add.text(0, 5, 'Best: ' + hs, {
+            fontSize: '16px', fill: '#888899'
+        }).setOrigin(0.5));
+    }
+
+    // Panel buttons
+    addPanelBtn(panel, 0, 55, '\u25B6 PLAY AGAIN', '#00ff88', function() { restartGame(scene); });
+    addPanelBtn(panel, 0, 100, '\u25C0 MENU', '#6699ff', function() { scene.scene.start('MenuScene'); });
+    addPanelBtn(panel, 0, 145, '\u2770 SHARE', '#9966ff', function() { doShare(scene, scene.score); });
+
+    // Animate panel in
+    panel.setScale(0.3).setAlpha(0);
+    scene.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: 450, ease: 'Back.easeOut' });
+}
+
+function addPanelBtn(parent, x, y, text, color, callback) {
+    var btn = parent.scene.add.container(x, y)
+        .setInteractive({ useHandCursor: true }).setSize(180, 38);
+    var bg = parent.scene.add.rectangle(0, 0, 180, 38, color, 0.12).setStrokeStyle(1, color);
+    var lbl = parent.scene.add.text(0, 0, text, {
+        fontSize: '14px', fill: color, fontStyle: 'bold'
+    }).setOrigin(0.5);
+    btn.add([bg, lbl]);
+    parent.add(btn);
+    btn.on('pointerover', function() { bg.setFillStyle(color, 0.25); });
+    btn.on('pointerout', function() { bg.setFillStyle(color, 0.12); });
+    btn.on('pointerdown', callback);
+}
+
+function collectCoin(player, coin) {
+    var scene = this;
+    coin.destroy();
+    scene.score += 10;
+    scene.scoreTxt.setText('Score: ' + scene.score);
+
+    scene.coinParts.emitParticleAt(coin.x, coin.y, 8);
+
+    var txt = scene.add.text(coin.x, coin.y - 10, '+10', {
+        fontSize: '17px', fill: '#ffcc00', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(50);
+    scene.tweens.add({
+        targets: txt, y: coin.y - 40, alpha: 0,
+        duration: 550, ease: 'Cubic.easeOut',
+        onComplete: function() { txt.destroy(); }
+    });
+
+    scene.tweens.add({ targets: scene.scoreTxt, scale: { from: 1.15, to: 1 }, duration: 150 });
+}
+
+function restartGame(scene) {
+    scene.scene.restart();
+}
+
+function doShare(scene, scoreVal) {
+    var url = window.location.href;
+    var txt = 'Dodge Master - I scored ' + scoreVal + ' points! Can you beat me? Play free: ' + url;
+
+    if (navigator.share) {
+        navigator.share({ title: 'Dodge Master', text: txt, url: url })
+            .catch(function() { copyLink(url, scene); });
+    } else {
+        copyLink(url, scene);
+    }
+}
+
+function copyLink(url, scene) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() {
+            showFeedback(scene, 'Link copied! Paste & send \u2705');
         });
     } else {
-        // Fallback prompt
-        showShareFeedback(scene,url);
+        showFeedback(scene, url);
     }
 }
 
-function showShareFeedback(scene,msg){
-    if(!scene||!scene.add)return alert(msg);
-    var fb=scene.add.text(GW/2,GH-80,msg,{fontSize:'14px',fill:'#00ff88',fontFamily:'Arial',backgroundColor:'#0a0a2e',padding:{x:12,y:8}}).setOrigin(0.5).setDepth(300);
-    scene.tweens.add({targets:fb,{y:GH-110,alpha:0},duration:2000,delay:1000,onComplete:function(){fb.destroy()}});
+function showFeedback(scene, msg) {
+    var fb = scene.add.text(GW / 2, GH - 80, msg, {
+        fontSize: '14px', fill: '#00ff88',
+        backgroundColor: '#0a0a2e', padding: { x: 12, y: 8 }
+    }).setOrigin(0.5).setDepth(300);
+    scene.tweens.add({
+        targets: fb, y: GH - 110, alpha: 0,
+        duration: 2000, delay: 1000,
+        onComplete: function() { fb.destroy(); }
+    });
 }
 
-// Launch game
-var game=new Phaser.Game({
-    type:Phaser.AUTO,width:GW,height:GH,
-    backgroundColor:'#0a0a2e',
-    physics:{default:'arcade',arcade:{gravity:{y:0},debug:false}},
-    scene:[BootScene,MenuScene,GameScene],
-    callbacks:{
-        postBoot:function(game){
-            // Ensure scenes are properly ordered
-        }
-    }
+/* ========== LAUNCH GAME ========== */
+var game = new Phaser.Game({
+    type: Phaser.AUTO,
+    width: GW,
+    height: GH,
+    backgroundColor: '#0a0a2e',
+    physics: {
+        default: 'arcade',
+        arcade: { gravity: { y: 0 }, debug: false }
+    },
+    scene: [BootScene, MenuScene, GameScene]
 });
 </script>
 </body>
