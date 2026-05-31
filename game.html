@@ -7,7 +7,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0a2e;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:none;font-family:Arial,sans-serif}
-canvas{display:block;border-radius:8px;box-shadow:0 0 40px rgba(0,255,136,0.15)}
+canvas{display:block;border-radius:8px}
 </style>
 </head>
 <body>
@@ -15,507 +15,456 @@ canvas{display:block;border-radius:8px;box-shadow:0 0 40px rgba(0,255,136,0.15)}
 <script>
 var GW = Math.min(window.innerWidth, 480);
 var GH = Math.min(window.innerHeight, 720);
-var HIGH_KEY = 'dodgeMasterHS';
+var HK = 'dodgeMasterHS';
 
-/* ========== BOOT SCENE ========== */
-var BootScene = {
-    preload: function() {
+function Boot() {
+    this.preload = function() {
         var g = this.add.graphics();
         g.fillStyle(0x00ff88); g.fillCircle(16, 16, 14); g.generateTexture('player', 32, 32); g.clear();
         g.fillStyle(0xff3344); g.fillRoundedRect(4, 4, 28, 28, 6); g.generateTexture('obstacle', 36, 36); g.clear();
         g.fillStyle(0xffcc00); g.fillCircle(12, 12, 10);
         g.lineStyle(2, 0xff9900); g.strokeCircle(12, 12, 10);
         g.generateTexture('coin', 24, 24); g.clear();
-        g.fillStyle(0xffffff); g.fillCircle(4, 4, 3); g.generateTexture('particle', 8, 8); g.clear();
-        g.fillStyle(0x00ff88, 0.3); g.fillCircle(16, 16, 20); g.generateTexture('glow', 32, 32); g.clear();
+        g.fillStyle(0xffffff); g.fillCircle(4, 4, 3); g.generateTexture('part', 8, 8); g.clear();
         g.destroy();
-    },
-    create: function() {
-        this.scene.start('MenuScene');
-    }
-};
+    };
+    this.create = function() {
+        this.scene.start('Menu');
+    };
+}
 
-/* ========== MENU SCENE ========== */
-var MenuScene = {
-    create: function() {
-        var self = this;
+function Menu() {
+    this.create = function() {
+        var s = this;
         var cx = GW / 2;
         var cy = GH / 2;
 
-        // Starfield
-        for (var i = 0; i < 40; i++) {
-            var sx = Phaser.Math.Between(0, GW);
-            var sy = Phaser.Math.Between(0, GH);
-            var sr = Phaser.Math.Between(1, 2);
-            var sa = Phaser.Math.FloatBetween(0.1, 0.5);
-            var star = self.add.circle(sx, sy, sr, 0xffffff, sa);
-            self.tweens.add({
+        for (var i = 0; i < 30; i++) {
+            var star = s.add.circle(
+                Phaser.Math.Between(0, GW),
+                Phaser.Math.Between(0, GH),
+                Phaser.Math.Between(1, 2),
+                0xffffff,
+                Phaser.Math.FloatBetween(0.15, 0.5)
+            );
+            s.tweens.add({
                 targets: star,
-                alpha: Phaser.Math.FloatBetween(0.1, 0.6),
-                duration: Phaser.Math.Between(1000, 3000),
-                yoyo: true, repeat: -1, delay: Phaser.Math.Between(0, 2000)
+                alpha: Phaser.Math.FloatBetween(0.1, 0.7),
+                duration: Phaser.Math.Between(800, 2500),
+                yoyo: true,
+                repeat: -1,
+                delay: Phaser.Math.Between(0, 2000)
             });
         }
 
-        // Floating obstacles
-        for (var i = 0; i < 5; i++) {
-            var fo = self.add.sprite(
-                Phaser.Math.Between(50, GW - 50),
-                Phaser.Math.Between(100, GH - 150),
-                'obstacle'
-            ).setAlpha(0.15).setScale(0.6 + Math.random() * 0.4);
-            self.tweens.add({
-                targets: fo,
-                y: fo.y - 20,
-                duration: 1500 + Math.random() * 1000,
-                yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
-            });
-        }
-
-        // Title
-        var title = self.add.text(cx, cy - 140, 'DODGE\nMASTER', {
-            fontSize: '38px', fill: '#00ff88',
-            fontFamily: 'Arial Black, Arial', fontStyle: 'bold'
+        var title = s.add.text(cx, cy - 130, 'DODGE\nMASTER', {
+            fontSize: '40px',
+            fill: '#00ff88',
+            fontFamily: 'Arial Black, Arial',
+            fontStyle: 'bold'
         }).setOrigin(0.5).setAlign('center');
 
-        self.tweens.add({
-            targets: title, scale: { from: 1, to: 1.04 },
-            duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        s.tweens.add({
+            targets: title,
+            scale: 1.06,
+            duration: 700,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
         });
 
-        // Subtitle
-        self.add.text(cx, cy - 40, 'Dodge . Collect . Survive', {
-            fontSize: '13px', fill: '#8888aa'
+        s.add.text(cx, cy - 35, 'Dodge . Collect . Survive', {
+            fontSize: '13px',
+            fill: '#7788aa'
         }).setOrigin(0.5);
 
-        // High score
-        var hsVal = localStorage.getItem(HIGH_KEY) || 0;
+        var hsVal = localStorage.getItem(HK) || 0;
         if (hsVal > 0) {
-            var hsBox = self.add.container(cx, cy + 10);
-            hsBox.add(self.add.rectangle(0, 0, 200, 36, 0xffffff, 0.06).setStrokeStyle(1, 0x333355));
-            hsBox.add(self.add.text(0, 1, '\u2605 BEST: ' + hsVal, {
-                fontSize: '15px', fill: '#ffcc00'
-            }).setOrigin(0.5));
+            s.add.text(cx, cy + 10, '\u2605 BEST: ' + hsVal, {
+                fontSize: '16px',
+                fill: '#ffcc00',
+                fontStyle: 'bold'
+            }).setOrigin(0.5);
         }
 
-        // START button
-        makeBtn(self, cx, cy + 70, '\u25B6  START GAME', '#00ff88', function() {
-            self.scene.start('GameScene');
+        makeBtn(s, cx, cy + 60, '\u25B6  START GAME', '#00ff88', function() {
+            s.scene.start('Play');
         });
 
-        // Hint text
-        self.add.text(cx, cy + 130, 'Drag or Arrow Keys to move', {
-            fontSize: '11px', fill: '#555577'
+        s.add.text(cx, cy + 120, 'Drag or Arrow Keys to move', {
+            fontSize: '11px',
+            fill: '#445566'
         }).setOrigin(0.5);
 
-        // SHARE button
-        makeBtn(self, cx, cy + 170, '\u2770  SHARE', '#6699ff', function() {
-            doShare(self, 0);
+        makeBtn(s, cx, cy + 160, '\u2770  SHARE GAME', '#5588ff', function() {
+            doShare(s);
         }, 0.75);
 
-        // Ambient particles
-        self.add.particles(0, 0, 'particle', {
-            x: { min: 0, max: GW }, y: -10,
-            speedY: { min: 30, max: 80 }, speedX: { min: -15, max: 15 },
-            scale: { start: 0.3, end: 0 }, lifespan: 6000,
-            quantity: 1, frequency: 400,
-            tint: [0x4466ff, 0x00ff88, 0xff66aa],
+        s.add.particles(0, 0, 'part', {
+            x: { min: 0, max: GW },
+            y: -10,
+            speedY: { min: 20, max: 60 },
+            speedX: { min: -10, max: 10 },
+            scale: { start: 0.3, end: 0 },
+            lifespan: 5000,
+            quantity: 1,
+            frequency: 500,
+            tint: [0x3355ff, 0x00ff88, 0xff55aa],
             blendMode: 'ADD'
         });
-    }
-};
+    };
+}
 
-/* ========== GAME SCENE ========== */
-var GameScene = {
-    isPaused: false, isGameOver: false, score: 0,
-    spawnTimer: 0, coinTimer: 0, diffTimer: 0,
-    spawnInt: 1200, coinInt: 2000, gameSpeed: 3,
+function PlayScene() {
+    var _score = 0;
+    var _paused = false;
+    var _dead = false;
+    var _st = 0, _ct = 0, _dt = 0;
+    var _si = 1200, _ci = 2000, _spd = 3;
+    var _obs, _coin, _player, _scoreTxt, _parts, _cparts;
+    var _pOv, _pTxt, _pSub, _pBtns, _pauseBtn;
 
-    create: function() {
-        var self = this;
-        self.isPaused = false;
-        self.isGameOver = false;
-        self.score = 0;
-        self.spawnTimer = 0; self.coinTimer = 0; self.diffTimer = 0;
-        self.spawnInt = 1200; self.coinInt = 2000; self.gameSpeed = 3;
+    this.preload = function() {};
+    this.create = function() {
+        var s = this;
+        _score = 0; _paused = false; _dead = false;
+        _st = 0; _ct = 0; _dt = 0;
+        _si = 1200; _ci = 2000; _spd = 3;
 
-        // Grid background
-        var gg = self.add.graphics();
-        gg.lineStyle(1, 0x1a1a3e, 0.5);
+        var gg = s.add.graphics();
+        gg.lineStyle(1, 0x1a1a3e, 0.4);
         for (var i = 0; i < GW; i += 40) { gg.moveTo(i, 0); gg.lineTo(i, GH); }
         for (var j = 0; j < GH; j += 40) { gg.moveTo(0, j); gg.lineTo(GW, j); }
 
-        // Groups
-        self.obstacles = self.physics.add.group();
-        self.coins = self.physics.add.group();
+        _obs = s.physics.add.group();
+        _coin = s.physics.add.group();
 
-        // Player with glow
-        self.playerGlow = self.add.sprite(GW / 2, GH - 100, 'glow').setAlpha(0.4).setDepth(0);
-        self.player = self.physics.add.sprite(GW / 2, GH - 100, 'player').setDepth(1);
-        self.player.setCollideWorldBounds(true);
-        self.player.body.setSize(26, 26);
+        _player = s.physics.add.sprite(GW / 2, GH - 100, 'player');
+        _player.setCollideWorldBounds(true);
+        _player.body.setSize(26, 26);
 
-        // Glow follow
-        self.glowTween = self.tweens.add({
-            targets: self.playerGlow,
-            duration: 60, repeat: -1,
-            onUpdate: function() {
-                if (self.playerGlow && self.player && self.player.active) {
-                    self.playerGlow.x = self.player.x;
-                    self.playerGlow.y = self.player.y;
-                }
+        var cursors = s.input.keyboard.createCursorKeys();
+
+        s.input.keyboard.on('keydown-SPACE', function() {
+            if (_dead) { doRestart(s); }
+            else { doPause(s); }
+        });
+
+        s.input.keyboard.on('keydown-ESC', function() { doPause(s); });
+        s.input.keyboard.on('keydown-P', function() { doPause(s); });
+
+        s.input.on('pointermove', function(ptr) {
+            if (!_paused && !_dead && ptr.isDown) {
+                _player.x = Phaser.Math.Clamp(ptr.x, 22, GW - 22);
+                _player.y = Phaser.Math.Clamp(ptr.y, 22, GH - 22);
             }
         });
 
-        // Input
-        self.cursors = self.input.keyboard.createCursorKeys();
+        s.physics.add.overlap(_player, _obs, onHit, null, s);
+        s.physics.add.overlap(_player, _coin, onCoin, null, s);
 
-        self.input.keyboard.on('keydown-SPACE', function() {
-            if (self.isGameOver) { restartGame(self); }
-            else { togglePause(self); }
-        });
+        s.add.rectangle(GW / 2, 22, GW, 44, 0x000000, 0.4).setDepth(100);
 
-        self.input.keyboard.on('keydown-ESC', function() { togglePause(self); });
-        self.input.keyboard.on('keydown-P', function() { togglePause(self); });
+        _scoreTxt = s.add.text(14, 10, 'Score: 0', {
+            fontSize: '20px', fill: '#fff', fontStyle: 'bold'
+        }).setDepth(101);
 
-        self.input.on('pointermove', function(pointer) {
-            if (!self.isPaused && !self.isGameOver && pointer.isDown) {
-                self.player.x = Phaser.Math.Clamp(pointer.x, 20, GW - 20);
-                self.player.y = Phaser.Math.Clamp(pointer.y, 20, GH - 20);
-            }
-        });
+        s.add.text(GW - 14, 10, 'Best: ' + (localStorage.getItem(HK) || 0), {
+            fontSize: '13px', fill: '#99aabb'
+        }).setOrigin(1, 0).setDepth(101);
 
-        // Collisions
-        self.physics.add.overlap(self.player, self.obstacles, hitObs, null, self);
-        self.physics.add.overlap(self.player, self.coins, collectCoin, null, self);
-
-        // HUD bg
-        self.hudBg = self.add.rectangle(GW / 2, 22, GW, 44, 0x000000, 0.4)
-            .setScrollFactor(0).setDepth(100);
-
-        self.scoreTxt = self.add.text(14, 10, 'Score: 0', {
-            fontSize: '20px', fill: '#ffffff', fontStyle: 'bold'
-        }).setScrollFactor(0).setDepth(101);
-
-        self.hsTxt = self.add.text(GW - 14, 10, 'Best: ' + (localStorage.getItem(HIGH_KEY) || 0), {
-            fontSize: '13px', fill: '#aaaacc'
-        }).setOrigin(1, 0).setScrollFactor(0).setDepth(101);
-
-        // Pause btn
-        self.pauseBtn = self.add.container(GW - 30, 55).setDepth(101)
-            .setInteractive({ useHandCursor: true }).setSize(36, 36);
-        var pbg = self.add.rectangle(0, 0, 32, 32, 0xffffff, 0.06).setStrokeStyle(1, 0x444466);
-        var plbl = self.add.text(0, 0, '\u275A\u275A', {
-            fontSize: '14px', fill: '#888899'
-        }).setOrigin(0.5);
-        self.pauseBtn.add([pbg, plbl]);
-        self.pauseBtn.on('pointerdown', function() { togglePause(self); });
-        self.pauseBtn.on('pointerover', function() { pbg.setFillStyle(0xffffff, 0.12); });
-        self.pauseBtn.on('pointerout', function() { pbg.setFillStyle(0xffffff, 0.06); });
+        // Pause button
+        _pauseBtn = s.add.text(GW - 30, 52, '\u275A\u275A', {
+            fontSize: '16px', fill: '#667788'
+        }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
+        _pauseBtn.on('pointerdown', function() { doPause(s); });
+        _pauseBtn.on('pointerover', function() { _pauseBtn.setColor('#aabbcc'); });
+        _pauseBtn.on('pointerout', function() { _pauseBtn.setColor('#667788'); });
 
         // Particles
-        self.parts = self.add.particles(0, 0, 'particle', {
-            speed: { min: 60, max: 180 }, scale: { start: 1, end: 0 },
-            lifespan: 350, blendMode: 'ADD'
+        _parts = s.add.particles(0, 0, 'part', {
+            speed: { min: 60, max: 160 },
+            scale: { start: 1, end: 0 },
+            lifespan: 300,
+            blendMode: 'ADD'
         }).stop();
 
-        self.coinParts = self.add.particles(0, 0, 'particle', {
-            speed: { min: 40, max: 100 }, scale: { start: 0.6, end: 0 },
-            lifespan: 300, tint: 0xffcc00, blendMode: 'ADD'
+        _cparts = s.add.particles(0, 0, 'part', {
+            speed: { min: 30, max: 80 },
+            scale: { start: 0.6, end: 0 },
+            lifespan: 250,
+            tint: 0xffcc00,
+            blendMode: 'ADD'
         }).stop();
 
-        // Flash overlay
-        self.flashOv = self.add.rectangle(GW / 2, GH / 2, GW, GH, 0xff0000, 0).setDepth(90);
-
-        // Pause overlay (hidden initially)
-        self.pauseOv = self.add.rectangle(GW / 2, GH / 2, GW, GH, 0x000033, 0.7)
+        // Pause overlay
+        _pOv = s.add.rectangle(GW / 2, GH / 2, GW, GH, 0x000022, 0.75)
             .setDepth(200).setVisible(false).setInteractive();
-        self.pauseTxt = self.add.text(GW / 2, GH / 2 - 30, 'PAUSED', {
-            fontSize: '42px', fill: '#00ff88', fontFamily: 'Arial Black', fontStyle: 'bold'
+        _pTxt = s.add.text(GW / 2, GH / 2 - 30, 'PAUSED', {
+            fontSize: '44px', fill: '#00ff88',
+            fontFamily: 'Arial Black', fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(201).setVisible(false);
-        self.pauseSub = self.add.text(GW / 2, GH / 2 + 20, 'Tap or press SPACE to resume', {
-            fontSize: '14px', fill: '#8888aa'
+        _pSub = s.add.text(GW / 2, GH / 2 + 25, 'Tap or press SPACE', {
+            fontSize: '14px', fill: '#7788aa'
         }).setOrigin(0.5).setDepth(201).setVisible(false);
 
-        // Pause buttons
-        self.pbtns = [];
-        addPBtn(self, GW / 2, GH / 2 + 65, '\u25B6 RESUME', '#00ff88', function() { togglePause(self); });
-        addPBtn(self, GW / 2, GH / 2 + 115, '\u25C0 QUIT TO MENU', '#ff4466', function() { self.scene.start('MenuScene'); });
+        // Pause buttons array
+        _pBtns = [];
+
+        var rb = s.add.text(GW / 2, GH / 2 + 80, '\u25B6  RESUME', {
+            fontSize: '18px', fill: '#00ff88', fontStyle: 'bold',
+            backgroundColor: '#001a0a', padding: { x: 20, y: 10 }
+        }).setOrigin(0.5).setDepth(201).setVisible(false).setInteractive({ useHandCursor: true });
+        rb.on('pointerdown', function() { doPause(s); });
+        rb.on('pointerover', function() { rb.setStyle({ backgroundColor: '#003320' }); });
+        rb.on('pointerout', function() { rb.setStyle({ backgroundColor: '#001a0a' }); });
+        _pBtns.push(rb);
+
+        var qb = s.add.text(GW / 2, GH / 2 + 130, '\u25C0  MENU', {
+            fontSize: '18px', fill: '#ff4466', fontStyle: 'bold',
+            backgroundColor: '#1a0008', padding: { x: 20, y: 10 }
+        }).setOrigin(0.5).setDepth(201).setVisible(false).setInteractive({ useHandCursor: true });
+        qb.on('pointerdown', function() { s.scene.start('Menu'); });
+        qb.on('pointerover', function() { qb.setStyle({ backgroundColor: '#330015' }); });
+        qb.on('pointerout', function() { qb.setStyle({ backgroundColor: '#1a0008' }); });
+        _pBtns.push(qb);
 
         // Entry anim
-        self.player.setAlpha(0).setScale(2);
-        self.tweens.add({ targets: self.player, alpha: 1, scale: 1, duration: 500, ease: 'Back.easeOut' });
-        self.cameras.main.shake(200, 0.003);
-    },
+        _player.setAlpha(0).setScale(2);
+        s.tweens.add({ targets: _player, alpha: 1, scale: 1, duration: 450, ease: 'Back.easeOut' });
+        s.cameras.main.shake(180, 0.003);
+    };
 
-    update: function(time, delta) {
-        var self = this;
-        if (self.isPaused || self.isGameOver) return;
+    this.update = function(time, delta) {
+        if (_paused || _dead) return;
+        var s = this;
+        var mv = 6.5;
+        var c = s.input.keyboard.createCursorKeys();
+        if (c.left.isDown) _player.x -= mv;
+        if (c.right.isDown) _player.x += mv;
+        if (c.up.isDown) _player.y -= mv;
+        if (c.down.isDown) _player.y += mv;
 
-        var spd = 6.5;
-        if (self.cursors.left.isDown) self.player.x -= spd;
-        if (self.cursors.right.isDown) self.player.x += spd;
-        if (self.cursors.up.isDown) self.player.y -= spd;
-        if (self.cursors.down.isDown) self.player.y += spd;
+        _st += delta;
+        if (_st >= _si) {
+            _st = 0;
+            var o = _obs.create(Phaser.Math.Between(35, GW - 35), -40, 'obstacle');
+            o.setVelocityY(_spd * 60 + Phaser.Math.Between(-20, 20));
+            o.setVelocityX(Phaser.Math.Between(-90, 90));
+            o.body.setSize(28, 28);
+        }
 
-        // Player glow pulse
-        var sc = 1 + Math.sin(time / 150) * 0.05;
-        if (self.playerGlow.active) self.playerGlow.setScale(sc * 1.3);
-
-        // Spawn obstacles
-        self.spawnTimer += delta;
-        if (self.spawnTimer >= self.spawnInt) {
-            self.spawnTimer = 0;
-            var obs = self.obstacles.create(
-                Phaser.Math.Between(35, GW - 35), -40, 'obstacle'
-            );
-            obs.setVelocityY(self.gameSpeed * 60 + Phaser.Math.Between(-20, 20));
-            obs.setVelocityX(Phaser.Math.Between(-90, 90));
-            obs.body.setSize(28, 28);
-            self.tweens.add({
-                targets: obs,
-                rotation: Phaser.Math.FloatBetween(-3, 3),
-                duration: Phaser.Math.Between(1000, 2500), repeat: -1
+        _ct += delta;
+        if (_ct >= _ci) {
+            _ct = 0;
+            var cn = _coin.create(Phaser.Math.Between(35, GW - 35), -30, 'coin');
+            cn.setVelocityY(_spd * 40 + Phaser.Math.Between(0, 20));
+            cn.body.setSize(18, 18);
+            s.tweens.add({
+                targets: cn,
+                scale: { from: 0.8, to: 1.15 },
+                duration: 350,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
             });
         }
 
-        // Spawn coins
-        self.coinTimer += delta;
-        if (self.coinTimer >= self.coinInt) {
-            self.coinTimer = 0;
-            var c = self.coins.create(
-                Phaser.Math.Between(35, GW - 35), -30, 'coin'
-            );
-            c.setVelocityY(self.gameSpeed * 40 + Phaser.Math.Between(0, 20));
-            c.body.setSize(18, 18);
-            self.tweens.add({
-                targets: c, scale: { from: 0.8, to: 1.15 },
-                duration: 350, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
-            });
-        }
-
-        // Difficulty ramp
-        self.diffTimer += delta;
-        if (self.diffTimer >= 5000) {
-            self.diffTimer = 0;
-            self.gameSpeed += 0.3;
-            self.spawnInt = Math.max(350, self.spawnInt - 70);
-            self.coinInt = Math.max(700, self.coinInt - 90);
-            var spTxt = self.add.text(GW / 2, GH / 2, 'SPEED UP!', {
-                fontSize: '18px', fill: '#ff6644', fontStyle: 'bold'
+        _dt += delta;
+        if (_dt >= 5000) {
+            _dt = 0;
+            _spd += 0.3;
+            _si = Math.max(350, _si - 70);
+            _ci = Math.max(700, _ci - 90);
+            var spT = s.add.text(GW / 2, GH / 2, 'SPEED UP!', {
+                fontSize: '18px', fill: '#ff5533', fontStyle: 'bold'
             }).setOrigin(0.5).setDepth(80).setAlpha(0);
-            self.tweens.add({
-                targets: spTxt, alpha: 1, y: GH / 2 - 20,
-                duration: 300, yoyo: true, repeat: 1,
-                onComplete: function() { spTxt.destroy(); }
+            s.tweens.add({
+                targets: spT,
+                alpha: 1,
+                y: GH / 2 - 20,
+                duration: 300,
+                yoyo: true,
+                repeat: 1,
+                onComplete: function() { spT.destroy(); }
             });
         }
 
-        // Cleanup off-screen
-        self.obstacles.children.each(function(o) {
-            if (o.y > GH + 60 || o.y < -200 || o.x < -60 || o.x > GW + 60) o.destroy();
+        _obs.children.each(function(x) {
+            if (x.y > GH + 60 || x.y < -200 || x.x < -60 || x.x > GW + 60) x.destroy();
         });
-        self.coins.children.each(function(c) {
-            if (c.y > GH + 50) c.destroy();
+        _coin.children.each(function(x) {
+            if (x.y > GH + 50) x.destroy();
         });
 
-        // Engine trail
-        if (time % 60 < 20) {
-            self.parts.emitParticleAt(
-                self.player.x + Phaser.Math.FloatBetween(-8, 8),
-                self.player.y + 12, 1
+        if (time % 50 < 15) {
+            _parts.emitParticleAt(
+                _player.x + Phaser.Math.FloatBetween(-6, 6),
+                _player.y + 12, 1
             );
         }
+    };
+
+    function doPause(s) {
+        if (_dead) return;
+        _paused = !_paused;
+        var hide = !_paused;
+        _pOv.setVisible(!hide);
+        _pTxt.setVisible(!hide);
+        _pSub.setVisible(!hide);
+        for (var i = 0; i < _pBtns.length; i++) {
+            _pBtns[i].setVisible(!hide);
+        }
+        if (_paused) { s.physics.pause(); }
+        else { s.physics.resume(); }
     }
-};
 
-/* ========== HELPER FUNCTIONS ========== */
+    function onHit(ply, ob) {
+        var s = this;
+        if (_dead) return;
+        _dead = true;
 
-function makeBtn(scene, x, y, text, color, callback, scl) {
+        _parts.emitParticleAt(_player.x, _player.y, 30);
+        s.cameras.main.shake(280, 0.02);
+        s.cameras.main.flash(180, 255, 0, 0, false);
+
+        _player.setVisible(false);
+        _obs.clear(true, true);
+        _coin.clear(true, true);
+        if (_pauseBtn) _pauseBtn.setVisible(false);
+
+        // GO Panel
+        var pnl = s.add.container(GW / 2, GH / 2).setDepth(150);
+        pnl.add(s.add.rectangle(0, 0, 280, 250, 0x08081e, 0.93).setStrokeStyle(2, 0xff3344));
+        pnl.add(s.add.text(0, -85, 'GAME OVER', {
+            fontSize: '34px', fill: '#ff3344',
+            fontFamily: 'Arial Black', fontStyle: 'bold'
+        }).setOrigin(0.5));
+        pnl.add(s.add.text(0, -38, 'Score: ' + _score, {
+            fontSize: '26px', fill: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5));
+
+        var bHs = parseInt(localStorage.getItem(HK) || 0);
+        if (_score > bHs) {
+            localStorage.setItem(HK, String(_score));
+            var nr = s.add.text(0, 5, '\u2605 NEW RECORD! \u2605', {
+                fontSize: '18px', fill: '#ffcc00', fontStyle: 'bold'
+            }).setOrigin(0.5);
+            pnl.add(nr);
+            s.tweens.add({ targets: nr, scale: { from: 1.2, to: 1 }, duration: 400, yoyo: true, repeat: 2 });
+        } else {
+            pnl.add(s.add.text(0, 5, 'Best: ' + bHs, {
+                fontSize: '15px', fill: '#888899'
+            }).setOrigin(0.5));
+        }
+
+        addPnlBtn(s, pnl, 0, 52, '\u25B6  AGAIN', '#00ff88', function() { doRestart(s); });
+        addPnlBtn(s, pnl, 0, 100, '\u25C0  MENU', '#5588ff', function() { s.scene.start('Menu'); });
+        addPnlBtn(s, pnl, 0, 148, '\u2770  SHARE', '#aa55ff', function() { doShare(s, _score); });
+
+        pnl.setScale(0.3).setAlpha(0);
+        s.tweens.add({ targets: pnl, scale: 1, alpha: 1, duration: 420, ease: 'Back.easeOut' });
+    }
+
+    function onCoin(ply, cn) {
+        var s = this;
+        cn.destroy();
+        _score += 10;
+        _scoreTxt.setText('Score: ' + _score);
+
+        _cparts.emitParticleAt(cn.x, cn.y, 8);
+
+        var ft = s.add.text(cn.x, cn.y - 10, '+10', {
+            fontSize: '17px', fill: '#ffcc00', fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(50);
+        s.tweens.add({
+            targets: ft, y: cn.y - 38, alpha: 0,
+            duration: 480, ease: 'Cubic.easeOut',
+            onComplete: function() { ft.destroy(); }
+        });
+
+        s.tweens.add({ targets: _scoreTxt, scale: { from: 1.15, to: 1 }, duration: 140 });
+    }
+
+    function doRestart(s) {
+        s.scene.restart();
+    }
+}
+
+function addPnlBtn(s, parent, x, y, text, color, cb) {
+    var btn = s.add.text(x, y, text, {
+        fontSize: '15px', fill: color, fontStyle: 'bold',
+        backgroundColor: Phaser.Display.Color.IntegerToColor(color).darken(50).rgba,
+        padding: { x: 24, y: 9 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    parent.add(btn);
+    btn.on('pointerover', function() {
+        btn.setStyle({ backgroundColor: Phaser.Display.Color.IntegerToColor(color).darken(30).rgba });
+    });
+    btn.on('pointerout', function() {
+        btn.setStyle({ backgroundColor: Phaser.Display.Color.IntegerToColor(color).darken(50).rgba });
+    });
+    btn.on('pointerdown', cb);
+}
+
+function makeBtn(scene, x, y, text, color, cb, scl) {
     if (!scl) scl = 1;
     var bw = 220 * scl, bh = 48 * scl;
-    var btn = scene.add.container(x, y).setSize(bw, bh)
+    var bg = scene.add.rectangle(x, y, bw, bh, color, 0.1).setStrokeStyle(1.5, color)
         .setInteractive({ useHandCursor: true });
-    var bg = scene.add.rectangle(0, 0, bw, bh, color, 0.12).setStrokeStyle(1.5, color);
-    var lbl = scene.add.text(0, 0, text, {
-        fontSize: String(Math.round(18 * scl)) + 'px', fill: color, fontStyle: 'bold'
+    var lbl = scene.add.text(x, y, text, {
+        fontSize: String(Math.round(18 * scl)) + 'px',
+        fill: color,
+        fontStyle: 'bold'
     }).setOrigin(0.5);
-    btn.add([bg, lbl]);
-    btn.on('pointerover', function() { bg.setFillStyle(color, 0.25); btn.setScale(1.05); });
-    btn.on('pointerout', function() { bg.setFillStyle(color, 0.12); btn.setScale(1); });
-    btn.on('pointerdown', callback);
-    return btn;
+    bg.on('pointerover', function() { bg.setFillStyle(color, 0.22); bg.setScale(1.04); });
+    bg.on('pointerout', function() { bg.setFillStyle(color, 0.1); bg.setScale(1); });
+    bg.on('pointerdown', cb);
+    return bg;
 }
 
-function addPBtn(scene, x, y, text, color, callback) {
-    var btn = scene.add.container(x, y).setDepth(201).setVisible(false)
-        .setInteractive({ useHandCursor: true }).setSize(200, 42);
-    var bg = scene.add.rectangle(0, 0, 200, 42, color, 0.1).setStrokeStyle(1, color);
-    var lbl = scene.add.text(0, 0, text, {
-        fontSize: '15px', fill: color, fontStyle: 'bold'
-    }).setOrigin(0.5);
-    btn.add([bg, lbl]);
-    btn.on('pointerover', function() { bg.setFillStyle(color, 0.22); });
-    btn.on('pointerout', function() { bg.setFillStyle(color, 0.1); });
-    btn.on('pointerdown', callback);
-    scene.pbtns.push(btn);
-}
-
-function togglePause(scene) {
-    if (scene.isGameOver) return;
-    scene.isPaused = !scene.isPaused;
-    var hide = !scene.isPaused; // true when resuming (hide pause UI)
-
-    scene.pauseOv.setVisible(!hide);
-    scene.pauseTxt.setVisible(!hide);
-    scene.pauseSub.setVisible(!hide);
-    for (var i = 0; i < scene.pbtns.length; i++) {
-        scene.pbtns[i].setVisible(!hide);
-    }
-
-    if (scene.isPaused) {
-        scene.physics.pause();
-    } else {
-        scene.physics.resume();
-    }
-}
-
-function hitObs(player, obs) {
-    var scene = this;
-    if (scene.isGameOver) return;
-    scene.isGameOver = true;
-
-    // Explosion effects
-    scene.parts.emitParticleAt(scene.player.x, scene.player.y, 30);
-    scene.cameras.main.shake(300, 0.02);
-    scene.cameras.main.flash(200, 255, 0, 0, false);
-
-    scene.player.setVisible(false);
-    if (scene.playerGlow.active) scene.playerGlow.setVisible(false);
-
-    scene.obstacles.clear(true, true);
-    scene.coins.clear(true, true);
-
-    // Hide pause btn
-    scene.pauseBtn.setVisible(false);
-
-    // Game Over panel
-    var panel = scene.add.container(GW / 2, GH / 2).setDepth(150);
-    panel.add(scene.add.rectangle(0, 0, 280, 240, 0x0a0a2e, 0.92).setStrokeStyle(2, 0xff3344));
-    panel.add(scene.add.text(0, -80, 'GAME OVER', {
-        fontSize: '34px', fill: '#ff3344', fontFamily: 'Arial Black', fontStyle: 'bold'
-    }).setOrigin(0.5));
-    panel.add(scene.add.text(0, -35, 'Score: ' + scene.score, {
-        fontSize: '24px', fill: '#ffffff', fontStyle: 'bold'
-    }).setOrigin(0.5));
-
-    var hs = parseInt(localStorage.getItem(HIGH_KEY) || 0);
-    if (scene.score > hs) {
-        localStorage.setItem(HIGH_KEY, String(scene.score));
-        var nr = scene.add.text(0, 5, '\u2605 NEW RECORD! \u2605', {
-            fontSize: '18px', fill: '#ffcc00', fontStyle: 'bold'
-        }).setOrigin(0.5);
-        panel.add(nr);
-        scene.tweens.add({ targets: nr, scale: { from: 1.2, to: 1 }, duration: 500, yoyo: true, repeat: 2 });
-    } else {
-        panel.add(scene.add.text(0, 5, 'Best: ' + hs, {
-            fontSize: '16px', fill: '#888899'
-        }).setOrigin(0.5));
-    }
-
-    // Panel buttons
-    addPanelBtn(panel, 0, 55, '\u25B6 PLAY AGAIN', '#00ff88', function() { restartGame(scene); });
-    addPanelBtn(panel, 0, 100, '\u25C0 MENU', '#6699ff', function() { scene.scene.start('MenuScene'); });
-    addPanelBtn(panel, 0, 145, '\u2770 SHARE', '#9966ff', function() { doShare(scene, scene.score); });
-
-    // Animate panel in
-    panel.setScale(0.3).setAlpha(0);
-    scene.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: 450, ease: 'Back.easeOut' });
-}
-
-function addPanelBtn(parent, x, y, text, color, callback) {
-    var btn = parent.scene.add.container(x, y)
-        .setInteractive({ useHandCursor: true }).setSize(180, 38);
-    var bg = parent.scene.add.rectangle(0, 0, 180, 38, color, 0.12).setStrokeStyle(1, color);
-    var lbl = parent.scene.add.text(0, 0, text, {
-        fontSize: '14px', fill: color, fontStyle: 'bold'
-    }).setOrigin(0.5);
-    btn.add([bg, lbl]);
-    parent.add(btn);
-    btn.on('pointerover', function() { bg.setFillStyle(color, 0.25); });
-    btn.on('pointerout', function() { bg.setFillStyle(color, 0.12); });
-    btn.on('pointerdown', callback);
-}
-
-function collectCoin(player, coin) {
-    var scene = this;
-    coin.destroy();
-    scene.score += 10;
-    scene.scoreTxt.setText('Score: ' + scene.score);
-
-    scene.coinParts.emitParticleAt(coin.x, coin.y, 8);
-
-    var txt = scene.add.text(coin.x, coin.y - 10, '+10', {
-        fontSize: '17px', fill: '#ffcc00', fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(50);
-    scene.tweens.add({
-        targets: txt, y: coin.y - 40, alpha: 0,
-        duration: 550, ease: 'Cubic.easeOut',
-        onComplete: function() { txt.destroy(); }
-    });
-
-    scene.tweens.add({ targets: scene.scoreTxt, scale: { from: 1.15, to: 1 }, duration: 150 });
-}
-
-function restartGame(scene) {
-    scene.scene.restart();
-}
-
-function doShare(scene, scoreVal) {
+function doShare(scene, sc) {
     var url = window.location.href;
-    var txt = 'Dodge Master - I scored ' + scoreVal + ' points! Can you beat me? Play free: ' + url;
-
+    var val = sc || 0;
+    var msg = 'Dodge Master - I scored ' + val + '! Can you beat me? ' + url;
     if (navigator.share) {
-        navigator.share({ title: 'Dodge Master', text: txt, url: url })
-            .catch(function() { copyLink(url, scene); });
+        navigator.share({ title: 'Dodge Master', text: msg, url: url })
+            .catch(function() { doCopy(url, scene); });
     } else {
-        copyLink(url, scene);
+        doCopy(url, scene);
     }
 }
 
-function copyLink(url, scene) {
-    if (navigator.clipboard) {
+function doCopy(url, scene) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(function() {
-            showFeedback(scene, 'Link copied! Paste & send \u2705');
+            showFb(scene, 'Link copied! Paste & send \u2705');
         });
     } else {
-        showFeedback(scene, url);
+        showFb(scene, url);
     }
 }
 
-function showFeedback(scene, msg) {
-    var fb = scene.add.text(GW / 2, GH - 80, msg, {
+function showFb(scene, msg) {
+    var fb = scene.add.text(GW / 2, GH - 70, msg, {
         fontSize: '14px', fill: '#00ff88',
-        backgroundColor: '#0a0a2e', padding: { x: 12, y: 8 }
+        backgroundColor: '#0a0a2e', padding: { x: 14, y: 8 }
     }).setOrigin(0.5).setDepth(300);
     scene.tweens.add({
-        targets: fb, y: GH - 110, alpha: 0,
-        duration: 2000, delay: 1000,
+        targets: fb, y: GH - 100, alpha: 0,
+        duration: 2000, delay: 800,
         onComplete: function() { fb.destroy(); }
     });
 }
 
-/* ========== LAUNCH GAME ========== */
+/* LAUNCH */
 var game = new Phaser.Game({
     type: Phaser.AUTO,
     width: GW,
     height: GH,
     backgroundColor: '#0a0a2e',
-    physics: {
-        default: 'arcade',
-        arcade: { gravity: { y: 0 }, debug: false }
-    },
-    scene: [BootScene, MenuScene, GameScene]
+    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+    scene: [Boot, Menu, PlayScene]
 });
 </script>
 </body>
