@@ -8,7 +8,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#050510;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:none;font-family:Arial,sans-serif}
 canvas{display:block}
-#err{color:#ff4444;position:fixed;top:10px;left:10px;font-size:12px;max-width:90%;word-break:break-all;z-index:999}
+#err{color:#ff4444;position:fixed;top:10px;left:10px;font-size:12px;max-width:90%;word-break:break-all;z-index:999;font-family:monospace}
 </style>
 </head>
 <body>
@@ -16,128 +16,153 @@ canvas{display:block}
 <div id="gw"></div>
 <script src="./phaser.min.js"></script>
 <script>
-window.onerror=function(e){document.getElementById("err").innerText="ERROR: "+e};
-var GW=480,GH=720,BEST_KEY="dodgeMasterHS",REC_KEY="dodgeMasterRC";
+window.onerror=function(e){document.getElementById("err").innerText="JS ERROR: "+e};
+var W=480,H=720,BK="dodgeMasterHS",RK="dodgeMasterRC";
 
-// Pre-generate textures using raw data (most compatible method)
-function genTex(game,key,w,h,drawFn){
-  var c=document.createElement("canvas");c.width=w;c.height=h;
-  drawFn(c.getContext("2d"));
-  game.textures.addCanvas(key,c);
-}
-
+// === MENU SCENE (FIRST - must show) ===
 var S_Menu={
-  preload:function(){
-    // Generate all textures in preload - safest place
-    genTex(this,"player",32,32,function(x){
-      x.fillStyle="#00ff88";x.beginPath();x.arc(16,16,14,0,Math.PI*2);x.fill();
-    });
-    genTex(this,"obs",36,36,function(x){
-      x.fillStyle="#ff3344";x.fillRect(6,6,24,24);
-    });
-    genTex(this,"coin",24,24,function(x){
-      x.fillStyle="#ffcc00";x.beginPath();x.arc(12,12,10,0,Math.PI*2);x.fill();
-    });
-  },
   create:function(){
-    var me=this;var cx=GW/2,cy=GH/2;
-    me.add.text(cx,cy-120,"DODGE MASTER",{fontSize:"38px",fill:"#00ff88",fontStyle:"bold"}).setOrigin(0.5);
-    me.add.text(cx,cy-60," Dodge the red blocks!",{fontSize:"14px",fill:"#667788"}).setOrigin(0.5);
-    function btn(x,y,txt,col,fn){
-      var bg=me.add.graphics();bg.fillStyle(col,1);bg.fillRoundedRect(x-80,y-18,160,36,12);
-      me.add.text(x,y,txt,{fontSize:"16px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
-      me.add.zone(x,y,160,36).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.time.delayedCall(100,fn)});
+    var me=this,cx=W/2,cy=H/2;
+    // Title with glow effect
+    var title=me.add.text(cx,cy-120,"DODGE MASTER",{fontSize:"42px",fill:"#00ff88",fontStyle:"bold"}).setOrigin(0.5);
+    me.tweens.add({targets:title,scale:{from:1,to:1.08},duration:800,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    
+    me.add.text(cx,cy-55,"Avoid the red blocks!",{fontSize:"15px",fill:"#557788"}).setOrigin(0.5);
+    
+    // Animated background particles
+    for(var i=0;i<8;i++){
+      var px=me.add.circle(Phaser.Math.Between(40,W-40),Phaser.Math.Between(60,H-80),Phaser.Math.Between(2,5),0x224433,0.6);
+      me.tweens.add({targets:px,y:px.y-30,alpha:{from:0.6,to:0},duration:2000+Math.random()*2000,delay:i*300,repeat:-1});
     }
-    btn(cx,cy+20,"START GAME",0x00cc66,function(){me.scene.start("S_Play")});
-    btn(cx,cy+75,"RECORDS",0xeebb00,function(){me.scene.start("S_Records")});
-    btn(cx,cy+130,"SHARE",0x4488ff,function(){
-      var u=window.location.href;
-      if(navigator.share)navigator.share({title:"Dodge Master",url:u});
-      else if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){
-        me.add.text(cx,cy+185,"LINK COPIED!",{fontSize:"13px",fill:"#00ff88"}).setOrigin(0.5);
-        me.time.delayedCall(2000,function(){me.children.each(function(c){if(c.text==="LINK COPIED!")c.destroy()})});
+    
+    function mkBtn(x,y,w,h,text,color,callback){
+      var g=me.add.graphics();
+      g.fillStyle(color,1);
+      g.fillRoundedRect(x-w/2,y-h/2,w,h,14);
+      g.lineStyle(2,0xffffff,0.3);
+      g.strokeRoundedRect(x-w/2,y-h/2,w,h,14);
+      var t=me.add.text(x,y,text,{fontSize:"17px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
+      var z=me.add.zone(x,y,w,h).setInteractive({useHandCursor:true});
+      z.on("pointerdown",function(){callback()});
+      z.on("pointerover",function(){g.clear();g.fillStyle(color,1);g.fillRoundedRect(x-w/2,y-h/2,w+8,h+4,16);t.setPosition(x,y)});
+      z.on("pointerout",function(){g.clear();g.fillStyle(color,1);g.fillRoundedRect(x-w/2,y-h/2,w,h,14);t.setPosition(x,y)});
+      return z;
+    }
+    
+    mkBtn(cx,cy+20,180,42,"START GAME",0x00dd66,function(){me.scene.start("S_Play")});
+    mkBtn(cx,cy+75,160,38,"RECORDS",0xeebb00,function(){me.scene.start("S_Records")});
+    mkBtn(cx,cy+130,140,36,"SHARE LINK",0x3388ff,function(){
+      var u=location.href;
+      if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){
+        var ok=me.add.text(cx,cy+185,"LINK COPIED!",{fontSize:"13px",fill:"#00ff88",fontStyle:"bold"}).setOrigin(0.5);
+        me.time.delayedCall(1500,function(){ok.destroy()});
       });
-      else prompt("Copy this link:",u);
+      else prompt("Copy:",u);
     });
   }
 };
+
+// === RECORDS SCENE ===
 var S_Records={
   create:function(){
-    var me=this;
-    me.add.rectangle(GW/2,GH/2,300,380,0x0a1a2e);
-    me.add.text(GW/2,GH/2-150,"RECORDS",{fontSize:"22px",fill:"#ffcc00",fontStyle:"bold"}).setOrigin(0.5);
+    var me=this,cx=W/2,cy=H/2;
+    me.add.rectangle(cx,cy,320,400,0x0a1a2e);
+    me.add.text(cx,cy-160,"RECORDS",{fontSize:"24px",fill:"#ffcc00",fontStyle:"bold"}).setOrigin(0.5);
     try{
-      var r=JSON.parse(localStorage.getItem(REC_KEY))||[];
-      if(r.length===0)me.add.text(GW/2,GH/2,"No records yet\nPlay to set one!",{fontSize:"15px",fill:"#556677",align:"center"}).setOrigin(0.5);
-      else for(var i=0;i<r.length;i++)me.add.text(GW/2,GH/2-90+i*35,(i+1)+". "+r[i].s+" pts",{fontSize:"16px",fill:"#00ff88"}).setOrigin(0.5);
-    }catch(e){me.add.text(GW/2,GH/2,"No records",{fontSize:"15px",fill:"#556677"}).setOrigin(0.5)}
-    var bg=me.add.graphics();bg.fillStyle(0xff4444,1);bg.fillRoundedRect(GW/2-55,GH/2+145,110,36,12);
-    me.add.text(GW/2,GH/2+163,"BACK",{fontSize:"15px",fill:"#fff",fontStyle:"bold"}).setOrigin(0.5);
-    me.add.zone(GW/2,GH/2+163,110,36).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.scene.start("S_Menu")});
+      var r=JSON.parse(localStorage.getItem(RK))||[];
+      if(!r.length)me.add.text(cx,cy,"No records yet\nPlay to set one!",{fontSize:"16px",color:"#556677",align:"center"}).setOrigin(0.5);
+      else for(var i=0;i<r.length&&i<10;i++){
+        var medal=i===0?"1st":i===1?"2nd":i===2?"3rd":i+1+"th";
+        me.add.text(cx,cy-95+i*32,medal+"  "+r[i].s+" pts",{fontSize:"16px",fill:i<3?"#ffcc00":"#aabbcc"}).setOrigin(0.5);
+      }
+    }catch(e){me.add.text(cx,cy,"No records",{fontSize:"16px",fill:"#556677"}).setOrigin(0.5)}
+    mkBtn(me,cx,cy+155,120,38,"BACK",0xff5544,function(){me.scene.start("S_Menu")});
   }
 };
+function mkBtn(sc,x,y,w,h,t,col,fn){
+  var g=sc.add.graphics();g.fillStyle(col,1);g.fillRoundedRect(x-w/2,y-h/2,w,h,12);
+  sc.add.text(x,y,t,{fontSize:"15px",fill:"#fff",fontStyle:"bold"}).setOrigin(0.5);
+  sc.add.zone(x,y,w,h).setInteractive({useHandCursor:true}).on("pointerdown",fn);
+}
+
+// === PLAY SCENE ===
 var S_Play={
-  init:function(){this.score=0;this.lives=3;this.speed=120;this.obs=[];this.gameOver=false},
+  init:function(){this.score=0;this.lives=3;this.spd=130;this.obs=[];this.go=false},
   create:function(){
     var me=this;
-    me.physics.world.setBounds(0,0,GW,GH);
-    me.player=me.physics.add.sprite(GW/2,GH-80,"player");
-    me.player.setCollideWorldBounds(true);me.player.body.setCircle(14);
-    me.scoreT=me.add.text(10,8,"SCORE: 0 | LIVES: 3",{fontSize:"13px",fill:"#aabbcc"});
-    me.timer=me.time.addEvent({delay:1000,callback:function(){me.score++;me.scoreT.setText("SCORE: "+me.score+" | LIVES: "+me.lives)},loop:true});
-    function spawn(){
-      if(me.gameOver)return;
-      var x=Phaser.Math.Between(30,GW-30);
-      var o=me.physics.add.sprite(x,-25,"obs");o.setVelocityY(me.speed);
-      me.obs.push(o);
-      me.time.delayedCall(800,spawn);
-    }
-    me.time.delayedCall(800,spawn);
+    me.physics.world.setBounds(0,0,W,H);
+    // Player = green circle (drawn as graphics)
+    me.pG=me.add.graphics();me.pG.fillStyle(0x00ff88,1);me.pG.fillCircle(0,0,14);
+    me.pG.generateTexture("_p",28,28);me.pG.clear();
+    me.player=me.physics.add.sprite(W/2,H-70,"_p");
+    me.player.setCollideWorldBounds(true);
+    me.st=me.add.text(10,10,"SCORE: 0   LIVES: 3",{fontSize:"14px",fill:"#99bbcc"});
+    me.tm=me.time.addEvent({delay:1000,callback:function(){me.score++;me.st.setText("SCORE: "+me.score+"   LIVES: "+me.lives)},loop:true});
+    me.spawnT=me.time.delayedCall(600,function(){me.spawnOne()});
+  },
+  spawnOne:function(){
+    if(this.go)return;
+    var me=this,x=Phaser.Math.Between(35,W-35);
+    // Obstacle = red square (drawn as graphics)
+    var og=me.add.graphics();og.fillStyle(0xff3344,1);og.fillRect(0,0,30,30);
+    og.generateTexture("_o",30,30);og.clear();
+    var o=me.physics.add.sprite(x,-25,"_o");o.setVelocityY(this.spd);
+    this.obs.push(o);
+    this.spawnT=me.time.delayedCall(700-this.score*5,this.spawnOne.bind(this));
   },
   update:function(){
-    if(this.gameOver)return;var me=this;
-    if(me.input.keyboard){
-      var k=me.input.keyboard.createCursorKeys();
-      if(k.left.isDown)me.player.x-=5;
-      if(k.right.isDown)me.player.x+=5;
-      me.player.x=Phaser.Math.Clamp(me.player.x,16,GW-16);
+    if(this.go)return;var me=this;
+    // Keyboard control
+    var keys=me.input.keyboard?me.input.keyboard.createCursorKeys():null;
+    if(keys){
+      if(keys.left.isDown)me.player.x-=6;
+      if(keys.right.isDown)me.player.x+=6;
     }
+    // Mouse/touch control
+    if(me.input.activePointer.isDown)me.player.x=me.input.activePointer.x;
+    me.player.x=Phaser.Math.Clamp(me.player.x,14,W-14);
+    // Collision check
     for(var i=me.obs.length-1;i>=0;i--){
-      var o=me.obs[i];if(!o.active)continue;
-      if(Phaser.Math.Distance.Between(me.player.x,me.player.y,o.x,o.y)<26){
+      var o=me.obs[i];if(!o||!o.active){if(o)o.destroy();me.obs.splice(i,1);continue}
+      if(Math.abs(me.player.x-o.x)<22&&Math.abs(me.player.y-o.y)<22){
         me.lives--;o.destroy();me.obs.splice(i,1);
-        me.scoreT.setText("SCORE: "+me.score+" | LIVES: "+me.lives);
-        if(me.lives<=0){doGO(me)}return;
+        me.st.setText("SCORE: "+me.score+"   LIVES: "+me.lives);
+        if(me.lives<=0){endGame(me)}return;
       }
-      if(o.y>GH+30){o.destroy();me.obs.splice(i,1)}
+      if(o.y>H+30){o.destroy();me.obs.splice(i,1)}
     }
   }
 };
-function doGO(sc){
-  sc.gameOver=true;sc.physics.pause();
-  sc.add.rectangle(GW/2,GH/2,260,220,0x0a1a2e);
-  sc.add.text(GW/2,GH/2-65,"GAME OVER",{fontSize:"26px",fill:"#ff3344",fontStyle:"bold"}).setOrigin(0.5);
-  sc.add.text(GW/2,GH/2-15,"Score: "+sc.score,{fontSize:"20px",fill:"#fff"}).setOrigin(0.5);
-  // Save record
+
+function endGame(sc){
+  sc.go=true;sc.physics.pause();
+  if(sc.tm)sc.tm.destroy();if(sc.spawnT)sc.spawnT.remove();
+  var cx=W/2,cy=H/2;
+  sc.add.rectangle(cx,cy,280,240,0x0a1a2e,0.95);
+  sc.add.text(cx,cy-75,"GAME OVER",{fontSize:"30px",fill:"#ff3344",fontStyle:"bold"}).setOrigin(0.5);
+  sc.add.text(cx,cy-25,"Score: "+sc.score,{fontSize:"22px",fill:"#ffffff"}).setOrigin(0.5);
+  // Save
   try{
-    var r=JSON.parse(localStorage.getItem(REC_KEY))||[];
+    var r=JSON.parse(localStorage.getItem(RK))||[];
     r.push({s:sc.score,t:new Date().toLocaleString()});
-    r.sort(function(a,b){return b.s-a.s});
-    r=r.slice(0,10);
-    localStorage.setItem(REC_KEY,JSON.stringify(r));
-    var hs=localStorage.getItem(BEST_KEY)||0;
-    if(sc.score>hs)localStorage.setItem(BEST_KEY,String(sc.score));
+    r.sort(function(a,b){return b.s-a.s});r=r.slice(0,10);
+    localStorage.setItem(RK,JSON.stringify(r));
+    var hs=parseInt(localStorage.getItem(BK)||"0");
+    if(sc.score>hs)localStorage.setItem(BK,String(sc.score));
   }catch(e){}
-  var bg=sc.add.graphics();bg.fillStyle(0x00cc66,1);bg.fillRoundedRect(GW/2-60,GH/2+45,120,40,12);
-  sc.add.text(GW/2,GH/2+67,"RETRY",{fontSize:"17px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
-  sc.add.zone(GW/2,GH/2+67,120,40).setInteractive({useHandCursor:true}).on("pointerdown",function(){sc.scene.restart()});
-  var bg2=sc.add.graphics();bg.fillStyle(0x5588ff,1);bg2.fillRoundedRect(GW/2-60,GH/2+95,120,36,12);
-  sc.add.text(GW/2,GH/2+115,"MENU",{fontSize:"15px",fill:"#fff",fontStyle:"bold"}).setOrigin(0.5);
-  sc.add.zone(GW/2,GH/2+115,120,36).setInteractive({useHandCursor:true}).on("pointerdown",function(){sc.scene.start("S_Menu")});
+  mkBtn(sc,cx,cy+45,140,42,"RETRY",0x00cc66,function(){sc.scene.restart()});
+  mkBtn(sc,cx,cy+98,140,38,"MENU",0x4488ff,function(){sc.scene.start("S_Menu")});
 }
+
+// === START GAME ===
 try{
-  new Phaser.Game({width:GW,height:GH,parent:"gw",backgroundColor:"#050510",scene:[S_Menu,S_Records,S_Play],physics:{default:"arcade",arcade:{debug:false}}});
-}catch(e){document.getElementById("err").innerText="Phaser error: "+e}
+  new Phaser.Game({
+    width:W,height:H,parent:"gw",
+    backgroundColor:"#050510",
+    scene:[S_Menu,S_Records,S_Play],
+    physics:{default:"arcade",arcade:{debug:false}}
+  });
+}catch(e){document.getElementById("err").innerText="PHASER ERROR: "+e}
 </script>
 </body>
 </html>
