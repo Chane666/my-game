@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🎮 躲避大师 - 超休闲游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        #gameContainer {
+            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 100;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer"></div>
+    <div id="instructions">🎯 鼠标/触摸拖动控制 | 方向键控制 | 躲避红色障碍物，收集金色金币！</div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script>
+        // 游戏配置
+        const config = {
+            type: Phaser.AUTO,
+            width: 400,
+            height: 600,
+            parent: 'gameContainer',
+            backgroundColor: '#1a1a2e',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        const game = new Phaser.Game(config);
+
+        // 游戏变量
+        let player;
+        let obstacles;
+        let coins;
+        let score = 0;
+        let bestScore = localStorage.getItem('bestScore') || 0;
+        let scoreText;
+        let bestScoreText;
+        let gameOver = false;
+        let gameStarted = false;
+        let obstacleTimer;
+        let coinTimer;
+        let speedMultiplier = 1;
+        let startText;
+        let restartText;
+        let playerTrail;
+        let cursors;
+        let isMobile = false;
+
+        // 检测是否为移动设备
+        function detectMobile() {
+            return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+        }
+
+        function preload() {
+            // 使用几何图形代替外部图片（0成本）
+        }
+
+        function create() {
+            isMobile = detectMobile();
+            
+            // 背景网格效果
+            createBackground.call(this);
+
+            // 玩家角色（圆形）
+            player = this.add.circle(200, 500, 15, 0x00ff88);
+            player.setStrokeStyle(2, 0xffffff);
+            
+            // 玩家物理体
+            this.physics.add.existing(player);
+            player.body.setCollideWorldBounds(true);
+            player.body.setBounce(0.5);
+            player.body.setCircle(15);
+            
+            // 粒子轨迹
+            playerTrail = this.add.particles(0, 0, 'trail', {
+                speed: 50,
+                scale: { start: 0.5, end: 0 },
+                alpha: { start: 0.5, end: 0 },
+                lifespan: 200,
+                frequency: 50
+            });
+            playerTrail.startFollow(player);
+
+            // 障碍物组
+            obstacles = this.physics.add.group();
+            
+            // 金币组
+            coins = this.physics.add.group();
+
+            // 碰撞检测
+            this.physics.add.overlap(player, obstacles, hitObstacle, null, this);
+            this.physics.add.overlap(player, coins, collectCoin, null, this);
+
+            // UI文字
+            scoreText = this.add.text(20, 20, '得分: 0', {
+                fontSize: '24px',
+                fill: '#fff',
+                fontStyle: 'bold',
+                stroke: '#000',
+                strokeThickness: 4
+            }).setDepth(10);
+
+            bestScoreText = this.add.text(20, 50, '最佳: ' + bestScore, {
+                fontSize: '18px',
+                fill: '#ffd700',
+                stroke: '#000',
+                strokeThickness: 3
+            }).setDepth(10);
+
+            // 开始提示
+            const startMsg = isMobile ? '触摸屏幕开始' : '点击屏幕开始';
+            startText = this.add.text(200, 300, startMsg, {
+                fontSize: '32px',
+                fill: '#fff',
+                fontStyle: 'bold',
+                align: 'center',
+                stroke: '#000',
+                strokeThickness: 4
+            }).setOrigin(0.5).setDepth(10);
+
+            // 游戏结束文字（初始隐藏）
+            restartText = this.add.text(200, 350, '点击重新开始', {
+                fontSize: '24px',
+                fill: '#ff6b6b',
+                fontStyle: 'bold',
+                align: 'center',
+                stroke: '#000',
+                strokeThickness: 4
+            }).setOrigin(0.5).setDepth(10);
+            restartText.setVisible(false);
+
+            // 鼠标/触摸控制
+            this.input.on('pointermove', (pointer) => {
+                if (gameStarted && !gameOver && isMobile) {
+                    player.x = Phaser.Math.Clamp(pointer.x, 20, 380);
+                    player.y = Phaser.Math.Clamp(pointer.y, 20, 580);
+                }
+            });
+
+            this.input.on('pointerdown', (pointer) => {
+                if (!gameStarted) {
+                    startGame.call(this);
+                } else if (gameOver) {
+                    restartGame.call(this);
+                }
+            });
+
+            // 键盘控制（PC端）
+            cursors = this.input.keyboard.createCursorKeys();
+            
+            // 空格键重启
+            this.input.keyboard.on('keydown-SPACE', () => {
+                if (gameOver) {
+                    restartGame.call(this);
+                } else if (!gameStarted) {
+                    startGame.call(this);
+                }
+            });
+        }
+
+        function update() {
+            if (!gameStarted || gameOver) return;
+
+            // PC键盘控制
+            const speed = 300;
+            if (cursors.left.isDown) {
+                player.body.setVelocityX(-speed);
+            } else if (cursors.right.isDown) {
+                player.body.setVelocityX(speed);
+            } else {
+                player.body.setVelocityX(0);
+            }
+
+            if (cursors.up.isDown) {
+                player.body.setVelocityY(-speed);
+            } else if (cursors.down.isDown) {
+                player.body.setVelocityY(speed);
+            } else {
+                player.body.setVelocityY(0);
+            }
+
+            // 难度递增
+            speedMultiplier = 1 + Math.floor(score / 10) * 0.2;
+        }
+
+        function startGame() {
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            speedMultiplier = 1;
+            startText.setVisible(false);
+            restartText.setVisible(false);
+            
+            // 定期生成障碍物
+            obstacleTimer = this.time.addEvent({
+                delay: 1000,
+                callback: spawnObstacle,
+                callbackScope: this,
+                loop: true
+            });
+
+            // 定期生成金币
+            coinTimer = this.time.addEvent({
+                delay: 1500,
+                callback: spawnCoin,
+                callbackScope: this,
+                loop: true
+            });
+        }
+
+        function spawnObstacle() {
+            if (gameOver) return;
+
+            const x = Phaser.Math.Between(50, 350);
+            const obstacle = obstacles.create(x, -50, 'obstacle');
+            
+            // 用图形代替图片
+            const graphics = this.add.graphics();
+            graphics.fillStyle(0xff6b6b, 1);
+            graphics.fillTriangle(-20, -20, 20, -20, 0, 20);
+            graphics.generateTexture('obstacle', 40, 40);
+            graphics.destroy();
+            
+            obstacle.setTexture('obstacle');
+            obstacle.body.setVelocityY(150 * speedMultiplier);
+            obstacle.body.setAllowGravity(false);
+            obstacle.body.setSize(30, 30);
+            
+            // 旋转动画
+            this.tweens.add({
+                targets: obstacle,
+                angle: 360,
+                duration: 1000,
+                repeat: -1
+            });
+        }
+
+        function spawnCoin() {
+            if (gameOver) return;
+
+            const x = Phaser.Math.Between(50, 350);
+            const coin = coins.create(x, -50, 'coin');
+            
+            // 创建金币图形
+            const graphics = this.add.graphics();
+            graphics.fillStyle(0xffd700, 1);
+            graphics.fillCircle(10, 10, 10);
+            graphics.lineStyle(2, 0xffffff, 1);
+            graphics.strokeCircle(10, 10, 10);
+            graphics.generateTexture('coin', 20, 20);
+            graphics.destroy();
+            
+            coin.setTexture('coin');
+            coin.body.setVelocityY(100);
+            coin.body.setAllowGravity(false);
+            coin.body.setSize(18, 18);
+            
+            // 上下浮动动画
+            this.tweens.add({
+                targets: coin,
+                y: coin.y + 20,
+                duration: 500,
+                yoyo: true,
+                repeat: -1
+            });
+        }
+
+        function hitObstacle(player, obstacle) {
+            if (gameOver) return;
+            
+            gameOver = true;
+            gameStarted = false;
+            
+            // 爆炸粒子效果
+            const particles = this.add.particles(obstacle.x, obstacle.y, 'explosion', {
+                speed: 200,
+                scale: { start: 0.8, end: 0 },
+                alpha: { start: 1, end: 0 },
+                lifespan: 500,
+                quantity: 20
+            });
+            
+            // 创建爆炸纹理
+            const graphics = this.add.graphics();
+            graphics.fillStyle(0xff0000, 1);
+            graphics.fillCircle(16, 16, 16);
+            graphics.generateTexture('explosion', 32, 32);
+            graphics.destroy();
+
+            // 更新最佳成绩
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('bestScore', bestScore);
+                bestScoreText.setText('最佳: ' + bestScore);
+            }
+
+            // 显示重新开始提示
+            restartText.setVisible(true);
+            
+            // 清除定时器
+            if (obstacleTimer) obstacleTimer.remove();
+            if (coinTimer) coinTimer.remove();
+            
+            // 清理所有障碍物和金币
+            obstacles.clear(true, true);
+            coins.clear(true, true);
+        }
+
+        function collectCoin(player, coin) {
+            coin.destroy();
+            score += 1;
+            scoreText.setText('得分: ' + score);
+            
+            // 得分粒子效果
+            const particles = this.add.particles(coin.x, coin.y, 'star', {
+                speed: 100,
+                scale: { start: 0.5, end: 0 },
+                alpha: { start: 1, end: 0 },
+                lifespan: 300,
+                quantity: 10
+            });
+            
+            // 创建星星纹理
+            const graphics = this.add.graphics();
+            graphics.fillStyle(0xffff00, 1);
+            graphics.fillStar(16, 16, 5, 16, 8);
+            graphics.generateTexture('star', 32, 32);
+            graphics.destroy();
+        }
+
+        function restartGame() {
+            // 重置游戏状态
+            player.setPosition(200, 500);
+            player.body.setVelocity(0, 0);
+            score = 0;
+            scoreText.setText('得分: 0');
+            gameOver = false;
+            
+            // 重新开始
+            startGame.call(this);
+        }
+
+        function createBackground() {
+            // 创建动态背景网格
+            const graphics = this.add.graphics();
+            graphics.lineStyle(1, 0x333366, 0.3);
+            
+            for (let i = 0; i < 20; i++) {
+                graphics.lineBetween(0, i * 30, 400, i * 30);
+            }
+            for (let i = 0; i < 14; i++) {
+                graphics.lineBetween(i * 30, 0, i * 30, 600);
+            }
+        }
+    </script>
+</body>
+</html>
