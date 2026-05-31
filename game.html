@@ -130,7 +130,7 @@ function gameOver(sc){
   sc.add.text(cx,cy+40,"[ RETRY ]",{fontSize:"20px",fill:"#00cc66",fontStyle:"bold"})
     .setOrigin(0.5).setInteractive({useHandCursor:true})
     .on("pointerdown",function(){sc.scene.restart()});
-  sc.add(text(cx,cy+85,"[ MENU ]",{fontSize:"18px",fill:"#4488ff",fontStyle:"bold"},sc))
+  sc.add.text(cx,cy+85,"[ MENU ]",{fontSize:"18px",fill:"#4488ff",fontStyle:"bold"})
     .setOrigin(0.5).setInteractive({useHandCursor:true})
     .on("pointerdown",function(){sc.scene.start("S_Menu")});
 }
