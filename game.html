@@ -1,375 +1,228 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🎮 躲避大师 - 超休闲游戏</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-        }
-        #gameContainer {
-            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        #instructions {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            z-index: 100;
-            text-align: center;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dodge Master</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a2e; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; touch-action: none; }
+canvas { display: block; }
+</style>
 </head>
 <body>
-    <div id="gameContainer"></div>
-    <div id="instructions">🎯 鼠标/触摸控制 | 方向键移动 | 躲避红色三角，收集金色金币！</div>
-
 <script src="./phaser.min.js"></script>
 <script>
-// ========== 游戏配置 ==========
-const config = {
+var config = {
     type: Phaser.AUTO,
-    width: 400,
-    height: 600,
-    parent: 'gameContainer',
-    backgroundColor: '#0f0f23',
+    width: Math.min(window.innerWidth, 480),
+    height: Math.min(window.innerHeight, 720),
+    backgroundColor: '#0a0a2e',
     physics: {
         default: 'arcade',
         arcade: { gravity: { y: 0 }, debug: false }
     },
-    scene: { preload, create, update }
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
 };
 
-const game = new Phaser.Game(config);
+var game = new Phaser.Game(config);
+var player;
+var cursors;
+var obstacles;
+var coins;
+var scoreText;
+var score = 0;
+var highScore = localStorage.getItem('dodgeHighScore') || 0;
+var isGameOver = false;
+var spawnTimer = 0;
+var coinTimer = 0;
+var difficultyTimer = 0;
+var spawnInterval = 1200;
+var coinInterval = 2000;
+var gameSpeed = 3;
+var particles;
 
-// ========== 全局变量 ==========
-let player, obstacles, coins;
-let score = 0, bestScore = parseInt(localStorage.getItem('bestScore')) || 0;
-let scoreText, bestScoreText, startText, restartText, speedText;
-let gameOver = false, gameStarted = false;
-let obstacleTimer, coinTimer;
-let speedMultiplier = 1;
-let cursors;
-let obstacleTextureCreated = false;
-let coinTextureCreated = false;
+function preload() {}
 
-// ========== 预加载：创建纹理（只执行一次）==========
-function preload() {
-    // 创建障碍物纹理（红色旋转三角形）
-    const g = this.add.graphics();
-    g.fillStyle(0xff4444, 1);
-    g.fillTriangle(0, -18, -16, 14, 16, 14);
-    g.lineStyle(2, 0xffffff, 0.8);
-    g.strokeTriangle(0, -18, -16, 14, 16, 14);
-    g.generateTexture('obs', 36, 36);
-    g.clear();
+function create() {
+    var g = this.add.graphics();
 
-    // 创建金币纹理（金色圆形+内圈）
-    g.fillStyle(0xffd700, 1);
-    g.fillCircle(12, 12, 11);
-    g.fillStyle(0xffec8b, 1);
-    g.fillCircle(12, 12, 7);
-    g.fillStyle(0xffd700, 1);
-    g.fillCircle(12, 12, 4);
-    g.lineStyle(1, 0xdaa520, 1);
-    g.strokeCircle(12, 12, 11);
-    g.generateTexture('coin', 24, 24);
-    g.clear();
-
-    // 创建玩家纹理（绿色发光圆）
-    g.fillStyle(0x00ff88, 1);
+    g.fillStyle(0x00ff88);
     g.fillCircle(16, 16, 14);
-    g.fillStyle(0x88ffcc, 1);
-    g.fillCircle(13, 13, 6);
-    g.lineStyle(2, 0xffffff, 0.9);
-    g.strokeCircle(16, 16, 14);
     g.generateTexture('player', 32, 32);
     g.clear();
 
-    // 创建爆炸纹理
-    g.fillStyle(0xff3300, 1);
-    g.fillCircle(0, 0, 12);
-    g.fillStyle(0xff6600, 1);
-    g.fillCircle(-5, -5, 6);
-    g.fillStyle(0xffaa00, 1);
-    g.fillCircle(5, 5, 5);
-    g.generateTexture('boom', 24, 24);
+    g.fillStyle(0xff3344);
+    g.fillRoundedRect(4, 4, 28, 28, 6);
+    g.generateTexture('obstacle', 36, 36);
     g.clear();
 
-    // 创建星星纹理（得分特效）
-    g.fillStyle(0xffff00, 1);
-    g.fillStar(0, 0, 5, 10, 5);
-    g.generateTexture('star', 20, 20);
+    g.fillStyle(0xffcc00);
+    g.fillCircle(12, 12, 10);
+    g.lineStyle(2, 0xff9900);
+    g.strokeCircle(12, 12, 10);
+    g.generateTexture('coin', 24, 24);
+    g.clear();
     g.destroy();
-}
 
-// ========== 创建场景 ==========
-function create() {
-    // 背景
-    drawBackground.call(this);
+    var pg = this.add.graphics();
+    pg.fillStyle(0xffffff);
+    pg.fillCircle(4, 4, 3);
+    pg.generateTexture('particle', 8, 8);
+    pg.destroy();
 
-    // 玩家
-    player = this.physics.add.sprite(200, 500, 'player');
-    player.setCollideWorldBounds(true);
-    player.body.setSize(24, 24);
-
-    // 组
     obstacles = this.physics.add.group();
     coins = this.physics.add.group();
 
-    // 碰撞
-    this.physics.add.overlap(player, obstacles, onHitObstacle, null, this);
-    this.physics.add.overlap(player, coins, onCollectCoin, null, this);
+    player = this.physics.add.sprite(config.width / 2, config.height - 100, 'player');
+    player.setCollideWorldBounds(true);
+    player.body.setSize(26, 26);
 
-    // UI
-    scoreText = this.add.text(16, 16, '得分: 0', {
-        fontSize: '22px', fill: '#fff', fontStyle: 'bold',
-        stroke: '#000', strokeThickness: 3
-    }).setDepth(100);
+    cursors = this.input.keyboard.createCursorKeys();
+    this.input.keyboard.on('keydown-SPACE', function() {
+        if (isGameOver) restartGame(this);
+    }, this);
 
-    bestScoreText = this.add.text(16, 44, '最佳: ' + bestScore, {
-        fontSize: '16px', fill: '#ffd700',
-        stroke: '#000', strokeThickness: 2
-    }).setDepth(100);
-
-    speedText = this.add.text(16, 70, '速度: x1.0', {
-        fontSize: '14px', fill: '#aaa'
-    }).setDepth(100);
-
-    startText = this.add.text(200, 280, '🎮 点击开始游戏', {
-        fontSize: '28px', fill: '#fff', fontStyle: 'bold', align: 'center',
-        stroke: '#000', strokeThickness: 4
-    }).setOrigin(0.5).setDepth(100);
-
-    restartText = this.add.text(200, 340, '🔄 点击重新开始', {
-        fontSize: '22px', fill: '#ff6b6b', fontStyle: 'bold', align: 'center',
-        stroke: '#000', strokeThickness: 3
-    }).setOrigin(0.5).setDepth(100);
-    restartText.setVisible(false);
-
-    // 输入
-    this.input.on('pointerdown', () => {
-        if (!gameStarted) startGame.call(this);
-        else if (gameOver) restartGame.call(this);
-    });
-
-    // 触摸/鼠标跟随（移动端）
-    this.input.on('pointermove', (p) => {
-        if (gameStarted && !gameOver) {
-            this.physics.moveTo(player, p.x, p.y, 300);
+    this.input.on('pointermove', function(pointer) {
+        if (!isGameOver && pointer.isDown) {
+            player.x = Phaser.Math.Clamp(pointer.x, 20, config.width - 20);
+            player.y = Phaser.Math.Clamp(pointer.y, 20, config.height - 20);
         }
     });
 
-    cursors = this.input.keyboard.createCursorKeys();
-    this.input.keyboard.on('keydown-SPACE', () => {
-        if (!gameStarted) startGame.call(this);
-        else if (gameOver) restartGame.call(this);
+    this.physics.add.overlap(player, obstacles, hitObstacle, null, this);
+    this.physics.add.overlap(player, coins, collectCoin, null, this);
+
+    scoreText = this.add.text(10, 10, 'Score: 0', { fontSize: '22px', fill: '#fff', fontFamily: 'Arial' });
+    this.add.text(10, 38, 'Best: ' + highScore, { fontSize: '14px', fill: '#aaa', fontFamily: 'Arial' });
+
+    particles = this.add.particles(0, 0, 'particle', {
+        speed: { min: 50, max: 150 },
+        scale: { start: 1, end: 0 },
+        lifespan: 400,
+        blendMode: 'ADD'
+    });
+    particles.stop();
+
+    this.flashOverlay = this.add.rectangle(config.width/2, config.height/2, config.width, config.height, 0xff0000, 0);
+}
+
+function update(time, delta) {
+    if (isGameOver) return;
+
+    var speed = 6;
+    if (cursors.left.isDown) player.x -= speed;
+    if (cursors.right.isDown) player.x += speed;
+    if (cursors.up.isDown) player.y -= speed;
+    if (cursors.down.isDown) player.y += speed;
+
+    spawnTimer += delta;
+    if (spawnTimer >= spawnInterval) {
+        spawnTimer = 0;
+        var obs = obstacles.create(Phaser.Math.Between(30, config.width - 30), -40, 'obstacle');
+        obs.setVelocityY(gameSpeed * 60 + Phaser.Math.Between(-30, 30));
+        obs.setVelocityX(Phaser.Math.Between(-80, 80));
+        obs.body.setSize(28, 28);
+    }
+
+    coinTimer += delta;
+    if (coinTimer >= coinInterval) {
+        coinTimer = 0;
+        var c = coins.create(Phaser.Math.Between(30, config.width - 30), -30, 'coin');
+        c.setVelocityY((gameSpeed * 40) + Phaser.Math.Between(0, 20));
+        c.body.setSize(18, 18);
+    }
+
+    difficultyTimer += delta;
+    if (difficultyTimer >= 5000) {
+        difficultyTimer = 0;
+        gameSpeed += 0.3;
+        spawnInterval = Math.max(400, spawnInterval - 80);
+        coinInterval = Math.max(800, coinInterval - 100);
+    }
+
+    obstacles.children.each(function(o) {
+        if (o.y > config.height + 60 || o.y < -200 || o.x < -60 || o.x > config.width + 60) o.destroy();
+    });
+    coins.children.each(function(c) {
+        if (c.y > config.height + 50) c.destroy();
     });
 }
 
-// ========== 每帧更新 ==========
-function update() {
-    if (!gameStarted || gameOver) return;
+function hitObstacle(player, obstacle) {
+    if (isGameOver) return;
+    isGameOver = true;
 
-    // 键盘控制
-    const spd = 320;
-    let vx = 0, vy = 0;
-    if (cursors.left.isDown) vx = -spd;
-    else if (cursors.right.isDown) vx = spd;
-    if (cursors.up.isDown) vy = -spd;
-    else if (cursors.down.isDown) vy = spd;
+    this.tweens.add({
+        targets: this.flashOverlay,
+        alpha: 0.5,
+        duration: 100,
+        yoyo: true,
+        hold: 50,
+        repeat: 2,
+        onComplete: function() { this.flashOverlay.alpha = 0; }.bind(this)
+    });
 
-    if (vx !== 0 || vy !== 0) {
-        player.setVelocity(vx, vy);
-    }
+    if (particles) particles.emitParticleAt(player.x, player.y, 15);
 
-    // 清理出屏幕的物体
-    obstacles.getChildren().forEach(o => { if (o.y > 650) o.destroy(); });
-    coins.getChildren().forEach(c => { if (c.y > 650) c.destroy(); });
+    player.setVisible(false);
 
-    // 更新速度显示
-    speedMultiplier = 1 + Math.floor(score / 8) * 0.15;
-    speedText.setText('速度: x' + speedMultiplier.toFixed(1));
-}
-
-// ========== 开始游戏 ==========
-function startGame() {
-    gameStarted = true;
-    gameOver = false;
-    score = 0;
-    speedMultiplier = 1;
-    startText.setVisible(false);
-    restartText.setVisible(false);
-    scoreText.setText('得分: 0');
-    speedText.setText('速度: x1.0');
-
-    player.setPosition(200, 480);
-    player.setVelocity(0, 0);
-    player.setVisible(true);
-    player.setActive(true);
-    player.body.enable = true;
-
-    // 清理残留
     obstacles.clear(true, true);
     coins.clear(true, true);
 
-    // 生成定时器
-    if (obstacleTimer) obstacleTimer.remove();
-    if (coinTimer) coinTimer.remove();
+    this.add.text(config.width / 2, config.height / 2 - 30, 'GAME OVER', {
+        fontSize: '36px', fill: '#ff3344', fontFamily: 'Arial', fontStyle: 'bold'
+    }).setOrigin(0.5);
 
-    obstacleTimer = this.time.addEvent({
-        delay: 900, callback: spawnObs, callbackScope: this, loop: true
-    });
-    coinTimer = this.time.addEvent({
-        delay: 1200, callback: spawnCoin, callbackScope: this, loop: true
-    });
-}
+    this.add.text(config.width / 2, config.height / 2 + 20, 'Score: ' + score, {
+        fontSize: '22px', fill: '#fff', fontFamily: 'Arial'
+    }).setOrigin(0.5);
 
-// ========== 生成障碍物 ==========
-function spawnObs() {
-    if (gameOver) return;
-    const x = Phaser.Math.Between(40, 360);
-    const obs = obstacles.create(x, -30, 'obs');
-    obs.setVelocityY(140 * speedMultiplier);
-    obs.setAngularVelocity(360); // 自动旋转
-
-    // 缩放动画让效果更好
-    this.tweens.add({
-        targets: obs, scaleX: 1.2, scaleY: 1.2,
-        duration: 300, yoyo: true, repeat: -1
-    });
-}
-
-// ========== 生成金币 ==========
-function spawnCoin() {
-    if (gameOver) return;
-    const x = Phaser.Math.Between(40, 360);
-    const coin = coins.create(x, -30, 'coin');
-    coin.setVelocityY(90 * speedMultiplier);
-
-    // 金币旋转+浮动
-    this.tweens.add({
-        targets: coin, angle: 360,
-        duration: 1500, repeat: -1
-    });
-    this.tweens.add({
-        targets: coin, y: coin.y + 15,
-        duration: 400, yoyo: true, repeat: -1
-    });
-}
-
-// ========== 碰到障碍物 ==========
-function onHitObstacle(_p, obs) {
-    if (gameOver) return;
-    gameOver = true;
-    gameStarted = false;
-
-    // 停止所有输入
-    player.setVelocity(0, 0);
-    player.setVisible(false);
-    player.body.enable = false;
-
-    // 爆炸特效
-    const boomX = obs.x, boomY = obs.y;
-    
-    // 爆炸粒子
-    for (let i = 0; i < 12; i++) {
-        const p = this.add.sprite(boomX, boomY, 'boom');
-        const angle = (i / 12) * Math.PI * 2;
-        const dist = Phaser.Math.Between(50, 120);
-        this.tweens.add({
-            targets: p,
-            x: boomX + Math.cos(angle) * dist,
-            y: boomY + Math.sin(angle) * dist,
-            alpha: 0, scale: 0,
-            duration: 500, ease: 'Power2',
-            onComplete: () => p.destroy()
-        });
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('dodgeHighScore', highScore);
+        this.add.text(config.width / 2, config.height / 2 + 55, 'NEW BEST!', {
+            fontSize: '18px', fill: '#ffcc00', fontFamily: 'Arial'
+        }).setOrigin(0.5);
     }
 
-    // 屏幕闪红
-    const flash = this.add.rectangle(200, 300, 400, 600, 0xff0000, 0.3);
-    flash.setDepth(99);
-    this.tweens.add({ targets: flash, alpha: 0, duration: 400, onComplete: () => flash.destroy() });
+    this.add.text(config.width / 2, config.height / 2 + 90, 'Press SPACE or Tap to Restart', {
+        fontSize: '14px', fill: '#aaa', fontFamily: 'Arial'
+    }).setOrigin(0.5);
 
-    // 更新最佳成绩
-    if (score > bestScore) {
-        bestScore = score;
-        localStorage.setItem('bestScore', bestScore);
-        bestScoreText.setText('最佳: ' + bestScore);
-    }
-
-    // 显示重启按钮
-    restartText.setVisible(true);
-
-    // 清理所有障碍物和金币
-    this.time.delayedCall(100, () => {
-        obstacles.clear(true, true);
-        coins.clear(true, true);
-    });
-
-    // 停止定时器
-    if (obstacleTimer) { obstacleTimer.remove(); obstacleTimer = null; }
-    if (coinTimer) { coinTimer.remove(); coinTimer = null; }
+    this.input.once('pointerdown', function() {
+        if (isGameOver) restartGame(this);
+    }, this);
 }
 
-// ========== 收集金币 ==========
-function onCollectCoin(_p, coin) {
+function collectCoin(player, coin) {
     coin.destroy();
-    score += 1;
-    scoreText.setText('得分: ' + score);
+    score += 10;
+    scoreText.setText('Score: ' + score);
 
-    // 得分星星特效
-    for (let i = 0; i < 6; i++) {
-        const s = this.add.sprite(coin.x, coin.y, 'star');
-        const angle = (i / 6) * Math.PI * 2;
-        this.tweens.add({
-            targets: s,
-            x: coin.x + Math.cos(angle) * 40,
-            y: coin.y + Math.sin(angle) * 40 - 20,
-            alpha: 0, scale: 0,
-            duration: 350, ease: 'Power2',
-            onComplete: () => s.destroy()
-        });
-    }
+    if (particles) particles.emitParticleAt(coin.x, coin.y, 5);
 
-    // 分数跳动
-    this.tweens.add({
-        targets: scoreText, scaleX: 1.3, scaleY: 1.3,
-        duration: 80, yoyo: true, repeat: 1
-    });
+    var txt = this.add.text(coin.x, coin.y, '+10', {
+        fontSize: '16px', fill: '#ffcc00', fontFamily: 'Arial'
+    }).setOrigin(0.5);
+    this.tweens.add({ targets: txt, y: coin.y - 30, alpha: 0, duration: 500, onComplete: function() { txt.destroy(); } });
 }
 
-// ========== 重新开始 ==========
-function restartGame() {
-    startGame.call(this);
-}
+function restartGame(scene) {
+    isGameOver = false;
+    score = 0;
+    spawnTimer = 0;
+    coinTimer = 0;
+    difficultyTimer = 0;
+    spawnInterval = 1200;
+    coinInterval = 2000;
+    gameSpeed = 3;
 
-// ========== 绘制背景 ==========
-function drawBackground() {
-    const g = this.add.graphics();
-    // 渐变网格
-    g.lineStyle(1, 0x334466, 0.25);
-    for (let i = 0; i <= 20; i++) g.lineBetween(0, i * 30, 400, i * 30);
-    for (let i = 0; i <= 14; i++) g.lineBetween(i * 30, 0, i * 30, 600);
-    // 中心光晕
-    g.fillStyle(0x4466aa, 0.08);
-    g.fillCircle(200, 300, 180);
+    scene.scene.restart();
 }
 </script>
 </body>
