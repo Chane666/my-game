@@ -24,203 +24,299 @@ var StoryScene={
     var s=this,mx=W/2,my=H/2;
     s.cameras.main.setBackgroundColor('#0e0620');
 
-    // === RUNNING CAT (center of screen) ===
+    // === RUNNING TABBY CAT (center) ===
     var catG=s.add.graphics();
-    catG.fillStyle(0xff9944,1);
-    catG.fillEllipse(40,50,55,38);
-    catG.fillStyle(0xffaa55,1);
-    catG.fillCircle(68,36,22);
-    catG.fillStyle(0xff9944,1);
-    catG.fillTriangle(54,18,64,2,67,20);
-    catG.fillTriangle(78,16,82,2,85,19);
-    catG.fillStyle(0xff88aa,1);
-    catG.fillTriangle(57,17,63,7,66,19);
-    catG.fillTriangle(77,15,81,7,84,18);
+    // body base (orange)
+    catG.fillStyle(0xee7722,1);
+    catG.fillEllipse(42,52,58,40);
+    // dark stripes on body
+    catG.fillStyle(0xcc5500,0.7);
+    catG.fillRect(22,38,6,20);
+    catG.fillRect(34,32,5,24);
+    catG.fillRect(46,30,5,26);
+    catG.fillRect(58,35,6,20);
+    // belly (lighter)
+    catG.fillStyle(0xffbb66,0.85);
+    catG.fillEllipse(48,60,30,18);
+    // head base
+    catG.fillStyle(0xee7722,1);
+    catG.fillCircle(72,38,25);
+    // head stripes
+    catG.fillStyle(0xcc5500,0.65);
+    catG.fillRect(56,22,4,16);
+    catG.fillRect(66,18,4,18);
+    catG.fillRect(76,20,4,17);
+    catG.fillRect(86,25,4,14);
+    // forehead M shape
+    catG.lineStyle(2.5,0xcc5500,0.6);
+    catG.beginPath();catG.moveTo(62,22);catG.lineTo(68,28);catG.lineTo(72,23);catG.lineTo(76,28);catG.lineTo(82,22);catG.strokePath();
+    // ears
+    catG.fillStyle(0xee7722,1);
+    catG.fillTriangle(54,20,66,0,70,22);
+    catG.fillTriangle(84,18,90,0,94,21);
+    // inner ears (pink)
+    catG.fillStyle(0xff8899,1);
+    catG.fillTriangle(58,18,65,5,68,20);
+    catG.fillTriangle(86,16,89,5,92,19);
+    // face white area
+    catG.fillStyle(0xffeedd,0.9);
+    catG.fillEllipse(72,46,20,14);
+    // eyes (half-closed confident like the image)
     catG.fillStyle(0xffffff,1);
-    catG.fillCircle(60,32,6);catG.fillCircle(76,32,6);
+    catG.fillEllipse(62,36,10,7);catG.fillEllipse(82,36,10,7);
+    // pupils (looking to side)
     catG.fillStyle(0x222222,1);
-    catG.fillCircle(62,33,3);catG.fillCircle(77,33,3);
+    catG.fillCircle(66,37,3.5);catG.fillCircle(79,37,3.5);
+    // eye shine
     catG.fillStyle(0xffffff,1);
-    catG.fillCircle(61,31,1);catG.fillCircle(76,31,1);
-    catG.fillStyle(0xff6688,1);
-    catG.fillTriangle(66,40,72,40,69,44);
-    catG.lineStyle(1.5,0xcc5566,1);
-    catG.beginPath();catG.moveTo(65,46);catG.lineTo(69,50);catG.lineTo(73,46);catG.strokePath();
-    catG.fillStyle(0xff7799,1);
-    catG.fillEllipse(69,53,5,4);
-    catG.lineStyle(1.2,0xddccbb,0.6);
-    catG.beginPath();catG.moveTo(48,36);catG.lineTo(56,38);catG.strokePath();
-    catG.beginPath();catG.moveTo(46,42);catG.lineTo(56,43);catG.strokePath();
-    catG.beginPath();catG.moveTo(88,36);catG.lineTo(80,38);catG.strokePath();
-    catG.beginPath();catG.moveTo(90,42);catG.lineTo(80,43);catG.strokePath();
-    catG.lineStyle(3,0xff9944,1);
-    catG.beginPath();catG.moveTo(12,45);catG.lineTo(2,25);catG.lineTo(8,15);catG.strokePath();
+    catG.fillCircle(67,35.5,1.2);catG.fillCircle(80,35.5,1.2);
+    // nose
+    catG.fillStyle(0xff5577,1);
+    catG.fillTriangle(68,44,76,44,72,49);
+    // mouth (smirk)
+    catG.lineStyle(1.5,0xaa3344,1);
+    catG.beginPath();catG.moveTo(68,50);catG.lineTo(72,53);catG.lineTo(76,50);catG.strokePath();
+    // whiskers
+    catG.lineStyle(1.2,0xddccaa,0.55);
+    catG.beginPath();catG.moveTo(48,42);catG.lineTo(58,45);catG.strokePath();
+    catG.beginPath();catG.moveTo(46,48);catG.lineTo(58,50);catG.strokePath();
+    catG.beginPath();catG.moveTo(96,42);catG.lineTo(86,45);catG.strokePath();
+    catG.beginPath();catG.moveTo(98,48);catG.lineTo(86,50);catG.strokePath();
+    // tail (striped, curving up)
+    catG.lineStyle(6,0xee7722,1);
+    catG.beginPath();catG.moveTo(12,48);catG.lineTo(-2,28);catG.lineTo(6,10);catG.lineTo(18,-2);catG.strokePath();
+    // tail stripes
+    catG.lineStyle(3,0xcc5500,0.7);
+    catG.beginPath();catG.moveTo(6,15);catG.lineTo(11,13);catG.strokePath();
+    catG.beginPath();catG.moveTo(1,25);catG.lineTo(7,23);catG.strokePath();
+    // front legs (stretched forward)
+    catG.fillStyle(0xee7722,1);
+    catG.fillEllipse(58,74,16,10);
+    catG.fillEllipse(78,72,16,9);
+    // front paws (lighter)
     catG.fillStyle(0xffcc88,1);
-    catG.fillEllipse(58,70,14,8);
-    catG.fillEllipse(75,68,14,8);
-    catG.fillStyle(0xee8833,1);
-    catG.fillEllipse(22,68,16,10);
-    catG.fillEllipse(30,72,14,8);
-    catG.lineStyle(2,0x664488,0.4);
-    for(var li=0;li<5;li++){
+    catG.fillEllipse(58,79,12,7);
+    catG.fillEllipse(78,77,12,7);
+    // back legs (pushing off)
+    catG.fillStyle(0xcc5500,1);
+    catG.fillEllipse(20,72,18,12);
+    catG.fillStyle(0xee7722,1);
+    catG.fillEllipse(30,78,14,9);
+    // back paw
+    catG.fillStyle(0xffcc88,1);
+    catG.fillEllipse(30,83,11,6);
+    // motion lines behind cat
+    catG.lineStyle(2.5,0x553377,0.35);
+    for(var li=0;li<6;li++){
       catG.beginPath();
-      catG.moveTo(10-li*8,30+li*6);
-      catG.lineTo(-2-li*8,28+li*6);
+      catG.moveTo(12-li*9,28+li*7);
+      catG.lineTo(-4-li*9,26+li*7);
       catG.strokePath();
     }
-    catG.generateTexture('story_cat',100,90);
+    // dust paws on ground
+    catG.fillStyle(0x997755,0.25);
+    catG.fillEllipse(20,92,14,6);
+    catG.fillEllipse(42,90,12,5);
+    catG.fillEllipse(68,89,14,6);
+
+    catG.generateTexture('story_cat',110,100);
     catG.clear();catG.destroy();
 
-    var catSprite=s.add.sprite(mx-50,my+20,'story_cat');
-    catSprite.setScale(1.6);
+    var catSprite=s.add.sprite(mx-40,my+30,'story_cat');
+    catSprite.setScale(1.5);
 
-    // === CHASING SLIPPER (complete shape with full heel) ===
+    // === FLYING SLIPPER (showing SOLE - like reference image!) ===
     var slpG=s.add.graphics();
 
-    // 1. Heel (back part - complete, rounded)
-    slpG.fillStyle(0xdd2244,1);
-    slpG.fillRoundedRect(0,10,22,30,8);
+    // Sole bottom (the visible part when thrown - with tread pattern!)
+    slpG.fillStyle(0xddccaa,1);  // rubber sole color (beige/tan)
+    slpG.fillRoundedRect(0,4,64,36,10);
 
-    // 2. Main sole body (middle section)
-    slpG.fillStyle(0xff3377,1);
-    slpG.fillRect(18,6,36,34);
-
-    // 3. Toe cap (front part - wider and rounded)
-    slpG.fillStyle(0xff5599,1);
-    slpG.fillRoundedRect(42,0,24,38,12);
-
-    // 4. Top surface (lighter pink overlay)
-    slpG.fillStyle(0xff77aa,0.7);
-    slpG.fillRoundedRect(4,6,52,16,6);
-
-    // 5. Opening (where foot goes in) - dark ellipse at back-top
-    slpG.fillStyle(0x1a0410,1);
-    slpG.fillEllipse(14,16,14,8);
-
-    // 6. Strap across the top
-    slpG.fillStyle(0xcc2255,1);
-    slpG.fillRect(16,10,36,4);
-
-    // 7. Sole bottom edge (darker line for depth)
-    slpG.lineStyle(2.5,0xaa1144,1);
-    slpG.beginPath();slpG.moveTo(2,40);slpG.lineTo(64,40);slpG.strokePath();
-
-    // 8. Full outline
-    slpG.lineStyle(1.5,0xbb1155,1);
-    // heel outline
-    slpG.beginPath();slpG.moveTo(0,18);slpG.lineTo(0,32);slpG.lineTo(8,40);slpG.lineTo(22,40);slpG.strokePath();
-    // main body outline (bottom already drawn)
-    slpG.beginPath();slpG.moveTo(22,6);slpG.lineTo(42,6);slpG.strokePath();
-    // toe outline
-    slpG.beginPath();slpG.moveTo(42,6);slpG.lineTo(56,6);slpG.lineTo(66,18);slpG.lineTo(66,32);slpG.lineTo(56,40);slpG.lineTo(54,40);slpG.strokePath();
-
-    // 9. Decorative stitch lines on toe
-    slpG.lineStyle(1,0xdd6699,0.5);
-    slpG.beginPath();slpG.moveTo(46,14);slpG.lineTo(60,14);slpG.strokePath();
-    slpG.beginPath();slpG.moveTo(48,20);slpG.lineTo(60,20);slpG.strokePath();
-
-    // motion lines around slipper
-    slpG.lineStyle(2,0xff4477,0.5);
-    for(var si=0;si<4;si++){
+    // TREAD PATTERN on sole (zigzag lines like real shoe sole)
+    slpG.lineStyle(1.2,0xbbaa88,0.8);
+    // horizontal wavy lines
+    for(var ti=0;ti<5;ti++){
+      var ty=10+ti*6;
       slpG.beginPath();
-      slpG.moveTo(68+si*6,8+si*8);
-      slpG.lineTo(78+si*6,6+si*8);
+      slpG.moveTo(6,ty);
+      for(var tx=6;tx<58;tx+=8){
+        slpG.lineTo(tx+4,ty+2.5);
+        slpG.lineTo(tx+8,ty);
+      }
+      slpG.strokePath();
+    }
+    // vertical tread lines at heel and toe
+    slpG.beginPath();
+    slpG.moveTo(8,6);slpG.lineTo(8,38);
+    slpG.moveTo(16,6);slpG.lineTo(16,36);
+    slpG.moveTo(48,6);slpG.lineTo(48,36);
+    slpG.moveTo(56,6);slpG.lineTo(56,38);
+    slpG.strokePath();
+
+    // Heel pad (thicker rubber)
+    slpG.fillStyle(0xccbb99,1);
+    slpG.fillRoundedRect(2,28,20,14,4);
+    slpG.lineStyle(1,0xaa9977,0.6);
+    slpG.strokeRoundedRect(2,28,20,14,4);
+
+    // Toe pad area
+    slpG.fillStyle(0xccbb99,1);
+    slpG.fillRoundedRect(46,4,16,32,4);
+    slpG.lineStyle(1,0xaa9977,0.6);
+    slpG.strokeRoundedRect(46,4,16,32,4);
+
+    // Upper part of slipper (visible from side - pink fabric)
+    slpG.fillStyle(0xff4488,1);
+    slpG.fillRoundedRect(0,-16,64,22,8);
+
+    // Pink fabric top surface
+    slpG.fillStyle(0xff66aa,0.8);
+    slpG.fillRect(4,-12,56,14);
+
+    // Opening (dark inside)
+    slpG.fillStyle(0x220818,1);
+    slpG.fillEllipse(18,-4,18,8);
+
+    // Strap across top
+    slpG.fillStyle(0xdd3377,1);
+    slpG.fillRect(14,-8,38,5);
+
+    // Fabric outline
+    slpG.lineStyle(1.5,0xcc2266,1);
+    slpG.strokeRoundedRect(0,-16,64,22,8);
+
+    // Sole outline (thick)
+    slpG.lineStyle(2,0x998866,1);
+    slpG.beginPath();slpG.moveTo(2,4);slpG.lineTo(2,40);slpG.lineTo(62,40);slpG.lineTo(62,4);slpG.strokePath();
+    slpG.strokeRoundedRect(0,4,64,36,10);
+
+    // Brand text on sole (fun detail)
+    slpG.lineStyle(1,0x887755,0.5);
+    // simple "CAT" text approximation with lines
+
+    // Motion blur lines around slipper
+    slpG.lineStyle(2.5,0xff6699,0.45);
+    for(var si=0;si<5;si++){
+      slpG.beginPath();
+      slpG.moveTo(66+si*7,4+si*7);
+      slpG.lineTo(76+si*7,2+si*7);
       slpG.strokePath();
     }
 
-    slpG.generateTexture('story_slipper_big',80,46);
+    slpG.generateTexture('story_slipper_big',82,56);
     slpG.clear();slpG.destroy();
 
-    var slipSprite=s.add.sprite(mx-200,my+35,'story_slipper_big');
-    slipSprite.setScale(1.5);
+    var slipSprite=s.add.sprite(mx-200,my+20,'story_slipper_big');
+    slipSprite.setScale(1.4);
 
-    // === ANGRY OWNER (far background, upper right) ===
+    // === ANGRY OWNER (upper right) ===
     var ownG=s.add.graphics();
+    // head
     ownG.fillStyle(0xffddbb,1);
-    ownG.fillCircle(30,30,24);
-    ownG.fillStyle(0x442200,1);
-    ownG.fillEllipse(30,10,44,18);
-    ownG.lineStyle(3,0x442200,1);
-    ownG.beginPath();ownG.moveTo(12,20);ownG.lineTo(26,26);ownG.strokePath();
-    ownG.beginPath();ownG.moveTo(48,20);ownG.lineTo(34,26);ownG.strokePath();
+    ownG.fillCircle(32,32,26);
+    // hair (dark, messy angry hair)
+    ownG.fillStyle(0x332211,1);
+    ownG.fillEllipse(32,8,50,20);
+    ownG.fillRect(6,4,52,12);
+    // ANGRY EYEBROWS (thick, diagonal)
+    ownG.lineStyle(4,0x332211,1);
+    ownG.beginPath();ownG.moveTo(8,18);ownG.lineTo(28,28);ownG.strokePath();
+    ownG.beginPath();ownG.moveTo(56,18);ownG.lineTo(36,28);ownG.strokePath();
+    // eyes (angry, narrowed)
     ownG.fillStyle(0xffffff,1);
-    ownG.fillCircle(20,32,6);ownG.fillCircle(40,32,6);
-    ownG.fillStyle(0x442200,1);
-    ownG.fillCircle(21,33,3);ownG.fillCircle(39,33,3);
-    ownG.fillStyle(0xcc4466,1);
-    ownG.fillEllipse(30,46,10,7);
-    ownG.fillStyle(0xff8866,1);
-    ownG.fillRoundedRect(42,40,30,14,6);
+    ownG.fillCircle(22,34,7);ownG.fillCircle(42,34,7);
+    ownG.fillStyle(0x332211,1);
+    ownG.fillCircle(24,35,4);ownG.fillCircle(40,35,4);
+    // mouth (shouting/open)
+    ownG.fillStyle(0xcc3344,1);
+    ownG.fillEllipse(32,50,12,8);
+    // teeth hint
+    ownG.fillStyle(0xffffff,1);
+    ownG.fillRect(28,48,8,3);
+    // neck/body
+    ownG.fillStyle(0xeeddcc,1);
+    ownG.fillRoundedRect(20,58,24,20,6);
+    // arm throwing (extended toward cat)
+    ownG.fillStyle(0xeeddcc,1);
+    ownG.fillRoundedRect(38,52,36,16,6);
+    // hand/fist
     ownG.fillStyle(0xffddbb,1);
-    ownG.fillCircle(74,47,8);
-    ownG.generateTexture('story_owner',86,70);
+    ownG.fillCircle(78,60,10);
+    // steam/anger marks above head
+    ownG.lineStyle(2,0x888888,0.6);
+    ownG.beginPath();ownG.moveTo(16,-4);ownG.lineTo(12,-12);ownG.lineTo(20,-10);ownG.strokePath();
+    ownG.beginPath();ownG.moveTo(48,-4);ownG.lineTo(52,-12);ownG.lineTo(44,-10);ownG.strokePath();
+    ownG.beginPath();ownG.moveTo(32,-8);ownG.lineTo(32,-18);ownG.strokePath();
+
+    ownG.generateTexture('story_owner',95,85);
     ownG.clear();ownG.destroy();
 
-    var ownerSprite=s.add.sprite(mx+160,my-80,'story_owner');
-    ownerSprite.setScale(1.2);
+    var ownerSprite=s.add.sprite(mx+155,my-90,'story_owner');
+    ownerSprite.setScale(1.15);
 
     // === ANIMATIONS ===
 
     // Cat running bounce
     s.tweens.add({
       targets:catSprite,
-      y:my+5,
-      duration:250,yoyo:true,ease:'Sine.easeInOut',loop:-1,
-      onRepeat:function(){catSprite.angle=(catSprite.angle===0?-3:0);}
+      y:my+12,
+      duration:220,yoyo:true,ease:'Sine.easeInOut',loop:-1,
+      onRepeat:function(){catSprite.angle=(catSprite.angle===0?-4:0);}
     });
 
-    // Slipper chasing wobble
-    slipSprite.angle=-12;
+    // Slipper spinning/chasing (tumbling through air!)
+    slipSprite.angle=-20;
     s.tweens.add({
       targets:slipSprite,
-      angle:12,duration:150,yoyo:true,ease:'Sine.easeInOut',loop:-1
+      angle:25,duration:130,yoyo:true,ease:'Sine.easeInOut',loop:-1
     });
+    // slipper gets closer
     s.tweens.add({
       targets:slipSprite,
-      x:mx-130,
-      duration:2000,ease:'Cubic.easeOut',
-      delay:300,onComplete:function(){
-        s.cameras.main.shake(300,0.01);
+      x:mx-120,y:my+10,
+      duration:2200,ease:'Cubic.easeOut',
+      delay:400,onComplete:function(){
+        s.cameras.main.shake(350,0.012);
         s.tweens.add({
-          targets:catSprite,scaleX:1.7,scaleY:1.5,
-          duration:150,yoyo:true,loop:-1
+          targets:catSprite,scaleX:1.6,scaleY:1.4,
+          duration:120,yoyo:true,loop:-1
         });
       }
     });
 
-    // Owner shaking with anger
+    // Owner shaking with rage
     s.tweens.add({
       targets:ownerSprite,
-      x:mx+155,duration:80,yoyo:true,loop:-1
+      x:mx+148,duration:70,yoyo:true,loop:-1
     });
-    ownerSprite.angle=5;
+    ownerSprite.angle=6;
     s.tweens.add({
       targets:ownerSprite,
-      angle:-5,duration:100,yoyo:true,loop:-1
+      angle:-6,duration:90,yoyo:true,loop:-1
     });
 
     // === TEXT ===
-    s.add.text(mx,80,'CAT ESCAPE!',{
-      fontSize:'40px',fill:'#ffaa33',fontStyle:'bold',
+    s.add.text(mx,70,'CAT ESCAPE!',{
+      fontSize:'42px',fill:'#ffaa33',fontStyle:'bold',
       fontFamily:'Arial Black',stroke:'#000000',strokeThickness:4
     }).setOrigin(0.5);
 
-    s.add.text(mx,125,'She found the broken vase...',{
+    s.add.text(mx,118,'She found the broken vase...',{
       fontSize:'17px',fill:'#ff6699',fontStyle:'italic'
     }).setOrigin(0.5);
 
-    s.add.text(mx,H-140,'Dodge her slippers & collect coins to survive!',{
+    s.add.text(mx,H-135,'Dodge her slippers & collect coins to survive!',{
       fontSize:'16px',fill:'#bbaadd',align:'center'
     }).setOrigin(0.5);
 
-    var tap=s.add.text(mx,H-80,'TAP TO START >',{
+    var tap=s.add.text(mx,H-75,'TAP TO START >',{
       fontSize:'22px',fill:'#ffffff',fontStyle:'bold',
       stroke:'#ff8844',strokeThickness:3
     }).setOrigin(0.5);
     s.tweens.add({targets:tap,alpha:0.3,duration:500,yoyo:true,loop:-1});
 
-    var excl=s.add.text(mx+130,my-160,'!!!',{fontSize:'32px',fill:'#ff3333',fontStyle:'bold'});
-    s.tweens.add({targets:excl,scale:1.3,duration:200,yoyo:true,loop:-1});
+    var excl=s.add.text(mx+120,my-175,'!!!',{fontSize:'36px',fill:'#ff3333',fontStyle:'bold'});
+    s.tweens.add({targets:excl,scale:1.35,duration:180,yoyo:true,loop:-1});
 
     s.input.on('pointerdown',function(){
       s.cameras.main.fade(400,14,6,32);
@@ -299,32 +395,55 @@ var PlayScene={
     var s=this;
     s.physics.world.setBounds(0,0,W,H);
 
-    // === PLAYER: detailed cat ===
+    // === PLAYER: tabby cat with stripes ===
     var pg=s.add.graphics();
-    pg.fillStyle(0xff9944,1);pg.fillCircle(16,18,13);
-    pg.fillStyle(0xff9944,1);
-    pg.fillTriangle(4,9,11,0,12,10);
-    pg.fillTriangle(28,9,21,0,20,10);
-    pg.fillStyle(0xff88aa,1);
-    pg.fillTriangle(7,8,10,2,11,9);
-    pg.fillTriangle(25,8,22,2,21,9);
+    // body
+    pg.fillStyle(0xee7722,1);pg.fillCircle(16,20,13);
+    pg.fillStyle(0xcc5500,0.7);
+    pg.fillRect(10,10,4,14);pg.fillRect(16,7,4,16);pg.fillRect(22,9,4,14);
+    // belly
+    pg.fillStyle(0xffbb66,0.8);pg.fillEllipse(16,25,14,7);
+    // head
+    pg.fillStyle(0xee7722,1);pg.fillCircle(16,10,11);
+    // head stripes
+    pg.fillStyle(0xcc5500,0.5);
+    pg.fillRect(8,3,3,7);pg.fillRect(13,1,3,8);pg.fillRect(18,1,3,8);pg.fillRect(23,3,3,7);
+    // ears
+    pg.fillStyle(0xee7722,1);
+    pg.fillTriangle(4,3,10,-4,12,4);
+    pg.fillTriangle(22,3,28,-4,20,4);
+    pg.fillStyle(0xff8899,1);
+    pg.fillTriangle(6,2,10,-2,11,3);
+    pg.fillTriangle(24,2,28,-2,21,3);
+    // face white
+    pg.fillStyle(0xffeedd,0.85);pg.fillEllipse(16,15,14,9);
+    // eyes
     pg.fillStyle(0xffffff,1);
-    pg.fillCircle(10,15,4);pg.fillCircle(22,15,4);
+    pg.fillEllipse(11,11,5,4);pg.fillEllipse(21,11,5,4);
     pg.fillStyle(0x222222,1);
-    pg.fillCircle(11,16,2.2);pg.fillCircle(23,16,2.2);
+    pg.fillCircle(12,11.5,2.2);pg.fillCircle(20,11.5,2.2);
     pg.fillStyle(0xffffff,1);
-    pg.fillCircle(10.5,14.5,1);pg.fillCircle(22.5,14.5,1);
-    pg.fillStyle(0xff6688,1);
-    pg.fillTriangle(14,20,18,20,16,23);
-    pg.lineStyle(1.2,0xcc5566,1);
-    pg.beginPath();pg.moveTo(14,24);pg.lineTo(16,26);pg.lineTo(18,24);pg.strokePath();
-    pg.lineStyle(1,0xddccbb,0.65);
-    pg.beginPath();pg.moveTo(1,19);pg.lineTo(8,21);pg.strokePath();
-    pg.beginPath();pg.moveTo(1,22);pg.lineTo(8,23);pg.strokePath();
-    pg.beginPath();pg.moveTo(31,19);pg.lineTo(24,21);pg.strokePath();
-    pg.beginPath();pg.moveTo(31,22);pg.lineTo(24,23);pg.strokePath();
-    pg.lineStyle(1.5,0xdd6611,1);pg.strokeCircle(16,18,13);
-    pg.generateTexture('tex_player',34,37);
+    pg.fillCircle(11.5,10.5,0.8);pg.fillCircle(19.5,10.5,0.8);
+    // nose
+    pg.fillStyle(0xff5577,1);
+    pg.fillTriangle(13,15,19,15,16,18);
+    // mouth
+    pg.lineStyle(1,0xaa3344,1);
+    pg.beginPath();pg.moveTo(13,19);pg.lineTo(16,21);pg.lineTo(19,19);pg.strokePath();
+    // whiskers
+    pg.lineStyle(0.8,0xddccaa,0.5);
+    pg.beginPath();pg.moveTo(3,14);pg.lineTo(9,16);pg.strokePath();
+    pg.beginPath();pg.moveTo(2,17);pg.lineTo(9,18);pg.strokePath();
+    pg.beginPath();pg.moveTo(29,14);pg.lineTo(23,16);pg.strokePath();
+    pg.beginPath();pg.moveTo(30,17);pg.lineTo(23,18);pg.strokePath();
+    // tail
+    pg.lineStyle(3,0xee7722,1);
+    pg.beginPath();pg.moveTo(3,20);pg.lineTo(-4,10);pg.lineTo(2,2);pg.strokePath();
+    pg.lineStyle(1.5,0xcc5500,0.6);
+    pg.beginPath();pg.moveTo(0,5);pg.lineTo(3,4);pg.strokePath();
+    // outline
+    pg.lineStyle(1.2,0xcc6600,1);pg.strokeCircle(16,20,13);
+    pg.generateTexture('tex_player',36,38);
     pg.clear();pg.destroy();
 
     s.player=s.physics.add.sprite(W/2,H-65,'tex_player');
@@ -376,50 +495,62 @@ var PlayScene={
 function scheduleSpawn(scene){
   if(scene.isOver)return;
 
-  // === ENEMY: COMPLETE SLIPPER with full heel ===
+  // === ENEMY: SLIPPER WITH VISIBLE SOLE + TREAD ===
   var eg=scene.add.graphics();
 
-  // 1. Heel (back - rounded rect, darker)
-  eg.fillStyle(0xdd2244,1);
-  eg.fillRoundedRect(0,8,18,26,6);
+  // Sole (rubber bottom - beige color)
+  eg.fillStyle(0xddccaa,1);
+  eg.fillRoundedRect(0,3,52,32,8);
 
-  // 2. Main sole body
-  eg.fillStyle(0xff3377,1);
-  eg.fillRect(14,4,28,30);
+  // Tread pattern (zigzag)
+  eg.lineStyle(1,0xbbaa88,0.7);
+  for(var ti=0;ti<4;ti++){
+    var ty=8+ti*6;
+    eg.beginPath();eg.moveTo(5,ty);
+    for(var tx=5;tx<47;tx+=7){
+      eg.lineTo(tx+3.5,ty+2);eg.lineTo(tx+7,ty);
+    }
+    eg.strokePath();
+  }
+  // vertical treads
+  eg.beginPath();
+  eg.moveTo(6,5);eg.lineTo(6,33);
+  eg.moveTo(13,5);eg.lineTo(13,31);
+  eg.moveTo(39,5);eg.lineTo(39,31);
+  eg.moveTo(46,5);eg.lineTo(46,33);
+  eg.strokePath();
 
-  // 3. Toe cap (front - wider, lighter)
-  eg.fillStyle(0xff5599,1);
-  eg.fillRoundedRect(34,0,18,34,10);
+  // Heel pad
+  eg.fillStyle(0xccbb99,1);
+  eg.fillRoundedRect(2,22,16,12,3);
+  // Toe pad
+  eg.fillStyle(0xccbb99,1);
+  eg.fillRoundedRect(38,2,12,30,3);
 
-  // 4. Top surface (lighter pink)
-  eg.fillStyle(0xff77aa,0.65);
-  eg.fillRoundedRect(3,4,43,13,5);
+  // Upper (pink fabric)
+  eg.fillStyle(0xff4488,1);
+  eg.fillRoundedRect(0,-14,52,20,7);
+  eg.fillStyle(0xff66aa,0.75);
+  eg.fillRect(3,-10,46,12);
+  // Opening
+  eg.fillStyle(0x220818,1);
+  eg.fillEllipse(14,-3,14,6);
+  // Strap
+  eg.fillStyle(0xdd3377,1);
+  eg.fillRect(11,-6,30,4);
+  // Outline
+  eg.lineStyle(1.2,0xcc2266,1);
+  eg.strokeRoundedRect(0,-14,52,20,7);
+  eg.lineStyle(1.5,0x998866,1);
+  eg.strokeRoundedRect(0,3,52,32,8);
 
-  // 5. Opening (dark ellipse)
-  eg.fillStyle(0x1a0410,1);
-  eg.fillEllipse(11,12,11,6);
-
-  // 6. Strap
-  eg.fillStyle(0xcc2255,1);
-  eg.fillRect(12,8,30,3);
-
-  // 7. Sole edge (depth line)
-  eg.lineStyle(2,0xaa1144,1);
-  eg.beginPath();eg.moveTo(1,34);eg.lineTo(53,34);eg.strokePath();
-
-  // 8. Outline
-  eg.lineStyle(1.2,0xbb1155,1);
-  eg.beginPath();eg.moveTo(1,14);eg.lineTo(1,28);eg.lineTo(7,34);eg.lineTo(18,34);eg.strokePath();
-  eg.beginPath();eg.moveTo(18,4);eg.lineTo(34,4);eg.strokePath();
-  eg.beginPath();eg.moveTo(34,4);eg.lineTo(45,4);eg.lineTo(53,14);eg.lineTo(53,28);eg.lineTo(45,34);eg.lineTo(53,34);eg.strokePath();
-
-  eg.generateTexture('tex_enemy',56,38);
+  eg.generateTexture('tex_enemy',56,48);
   eg.clear();eg.destroy();
 
   var ex=Phaser.Math.Between(44,W-44);
-  var enemy=scene.physics.add.sprite(ex,-38,'tex_enemy');
+  var enemy=scene.physics.add.sprite(ex,-48,'tex_enemy');
   enemy.setVelocityY(scene.baseSpeed+scene.score*1.5);
-  enemy.angle=Phaser.Math.Between(-10,10);
+  enemy.angle=Phaser.Math.Between(-15,15);
   scene.enemies.push(enemy);
 
   scene.spawnTimer=scene.time.delayedCall(Math.max(280,600-scene.score*3),function(){scheduleSpawn(scene)});
