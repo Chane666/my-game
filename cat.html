@@ -24,9 +24,8 @@ var StoryScene={
     var s=this,mx=W/2;
     s.cameras.main.setBackgroundColor('#0e0620');
 
-    // --- draw the cat (naughty) with graphics ---
+    // cat body
     var catG=s.add.graphics();
-    // body
     catG.fillStyle(0xff9944,1);
     catG.fillEllipse(mx,H/2-20,80,60);
     // head
@@ -43,31 +42,30 @@ var StoryScene={
     // eyes (mischievous)
     catG.fillStyle(0xffffff,1);catG.fillCircle(mx-13,H/2-74,7);catG.fillCircle(mx+13,H/2-74,7);
     catG.fillStyle(0x222222,1);catG.fillCircle(mx-10,H/2-73,4);catG.fillCircle(mx+14,H/2-73,4);
-    // eye shine
     catG.fillStyle(0xffffff,1);catG.fillCircle(mx-11,H/2-75,1.5);catG.fillCircle(mx+13,H/2-75,1.5);
     // nose
     catG.fillStyle(0xff6688,1);catG.fillTriangle(mx-5,H/2-62,mx+5,H/2-62,mx,H/2-57);
-    // smile (cheeky curve)
+    // smile
     catG.lineStyle(2,0xcc5566,1);
-    catG.beginPath();catG.moveTo(mx-12,H/2-56);catG.quadraticCurveTo(mx,H/2-48,mx+12,H/2-56);catG.strokePath();
+    catG.beginPath();catG.moveTo(mx-12,H/2-56);catG.lineTo(mx,H/2-48);catG.lineTo(mx+12,H/2-56);catG.strokePath();
     // whiskers
     catG.lineStyle(1.5,0xddccbb,0.7);
     catG.beginPath();catG.moveTo(mx-38,H/2-64);catG.lineTo(mx-18,H/2-60);catG.strokePath();
     catG.beginPath();catG.moveTo(mx-40,H/2-56);catG.lineTo(mx-18,H/2-54);catG.strokePath();
     catG.beginPath();catG.moveTo(mx+38,H/2-64);catG.lineTo(mx+18,H/2-60);catG.strokePath();
     catG.beginPath();catG.moveTo(mx+40,H/2-56);catG.lineTo(mx+18,H/2-54);catG.strokePath();
-    // paws holding something
+    // paws
     catG.fillStyle(0xffcc88,1);
     catG.fillEllipse(mx-25,H/2+10,18,12);
     catG.fillEllipse(mx+25,H/2+10,18,12);
 
-    // --- knocked over vase (broken pieces) ---
+    // broken vase pieces
     catG.lineStyle(2,0x66aacc,0.8);
     catG.beginPath();catG.moveTo(mx+45,H/2+15);catG.lineTo(mx+58,H/2+30);catG.strokePath();
     catG.beginPath();catG.moveTo(mx+50,H/2+22);catG.lineTo(mx+68,H/2+25);catG.strokePath();
     catG.beginPath();catG.moveTo(mx+42,H/2+30);catG.lineTo(mx+55,H/2+42);catG.strokePath();
 
-    // --- speech bubble ---
+    // speech bubble
     var bubble=s.add.graphics();
     bubble.fillStyle(0xffffff,0.92);
     bubble.fillRoundedRect(mx-110,H/2-170,220,50,12);
@@ -77,11 +75,11 @@ var StoryScene={
     bubble.strokeRoundedRect(mx-110,H/2-170,220,50,12);
     s.add.text(mx,H/2-145,'Uh oh... she is coming!',{fontSize:'16px',fill:'#cc4444',fontStyle:'bold'}).setOrigin(0.5);
 
-    // --- angry owner (off-screen indicator) ---
+    // angry owner indicator
     s.add.text(mx+140,H/2-150,'!!!',{fontSize:'36px',fill:'#ff3333',fontStyle:'bold'});
     s.add.text(mx+135,H/2-110,'* SLIPPER *',{fontSize:'12px',fill:'#ff66aa',fontStyle:'bold'});
 
-    // story text (fade in)
+    // story text
     var st=s.add.text(mx,H/2+90,'',{fontSize:'17px',fill:'#ddccee',align:'center',lineHeight:24}).setOrigin(0.5);
     st.setText([
       {text:'Mittens knocked over her favorite vase.\n',fill:'#ff9966'},
@@ -92,28 +90,29 @@ var StoryScene={
     // tap to start
     var tap=s.add.text(mx,H/2+180,'TAP TO START >',{fontSize:'20px',fill:'#ffffff',fontStyle:'bold'}).setOrigin(0.5);
     s.tweens.add({targets:tap,alpha:0.3,duration:600,yoyo:true,loop:-1});
-
-    // animate cat bobbing
     s.tweens.add({targets:catG,y:H/2-30,duration:800,yoyo:true,ease:'Sine.easeInOut',loop:-1});
 
-    // slipper flying animation (from right side)
+    // flying slipper animation
     var slpG=s.add.graphics();
     slpG.fillStyle(0xff4488,1);
-    slpG.fillRoundedRect(0,0,44,32,8);
+    slpG.fillRoundedRect(0,2,44,28,8);
     slpG.fillStyle(0xff66aa,1);
-    slpG.fillRoundedRect(0,-4,44,16,6);
+    slpG.fillRoundedRect(0,-2,44,14,6);
+    slpG.fillStyle(0x220818,1);
+    slpG.fillEllipse(22,6,14,6);
+    slpG.fillStyle(0xdd3377,1);
+    slpG.fillRect(10,3,24,3);
     slpG.lineStyle(2,0xcc2266,1);
-    slpG.strokeRoundedRect(0,0,44,32,8);
+    slpG.strokeRoundedRect(0,2,44,28,8);
     slpG.generateTexture('story_slipper',48,36);
     slpG.clear();slpG.destroy();
 
     var flySlip=s.add.sprite(W+40,H/2-50,'story_slipper');
     s.tweens.add({
-      targets:flySlipper,x:mx+60,y:H/2-20,
+      targets:flySlip,x:mx+60,y:H/2-20,
       angle:-200,duration:1200,ease:'Power2',
       delay:400,onComplete:function(){
-        s.tweens.add({targets:flySlipper,alpha:0,scale:0.5,duration:300});
-        // screen shake
+        s.tweens.add({targets:flySlip,alpha:0,scale:0.5,duration:300});
         s.cameras.main.shake(200,0.008);
       }
     });
@@ -168,7 +167,6 @@ var RecordsScene={
         for(var i=0;i<recs.length&&i<10;i++){
           var medal=i===0?'GOLD':i===1?'SILVER':i===2?'BRONZE':'#'+(i+1);
           var col=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#aa99bb';
-          // FIX: use recs[i].sc not recs[i].s
           var scoreVal = recs[i].sc !== undefined ? recs[i].sc : recs[i].s;
           s.add.text(mx,140+i*34,medal+'  '+scoreVal+' pts',{fontSize:'17px',fill:col}).setOrigin(0.5);
         }
@@ -184,79 +182,57 @@ var RecordsScene={
 var PlayScene={
   key:'Play',
   init:function(){
-    this.score=0;
-    this.lives=3;
-    this.baseSpeed=140;
-    this.enemies=[];
-    this.coins=[];
-    this.isOver=false;
-    this.spawnTimer=null;
-    this.coinTimer=null;
+    this.score=0;this.lives=3;this.baseSpeed=140;
+    this.enemies=[];this.coins=[];
+    this.isOver=false;this.spawnTimer=null;this.coinTimer=null;
   },
   create:function(){
     var s=this;
     s.physics.world.setBounds(0,0,W,H);
 
-    // === PLAYER: detailed cat face ===
+    // === PLAYER: detailed cat ===
     var pg=s.add.graphics();
-    pg.fillStyle(0xff9944,1);
-    pg.fillCircle(16,18,13);
-    // ears
+    pg.fillStyle(0xff9944,1);pg.fillCircle(16,18,13);
     pg.fillStyle(0xff9944,1);
     pg.fillTriangle(4,9,11,0,12,10);
     pg.fillTriangle(28,9,21,0,20,10);
-    // inner ears
     pg.fillStyle(0xff88aa,1);
     pg.fillTriangle(7,8,10,2,11,9);
     pg.fillTriangle(25,8,22,2,21,9);
-    // eyes
     pg.fillStyle(0xffffff,1);
-    pg.fillCircle(10,15,4);
-    pg.fillCircle(22,15,4);
+    pg.fillCircle(10,15,4);pg.fillCircle(22,15,4);
     pg.fillStyle(0x222222,1);
-    pg.fillCircle(11,16,2.2);
-    pg.fillCircle(23,16,2.2);
-    // eye shine
+    pg.fillCircle(11,16,2.2);pg.fillCircle(23,16,2.2);
     pg.fillStyle(0xffffff,1);
-    pg.fillCircle(10.5,14.5,1);
-    pg.fillCircle(22.5,14.5,1);
-    // nose
+    pg.fillCircle(10.5,14.5,1);pg.fillCircle(22.5,14.5,1);
     pg.fillStyle(0xff6688,1);
     pg.fillTriangle(14,20,18,20,16,23);
-    // mouth
     pg.lineStyle(1.2,0xcc5566,1);
     pg.beginPath();pg.moveTo(14,24);pg.lineTo(16,26);pg.lineTo(18,24);pg.strokePath();
-    // whiskers
     pg.lineStyle(1,0xddccbb,0.65);
     pg.beginPath();pg.moveTo(1,19);pg.lineTo(8,21);pg.strokePath();
     pg.beginPath();pg.moveTo(1,22);pg.lineTo(8,23);pg.strokePath();
     pg.beginPath();pg.moveTo(31,19);pg.lineTo(24,21);pg.strokePath();
     pg.beginPath();pg.moveTo(31,22);pg.lineTo(24,23);pg.strokePath();
-    // body outline
-    pg.lineStyle(1.5,0xdd6611,1);
-    pg.strokeCircle(16,18,13);
+    pg.lineStyle(1.5,0xdd6611,1);pg.strokeCircle(16,18,13);
     pg.generateTexture('tex_player',34,37);
     pg.clear();pg.destroy();
 
     s.player=s.physics.add.sprite(W/2,H-65,'tex_player');
     s.player.setCollideWorldBounds(true);
-    s.player.body.setSize(26,28);
-    s.player.body.setOffset(4,4);
+    s.player.body.setSize(26,28);s.player.body.setOffset(4,4);
 
-    // HUD
     s.hudText=s.add.text(12,10,'SCORE: 0   LIVES: 3',{fontSize:'15px',fill:'#ccaa88',fontStyle:'bold'});
 
     s.scoreTimer=s.time.addEvent({
       delay:1000,callback:function(){s.score++;s.hudText.setText('SCORE: '+s.score+'   LIVES: '+s.lives);},loop:true
     });
 
-    scheduleSpawn(s);
-    scheduleCoin(s);
+    scheduleSpawn(s);scheduleCoin(s);
   },
   update:function(){
     if(this.isOver)return;
     var s=this;
-
     var cursors=s.input.keyboard?s.input.keyboard.createCursorKeys():null;
     if(cursors){if(cursors.left.isDown)s.player.x-=7;if(cursors.right.isDown)s.player.x+=7;}
     if(s.input.activePointer.isDown)s.player.x=s.input.activePointer.x;
@@ -290,45 +266,34 @@ var PlayScene={
 
 function scheduleSpawn(scene){
   if(scene.isOver)return;
-  // === ENEMY: realistic slipper shape ===
+  // === ENEMY: slipper shape (using only Phaser-safe graphics) ===
   var eg=scene.add.graphics();
-  // sole bottom (thicker at heel)
+  // sole - main body (rounded rect)
   eg.fillStyle(0xff4488,1);
-  eg.beginPath();
-  eg.moveTo(6,32);eg.lineTo(4,20);eg.quadraticCurveTo(2,8,8,4);
-  eg.quadraticCurveTo(18,0,30,3);
-  eg.quadraticCurveTo(38,6,36,16);
-  eg.quadraticCurveTo(34,26,28,32);
-  eg.closePath();eg.fillPath();
-  // upper part (toe area - lighter pink)
+  eg.fillRoundedRect(2,4,38,28,10);
+  // toe area (lighter pink, wider at top)
   eg.fillStyle(0xff77aa,1);
-  eg.beginPath();
-  eg.moveTo(6,16);eg.quadraticCurveTo(4,8,8,4);
-  eg.quadraticCurveTo(18,0,30,3);
-  eg.quadraticCurveTo(36,6,34,14);
-  eg.quadraticCurveTo(28,16,18,16);
-  eg.closePath();eg.fillPath();
-  // opening (where foot goes in)
-  eg.fillStyle(0x220818,1);
-  eg.beginPath();
-  eg.ellipse(18,10,10,5,0,0,Math.PI*2);
-  eg.fillPath();
-  // strap across top
+  eg.fillRoundedRect(2,0,38,16,8);
+  // heel area (darker, narrower)
+  eg.fillStyle(0xee3377,1);
+  eg.fillRect(0,26,14,8);
+  // opening (dark ellipse where foot goes in)
+  eg.fillStyle(0x1a0612,1);
+  eg.fillEllipse(21,10,16,7);
+  // strap across the top
   eg.fillStyle(0xdd3377,1);
-  eg.fillRect(10,6,18,3);
-  // sole edge line
+  eg.fillRect(10,6,22,3);
+  // outline
   eg.lineStyle(1.5,0xbb2266,1);
-  eg.beginPath();
-  eg.moveTo(6,32);eg.lineTo(4,20);eg.quadraticCurveTo(2,8,8,4);
-  eg.quadraticCurveTo(18,0,30,3);
-  eg.quadraticCurveTo(38,6,36,16);
-  eg.quadraticCurveTo(34,26,28,32);
-  eg.closePath();eg.strokePath();
-  eg.generateTexture('tex_enemy',42,36);
+  eg.strokeRoundedRect(2,4,38,28,10);
+  // toe cap line
+  eg.lineStyle(1,0xcc4488,0.6);
+  eg.beginPath();eg.moveTo(4,16);eg.lineTo(38,16);eg.strokePath();
+  eg.generateTexture('tex_enemy',44,38);
   eg.clear();eg.destroy();
 
-  var ex=Phaser.Math.Between(42,W-42);
-  var enemy=scene.physics.add.sprite(ex,-36,'tex_enemy');
+  var ex=Phaser.Math.Between(44,W-44);
+  var enemy=scene.physics.add.sprite(ex,-38,'tex_enemy');
   enemy.setVelocityY(scene.baseSpeed+scene.score*1.5);
   enemy.angle=Phaser.Math.Between(-10,10);
   scene.enemies.push(enemy);
