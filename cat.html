@@ -18,9 +18,9 @@ var GW=480,GH=720;
 
 var S_Boot = {
   preload: function(){
-    this.load.image('player', 'player.png');
-    this.load.image('obs', 'obs.png');
-    this.load.image('coin', 'coin.png');
+    this.textures.addBase64('player', 'data:image/png;base64,' + iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAeUlEQVR4nO3SMQ4AIQhEUe/kJffWbme3C8IMTgEJnea/RMfoSc565iqNefdaGA7JxNMIRDyMQMaPEYy4G8GMuxBXAcalvZkzv4gGSAPoH7EyLoHQe4IGSACqEJ9xCQAbYcaZCHecgTiOIxHhOAKRjkch0LCFKosx5gUiz1vo9IFDHgAAAABJRU5ErkJggg==);
+    this.textures.addBase64('obs', 'data:image/png;base64,' + iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAAcklEQVR4nO3XTQoAIQiA0Q43Z+ksnWXO0p2KdjIwmot+hE+QFoo+3JUSETnqU9qJVEEWzAOfnWVeqOV3S05dCBAgQKtB49WGWHVPr9wZ50KAAAECBOgDGq82xKp7euXOOBcCBAjQapCEXfOV3p2/ICJCdJQHKmM4qHJOAAAAAElFTkSuQmCC);
+    this.textures.addBase64('coin', 'data:image/png;base64,' + iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAa0lEQVR4nN2VwQ0AIAgD2X8ex3AO19AFFCxUoprwM3c2BBS57fQqnQ606hjYLdIgrQQlK+iqIAkCtkSmAIHPJNTXb6WIws0UbwtY8BTJpz1ImYPjkxxN4V541G2qSWj/wY4kDEdFLrAmRO4P+/z180rMxawAAAAASUVORK5CYII=);
   },
   create: function(){
     this.scene.start("S_Menu");
@@ -31,7 +31,7 @@ var S_Menu = {
   create: function(){
     var me = this;
     var cx = GW / 2, cy = GH / 2;
-    me.add.text(cx, cy - 120, "🐱 CAT ESCAPE!", {fontSize: "32px", fill: "#ffaa33", fontStyle: "bold"}).setOrigin(0.5);
+    me.add.text(cx, cy - 120, "\u{1F431} CAT ESCAPE!", {fontSize: "32px", fill: "#ffaa33", fontStyle: "bold"}).setOrigin(0.5);
     me.add.text(cx, cy - 55, "Dodge the flying slippers!", {fontSize: "12px", fill: "#8899aa"}).setOrigin(0.5);
     
     function btn(x, y, txt, col, fn){
