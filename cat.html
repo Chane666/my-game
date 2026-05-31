@@ -21,14 +21,18 @@ var S_Boot={
     // Cat player: orange circle body + triangle ears
     g.fillStyle(0xff8833);
     g.fillCircle(16,16,14);
-    g.fillTriangle(8,6,14,2,20,10);  // left ear
-    g.fillTriangle(12,10,18,2,24,6); // right ear
+    g.fillTriangle(8,6,14,2,20,10);
+    g.fillTriangle(12,10,18,2,24,6);
     g.generateTexture("player",32,32);
     g.clear();
+    // Pink slipper obstacle
     g.fillStyle(0xff66aa);
-    g.fillRoundedRect(4,4,28,28,6);
+    g.fillRect(6,6,24,24);
+    g.lineStyle(2,0xcc4488);
+    g.strokeRoundedRect(6,6,24,24,4);
     g.generateTexture("obs",36,36);
     g.clear();
+    // Gold coin
     g.fillStyle(0xffcc00);
     g.fillCircle(12,12,10);
     g.generateTexture("coin",24,24);
@@ -123,7 +127,7 @@ function doGO(sc){
   sc.add.text(GW/2,GH/2+66,"RETRY",{fontSize:"14px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
   sc.add.zone(GW/2,GH/2+66,110,32).setInteractive({useHandCursor:true}).on("pointerdown",function(){sc.scene.restart()});
 }
-new Phaser.Game({width:GW,height:GH,parent:"gw",backgroundColor:"#050510",scene:[S_Boot,S_Menu,S_Records,S_Play],physics:{default:"arcade",arcade:{debug:false}}});
+new Phaser.Game({width:GW,height:GH,parent:"gw",backgroundColor:"#120822",scene:[S_Boot,S_Menu,S_Records,S_Play],physics:{default:"arcade",arcade:{debug:false,gravity:{y:0}}}});
 </script>
 </body>
 </html>
