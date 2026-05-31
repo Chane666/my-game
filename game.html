@@ -18,41 +18,45 @@ canvas{display:block}
 <script>
 window.onerror=function(e){document.getElementById("err").innerText="ERROR: "+e};
 var GW=480,GH=720,BEST_KEY="dodgeMasterHS",REC_KEY="dodgeMasterRC";
-var gPlayer,gObs,gCoin;
 
-function makeTextures(game){
-  // player - green circle
-  var c=document.createElement("canvas");c.width=32;c.height=32;
-  var x=c.getContext("2d");x.fillStyle="#00ff88";x.beginPath();x.arc(16,16,14,0,Math.PI*2);x.fill();
-  game.textures.addCanvas("player",c);
-  // obstacle - red rounded rect
-  var c2=document.createElement("canvas");c2.width=36;c2.height=36;
-  var x2=c2.getContext("2d");x2.fillStyle="#ff3344";x2.beginPath();
-  x2.moveTo(8,4);x2.lineTo(28,4);x2.quadraticCurveTo(34,4,34,10);x2.lineTo(34,26);x2.quadraticCurveTo(34,32,28,32);x2.lineTo(8,32);x2.quadraticCurveTo(2,32,2,26);x2.lineTo(2,10);x2.quadraticCurveTo(2,4,8,4);x2.fill();
-  game.textures.addCanvas("obs",c2);
-  // coin - yellow circle
-  var c3=document.createElement("canvas");c3.width=24;c3.height=24;
-  var x3=c3.getContext("2d");x3.fillStyle="#ffcc00";x3.beginPath();x3.arc(12,12,10,0,Math.PI*2);x3.fill();
-  game.textures.addCanvas("coin",c3);
+// Pre-generate textures using raw data (most compatible method)
+function genTex(game,key,w,h,drawFn){
+  var c=document.createElement("canvas");c.width=w;c.height=h;
+  drawFn(c.getContext("2d"));
+  game.textures.addCanvas(key,c);
 }
 
 var S_Menu={
-  init:function(){if(!this.textures.exists("player"))makeTextures(this)},
+  preload:function(){
+    // Generate all textures in preload - safest place
+    genTex(this,"player",32,32,function(x){
+      x.fillStyle="#00ff88";x.beginPath();x.arc(16,16,14,0,Math.PI*2);x.fill();
+    });
+    genTex(this,"obs",36,36,function(x){
+      x.fillStyle="#ff3344";x.fillRect(6,6,24,24);
+    });
+    genTex(this,"coin",24,24,function(x){
+      x.fillStyle="#ffcc00";x.beginPath();x.arc(12,12,10,0,Math.PI*2);x.fill();
+    });
+  },
   create:function(){
     var me=this;var cx=GW/2,cy=GH/2;
-    me.add.text(cx,cy-120,"DODGE MASTER",{fontSize:"36px",fill:"#00ff88",fontStyle:"bold"}).setOrigin(0.5);
-    me.add.text(cx,cy-55,"v8 - simple",{fontSize:"12px",fill:"#667788"}).setOrigin(0.5);
+    me.add.text(cx,cy-120,"DODGE MASTER",{fontSize:"38px",fill:"#00ff88",fontStyle:"bold"}).setOrigin(0.5);
+    me.add.text(cx,cy-60," Dodge the red blocks!",{fontSize:"14px",fill:"#667788"}).setOrigin(0.5);
     function btn(x,y,txt,col,fn){
-      var bg=me.add.graphics();bg.fillStyle(col,1);bg.fillRoundedRect(x-70,y-14,140,30,12);
-      me.add.text(x,y,txt,{fontSize:"14px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
-      me.add.zone(x,y,140,30).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.time.delayedCall(100,fn)});
+      var bg=me.add.graphics();bg.fillStyle(col,1);bg.fillRoundedRect(x-80,y-18,160,36,12);
+      me.add.text(x,y,txt,{fontSize:"16px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
+      me.add.zone(x,y,160,36).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.time.delayedCall(100,fn)});
     }
-    btn(cx,cy+20,"START GAME",0x00ff88,function(){me.scene.start("S_Play")});
-    btn(cx,cy+65,"RECORDS",0xffcc00,function(){me.scene.start("S_Records")});
-    btn(cx,cy+110,"SHARE",0x5588ff,function(){
+    btn(cx,cy+20,"START GAME",0x00cc66,function(){me.scene.start("S_Play")});
+    btn(cx,cy+75,"RECORDS",0xeebb00,function(){me.scene.start("S_Records")});
+    btn(cx,cy+130,"SHARE",0x4488ff,function(){
       var u=window.location.href;
       if(navigator.share)navigator.share({title:"Dodge Master",url:u});
-      else if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){me.add.text(cx,cy+150,"LINK COPIED!",{fontSize:"12px",fill:"#00ff88"}).setOrigin(0.5)});
+      else if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){
+        me.add.text(cx,cy+185,"LINK COPIED!",{fontSize:"13px",fill:"#00ff88"}).setOrigin(0.5);
+        me.time.delayedCall(2000,function(){me.children.each(function(c){if(c.text==="LINK COPIED!")c.destroy()})});
+      });
       else prompt("Copy this link:",u);
     });
   }
@@ -60,15 +64,16 @@ var S_Menu={
 var S_Records={
   create:function(){
     var me=this;
-    me.add.rectangle(GW/2,GH/2,280,360,0x0a1a2e);
-    me.add.text(GW/2,GH/2-140,"RECORDS",{fontSize:"20px",fill:"#ffcc00",fontStyle:"bold"}).setOrigin(0.5);
-    try{var r=JSON.parse(localStorage.getItem(REC_KEY))||[];
-      if(r.length===0)me.add.text(GW/2,GH/2,"No records",{fontSize:"14px",fill:"#556677"}).setOrigin(0.5);
-      else for(var i=0;i<r.length;i++)me.add.text(GW/2,GH/2-80+i*35,(i+1)+". "+r[i].s+" pts",{fontSize:"14px",fill:"#00ff88"}).setOrigin(0.5);
-    }catch(e){me.add.text(GW/2,GH/2,"No records",{fontSize:"14px",fill:"#556677"}).setOrigin(0.5)}
-    var bg=me.add.graphics();bg.fillStyle(0xff4444,1);bg.fillRoundedRect(GW/2-50,GH/2+140,100,32,12);
-    me.add.text(GW/2,GH/2+156,"BACK",{fontSize:"14px",fill:"#fff"}).setOrigin(0.5);
-    me.add.zone(GW/2,GH/2+156,100,32).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.scene.start("S_Menu")});
+    me.add.rectangle(GW/2,GH/2,300,380,0x0a1a2e);
+    me.add.text(GW/2,GH/2-150,"RECORDS",{fontSize:"22px",fill:"#ffcc00",fontStyle:"bold"}).setOrigin(0.5);
+    try{
+      var r=JSON.parse(localStorage.getItem(REC_KEY))||[];
+      if(r.length===0)me.add.text(GW/2,GH/2,"No records yet\nPlay to set one!",{fontSize:"15px",fill:"#556677",align:"center"}).setOrigin(0.5);
+      else for(var i=0;i<r.length;i++)me.add.text(GW/2,GH/2-90+i*35,(i+1)+". "+r[i].s+" pts",{fontSize:"16px",fill:"#00ff88"}).setOrigin(0.5);
+    }catch(e){me.add.text(GW/2,GH/2,"No records",{fontSize:"15px",fill:"#556677"}).setOrigin(0.5)}
+    var bg=me.add.graphics();bg.fillStyle(0xff4444,1);bg.fillRoundedRect(GW/2-55,GH/2+145,110,36,12);
+    me.add.text(GW/2,GH/2+163,"BACK",{fontSize:"15px",fill:"#fff",fontStyle:"bold"}).setOrigin(0.5);
+    me.add.zone(GW/2,GH/2+163,110,36).setInteractive({useHandCursor:true}).on("pointerdown",function(){me.scene.start("S_Menu")});
   }
 };
 var S_Play={
@@ -78,46 +83,61 @@ var S_Play={
     me.physics.world.setBounds(0,0,GW,GH);
     me.player=me.physics.add.sprite(GW/2,GH-80,"player");
     me.player.setCollideWorldBounds(true);me.player.body.setCircle(14);
-    me.scoreT=me.add.text(10,8,"SCORE: 0",{fontSize:"13px",fill:"#aabbcc"});
-    me.timer=me.time.addEvent({delay:1000,callback:function(){me.score++;me.scoreT.setText("SCORE: "+me.score)},loop:true});
-    me.time.delayedCall(800,function spawn(){
+    me.scoreT=me.add.text(10,8,"SCORE: 0 | LIVES: 3",{fontSize:"13px",fill:"#aabbcc"});
+    me.timer=me.time.addEvent({delay:1000,callback:function(){me.score++;me.scoreT.setText("SCORE: "+me.score+" | LIVES: "+me.lives)},loop:true});
+    function spawn(){
       if(me.gameOver)return;
       var x=Phaser.Math.Between(30,GW-30);
-      var o=me.physics.add.sprite(x,-20,"obs");o.setVelocityY(me.speed);
+      var o=me.physics.add.sprite(x,-25,"obs");o.setVelocityY(me.speed);
       me.obs.push(o);
-      me.time.delayedCall(900,spawn);
-    });
+      me.time.delayedCall(800,spawn);
+    }
+    me.time.delayedCall(800,spawn);
   },
   update:function(){
     if(this.gameOver)return;var me=this;
     if(me.input.keyboard){
       var k=me.input.keyboard.createCursorKeys();
-      if(k.left.isDown)me.player.x-=4;
-      if(k.right.isDown)me.player.x+=4;
+      if(k.left.isDown)me.player.x-=5;
+      if(k.right.isDown)me.player.x+=5;
       me.player.x=Phaser.Math.Clamp(me.player.x,16,GW-16);
     }
     for(var i=me.obs.length-1;i>=0;i--){
       var o=me.obs[i];if(!o.active)continue;
       if(Phaser.Math.Distance.Between(me.player.x,me.player.y,o.x,o.y)<26){
         me.lives--;o.destroy();me.obs.splice(i,1);
+        me.scoreT.setText("SCORE: "+me.score+" | LIVES: "+me.lives);
         if(me.lives<=0){doGO(me)}return;
       }
-      if(o.y>GH+20){o.destroy();me.obs.splice(i,1)}
+      if(o.y>GH+30){o.destroy();me.obs.splice(i,1)}
     }
   }
 };
 function doGO(sc){
   sc.gameOver=true;sc.physics.pause();
-  sc.add.rectangle(GW/2,GH/2,240,200,0x0a1a2e);
-  sc.add.text(GW/2,GH/2-50,"GAME OVER",{fontSize:"22px",fill:"#ff3344",fontStyle:"bold"}).setOrigin(0.5);
-  sc.add.text(GW/2,GH/2,"SCORE: "+sc.score,{fontSize:"18px",fill:"#fff"}).setOrigin(0.5);
-  var bg=sc.add.graphics();bg.fillStyle(0x00ff88,1);bg.fillRoundedRect(GW/2-55,GH/2+50,110,32,12);
-  sc.add.text(GW/2,GH/2+66,"RETRY",{fontSize:"14px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
-  sc.add.zone(GW/2,GH/2+66,110,32).setInteractive({useHandCursor:true}).on("pointerdown",function(){sc.scene.restart()});
+  sc.add.rectangle(GW/2,GH/2,260,220,0x0a1a2e);
+  sc.add.text(GW/2,GH/2-65,"GAME OVER",{fontSize:"26px",fill:"#ff3344",fontStyle:"bold"}).setOrigin(0.5);
+  sc.add.text(GW/2,GH/2-15,"Score: "+sc.score,{fontSize:"20px",fill:"#fff"}).setOrigin(0.5);
+  // Save record
+  try{
+    var r=JSON.parse(localStorage.getItem(REC_KEY))||[];
+    r.push({s:sc.score,t:new Date().toLocaleString()});
+    r.sort(function(a,b){return b.s-a.s});
+    r=r.slice(0,10);
+    localStorage.setItem(REC_KEY,JSON.stringify(r));
+    var hs=localStorage.getItem(BEST_KEY)||0;
+    if(sc.score>hs)localStorage.setItem(BEST_KEY,String(sc.score));
+  }catch(e){}
+  var bg=sc.add.graphics();bg.fillStyle(0x00cc66,1);bg.fillRoundedRect(GW/2-60,GH/2+45,120,40,12);
+  sc.add.text(GW/2,GH/2+67,"RETRY",{fontSize:"17px",fill:"#000",fontStyle:"bold"}).setOrigin(0.5);
+  sc.add.zone(GW/2,GH/2+67,120,40).setInteractive({useHandCursor:true}).on("pointerdown",function(){sc.scene.restart()});
+  var bg2=sc.add.graphics();bg.fillStyle(0x5588ff,1);bg2.fillRoundedRect(GW/2-60,GH/2+95,120,36,12);
+  sc.add.text(GW/2,GH/2+115,"MENU",{fontSize:"15px",fill:"#fff",fontStyle:"bold"}).setOrigin(0.5);
+  sc.add.zone(GW/2,GH/2+115,120,36).setInteractive({useHandCursor:true}).on("pointerdown",function(){sc.scene.start("S_Menu")});
 }
 try{
   new Phaser.Game({width:GW,height:GH,parent:"gw",backgroundColor:"#050510",scene:[S_Menu,S_Records,S_Play],physics:{default:"arcade",arcade:{debug:false}}});
-}catch(e){document.getElementById("err").innerText="Phaser init error: "+e}
+}catch(e){document.getElementById("err").innerText="Phaser error: "+e}
 </script>
 </body>
 </html>
