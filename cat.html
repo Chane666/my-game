@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>🐱 Cat Escape! - UI Improved</title>
+<title>🐱 Cat Escape! - v22 Phase 1</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -25,9 +25,11 @@ canvas{display:block; border-radius: 12px; box-shadow: 0 0 30px rgba(255,170,51,
 var GW = 480, GH = 720;
 
 // ============================================================
-//  🐱 Cat Escape! v21 - UI Improved Edition
-//  ✅ FIXED: Use correct generateTexture() method
-//  🎨 IMPROVED: Better UI design and visual effects
+//  🐱 Cat Escape! v22 - Phase 1 Edition
+//  ✅ Combo Bug Fix
+//  ✅ Close Call Feedback (险些碰撞反馈)
+//  ✅ Coin Flash Effect (金币收集闪光)
+//  ✅ Vibration Feedback (移动端振动)
 // ============================================================
 
 var S_Boot = {
@@ -35,30 +37,20 @@ var S_Boot = {
   preload: function(){
     var g = this.add.graphics();
     
-    // ====== PLAYER: 橙色猫咪（仅使用已验证安全的API） ======
-    // 身体（圆形）
+    // ====== PLAYER: 橙色猫咪 ======
     g.fillStyle(0xff9933);
     g.fillCircle(16, 18, 12);
-    
-    // 左耳（小圆形模拟）
     g.fillStyle(0xff8833);
     g.fillCircle(8, 7, 5);
-    
-    // 右耳
     g.fillCircle(24, 7, 5);
-    
-    // 眼睛
     g.fillStyle(0xffffff);
     g.fillCircle(11, 16, 3);
     g.fillCircle(21, 16, 3);
     g.fillStyle(0x222222);
     g.fillCircle(11, 16, 1.5);
     g.fillCircle(21, 16, 1.5);
-    
-    // 鼻子
     g.fillStyle(0xff6688);
     g.fillRect(15, 20, 2, 2);
-    
     g.generateTexture("player", 32, 36);
     g.clear();
     
@@ -70,24 +62,16 @@ var S_Boot = {
     g.generateTexture("obs", 36, 36);
     g.clear();
     
-    // ====== COIN: 金色硬币（改进版） ======
-    // 外圈
+    // ====== COIN: 金色硬币 ======
     g.fillStyle(0xffaa00);
     g.fillCircle(12, 12, 10);
-    
-    // 内圈
     g.fillStyle(0xffcc00);
     g.fillCircle(12, 12, 7);
-    
-    // 高光
     g.fillStyle(0xffee55);
     g.fillCircle(9, 9, 2);
-    
-    // 符号
     g.fillStyle(0xff8800);
     g.fillRect(11, 8, 2, 8);
     g.fillRect(8, 11, 8, 2);
-    
     g.generateTexture("coin", 24, 24);
     g.clear();
     
@@ -99,17 +83,35 @@ var S_Boot = {
   }
 };
 
+// ====== 振动工具函数 ======
+function vibrate(pattern){
+  if(navigator.vibrate){
+    try{ navigator.vibrate(pattern); }catch(e){}
+  }
+}
+
+// ====== 屏幕闪光效果 ======
+function screenFlash(scene, color, alpha, duration){
+  var flash = scene.add.graphics();
+  flash.fillStyle(color, alpha);
+  flash.fillRect(0, 0, GW, GH);
+  scene.tweens.add({
+    targets: flash,
+    alpha: 0,
+    duration: duration,
+    onComplete: function(){ flash.destroy(); }
+  });
+}
+
 var S_Menu = {
   key: "S_Menu",
   create: function(){
     var me = this;
     var cx = GW / 2, cy = GH / 2;
     
-    // 背景装饰
     me.add.graphics().fillStyle(0x120822).fillRect(0, 0, GW, GH);
     
-    // 标题：带描边和阴影
-    var title = me.add.text(cx, cy - 140, "🐱 Cat Escape!", {
+    me.add.text(cx, cy - 140, "🐱 Cat Escape!", {
       fontSize: "36px",
       fill: "#ffaa33",
       fontStyle: "bold",
@@ -118,24 +120,19 @@ var S_Menu = {
       shadow: { offsetX: 2, offsetY: 2, color: "#000", blur: 4, fill: true }
     }).setOrigin(0.5);
     
-    // 副标题
     me.add.text(cx, cy - 75, "Help the cat dodge flying slippers!", {
       fontSize: "14px",
       fill: "#aabbcc",
       align: "center"
     }).setOrigin(0.5);
     
-    // 装饰：左右两旁的猫咪图标
-    me.add.text(cx - 120, cy - 140, "🐾", {fontSize: "24px"}).setOrigin(0.5);
-    me.add.text(cx + 120, cy - 140, "🐾", {fontSize: "24px"}).setOrigin(0.5);
+    me.add.text(cx - 120, cy - 140, "🐾", {fontSize:"24px"}).setOrigin(0.5);
+    me.add.text(cx + 120, cy - 140, "🐾", {fontSize:"24px"}).setOrigin(0.5);
     
-    // 按钮函数（改进版：带悬停效果）
     function btn(x, y, txt, col, fn){
       var bg = me.add.graphics();
       bg.fillStyle(col);
       bg.fillRoundedRect(x - 75, y - 16, 150, 34, 14);
-      
-      // 高光效果
       bg.fillStyle(0xffffff, 0.2);
       bg.fillRoundedRect(x - 73, y - 14, 146, 14, 12);
       
@@ -147,7 +144,7 @@ var S_Menu = {
         strokeThickness: 2
       }).setOrigin(0.5);
       
-      var zone = me.add.zone(x, y, 150, 34).setInteractive({useHandCursor: true});
+      var zone = me.add.zone(x, y, 150, 34).setInteractive({useHandCursor:true});
       
       zone.on("pointerover", function(){
         bg.clear();
@@ -169,95 +166,67 @@ var S_Menu = {
       
       zone.on("pointerdown", function(){
         label.setScale(0.95);
+        vibrate(20);
         me.time.delayedCall(100, fn);
       });
     }
     
-    // 按钮
     btn(cx, cy + 10, "🎮 START GAME", 0x00cc66, function(){ me.scene.start("S_Play"); });
     btn(cx, cy + 60, "🏆 RECORDS", 0xffaa00, function(){ me.scene.start("S_Records"); });
     btn(cx, cy + 110, "📤 SHARE", 0x4488ff, function(){
       var url = window.location.href;
-      if(navigator.share){ navigator.share({title: "🐱 Cat Escape!", url: url}); }
-      else if(navigator.clipboard){ navigator.clipboard.writeText(url); me.showToast("Link copied!"); }
-      else { me.showToast("Share: " + url); }
+      if(navigator.share){ navigator.share({title:"🐱 Cat Escape!", url:url}); }
+      else if(navigator.clipboard){ navigator.clipboard.writeText(url); showToast(me,"Link copied!"); }
+      else { showToast(me,"Share: "+url); }
     });
     
-    // 版本信息
-    me.add.text(GW - 10, GH - 10, "v21 UI Improved", {
-      fontSize: "10px",
-      fill: "#556677"
-    }).setOrigin(1, 1);
+    me.add.text(GW-10, GH-10, "v22 Phase 1", {fontSize:"10px", fill:"#556677"}).setOrigin(1,1);
   },
   
-  // Toast提示
   showToast: function(msg){
-    var me = this;
-    var toast = me.add.text(GW/2, GH - 50, msg, {
-      fontSize: "14px",
-      fill: "#ffffff",
-      backgroundColor: "#000000",
-      padding: { x: 10, y: 5 }
+    var toast = this.add.text(GW/2, GH-50, msg, {
+      fontSize:"14px", fill:"#ffffff", backgroundColor:"#000000", padding:{x:10,y:5}
     }).setOrigin(0.5);
-    
-    me.tweens.add({
-      targets: toast,
-      alpha: 0,
-      duration: 2000,
-      ease: "Power2",
-      onComplete: function(){ toast.destroy(); }
-    });
+    this.tweens.add({targets:toast, alpha:0, duration:2000, ease:"Power2", onComplete:function(){toast.destroy();}});
   }
 };
+
+function showToast(scene, msg){
+  var toast = scene.add.text(GW/2, GH-50, msg, {
+    fontSize:"14px", fill:"#ffffff", backgroundColor:"#000000", padding:{x:10,y:5}
+  }).setOrigin(0.5);
+  scene.tweens.add({targets:toast, alpha:0, duration:2000, ease:"Power2", onComplete:function(){toast.destroy();}});
+}
 
 var S_Records = {
   key: "S_Records",
   create: function(){
     var me = this;
+    me.add.graphics().fillStyle(0x0a1a2e).fillRoundedRect(GW/2-140, GH/2-180, 280, 360, 20);
     
-    // 背景
-    me.add.graphics().fillStyle(0x0a1a2e).fillRoundedRect(GW/2 - 140, GH/2 - 180, 280, 360, 20);
-    
-    // 标题
-    me.add.text(GW/2, GH/2 - 150, "🏆 RECORDS", {
-      fontSize: "24px",
-      fill: "#ffaa00",
-      fontStyle: "bold",
-      stroke: "#cc8800",
-      strokeThickness: 3
+    me.add.text(GW/2, GH/2-150, "🏆 RECORDS", {
+      fontSize:"24px", fill:"#ffaa00", fontStyle:"bold", stroke:"#cc8800", strokeThickness:3
     }).setOrigin(0.5);
     
-    // 读取记录
     try{
       var r = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
-      
       if(r.length === 0){
         me.add.text(GW/2, GH/2, "No records yet!\nPlay a game to set a record!", {
-          fontSize: "14px",
-          fill: "#8899aa",
-          align: "center"
+          fontSize:"14px", fill:"#8899aa", align:"center"
         }).setOrigin(0.5);
-      }
-      else {
+      }else{
         for(var i = 0; i < r.length && i < 5; i++){
-          var icon = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i+1) + ".";
-          me.add.text(GW/2, GH/2 - 80 + i * 40, icon + "  " + r[i].s + " pts", {
-            fontSize: "16px",
-            fill: i === 0 ? "#ffcc00" : "#00ff88",
-            fontStyle: i === 0 ? "bold" : "normal"
+          var icon = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
+          me.add.text(GW/2, GH/2-80+i*40, icon+"  "+r[i].s+" pts", {
+            fontSize:"16px", fill:i===0?"#ffcc00":"#00ff88", fontStyle:i===0?"bold":"normal"
           }).setOrigin(0.5);
         }
       }
-    }
-    catch(e){
-      me.add.text(GW/2, GH/2, "Error loading records", {
-        fontSize: "14px",
-        fill: "#ff4444"
-      }).setOrigin(0.5);
+    }catch(e){
+      me.add.text(GW/2, GH/2, "Error loading records", {fontSize:"14px", fill:"#ff4444"}).setOrigin(0.5);
     }
     
-    // 返回按钮
-    btn(me, GW/2, GH/2 + 150, "← BACK", 0xff4444, function(){ me.scene.start("S_Menu"); });
+    btn(me, GW/2, GH/2+150, "← BACK", 0xff4444, function(){ me.scene.start("S_Menu"); });
   }
 };
 
@@ -270,42 +239,46 @@ var S_Play = {
     this.obsList = [];
     this.coinList = [];
     this.gameOver = false;
+    // 🔧 FIX: combo 现在基于连续收集金币计数，不再用分数小数位
     this.combo = 0;
+    this.lastCoinTime = 0;
+    this.closeCallCooldown = 0;
+    this.invincible = false;
   },
   
   create: function(){
     var me = this;
     
-    // 背景：纯色
-    var bg = me.add.graphics();
-    bg.fillStyle(0x120822);
-    bg.fillRect(0, 0, GW, GH);
+    // 背景
+    me.bgGraphic = me.add.graphics();
+    me.bgGraphic.fillStyle(0x120822).fillRect(0, 0, GW, GH);
     
     // 玩家
-    me.player = me.physics.add.sprite(GW/2, GH - 100, "player");
+    me.player = me.physics.add.sprite(GW/2, GH-100, "player");
     me.player.setCollideWorldBounds(true);
     me.player.setScale(1.2);
+    me.player.setDepth(10);
     
     // HUD
     me.scoreText = me.add.text(16, 16, "Score: 0", {
-      fontSize: "18px",
-      fill: "#ffffff",
-      stroke: "#000000",
-      strokeThickness: 3
+      fontSize:"18px", fill:"#ffffff", stroke:"#000000", strokeThickness:3
     });
     
-    me.livesText = me.add.text(GW - 16, 16, "❤❤❤", {
-      fontSize: "18px",
-      fill: "#ff4444"
+    me.livesText = me.add.text(GW-16, 16, "❤❤❤", {
+      fontSize:"18px", fill:"#ff4444"
     }).setOrigin(1, 0);
     
     me.comboText = me.add.text(GW/2, 50, "", {
-      fontSize: "16px",
-      fill: "#ffcc00",
-      fontStyle: "bold"
-    }).setOrigin(0.5);
+      fontSize:"18px", fill:"#ffcc00", fontStyle:"bold"
+    }).setOrigin(0.5).setDepth(20);
     
-    // 障碍物组
+    // Close Call 提示文字
+    me.closeCallText = me.add.text(GW/2, GH/2 - 80, "", {
+      fontSize:"28px", fill:"#00ffff", fontStyle:"bold",
+      stroke:"#008888", strokeThickness:3
+    }).setOrigin(0.5).setDepth(20).setAlpha(0);
+    
+    // 障碍物组 / 金币组
     me.obsGroup = me.physics.add.group();
     me.coinGroup = me.physics.add.group();
     
@@ -315,17 +288,10 @@ var S_Play = {
     
     // 定时器
     me.obsTimer = me.time.addEvent({
-      delay: 1000,
-      callback: spawnObstacle,
-      callbackScope: me,
-      loop: true
+      delay: 1000, callback: spawnObstacle, callbackScope: me, loop: true
     });
-    
     me.coinTimer = me.time.addEvent({
-      delay: 1500,
-      callback: spawnCoin,
-      callbackScope: me,
-      loop: true
+      delay: 1500, callback: spawnCoin, callbackScope: me, loop: true
     });
     
     // 键盘控制
@@ -333,14 +299,10 @@ var S_Play = {
     
     // 触摸控制
     me.input.on("pointermove", function(pointer){
-      if(!me.gameOver){
-        me.player.x = Phaser.Math.Clamp(pointer.x, 16, GW - 16);
+      if(!me.gameOver && !me.invincible){
+        me.player.x = Phaser.Math.Clamp(pointer.x, 16, GW-16);
       }
     });
-    
-    // 音效（可选）
-    // me.coinSound = me.sound.add('coin');
-    // me.hitSound = me.sound.add('hit');
   },
   
   update: function(){
@@ -352,22 +314,47 @@ var S_Play = {
     else if(me.cursors.right.isDown){ me.player.setVelocityX(180); }
     else { me.player.setVelocityX(0); }
     
-    // 分数递增
+    // 分数递增（存活时间）
     me.score += 0.02;
     me.scoreText.setText("Score: " + Math.floor(me.score));
     
-    // 连击计数
-    if(me.score - Math.floor(me.score) < 0.02){
-      me.combo++;
-      if(me.combo >= 10){
-        me.comboText.setText("🔥 COMBO x" + me.combo + "!");
-        me.time.delayedCall(500, function(){ me.comboText.setText(""); });
-      }
+    // 🔧 COMBO FIX: 基于连续收集金币，2秒内不收集则重置
+    if(me.combo > 0 && me.time.now - me.lastCoinTime > 2000){
+      me.combo = 0;
+      me.comboText.setText("");
     }
     
-    // 加速
-    if(me.score > 0 && Math.floor(me.score) % 100 === 0){
-      me.speed = Math.min(me.speed + 5, 400);
+    // Close Call 冷却递减
+    if(me.closeCallCooldown > 0){
+      me.closeCallCooldown -= me.game.loop.delta;
+    }
+    
+    // 难度渐进加速
+    var newSpeed = 120 + Math.floor(me.score / 50) * 8;
+    newSpeed = Math.min(newSpeed, 450);
+    if(newSpeed !== me.speed){
+      me.speed = newSpeed;
+      // 更新已有障碍物速度
+      me.obsGroup.getChildren().forEach(function(o){ o.setVelocityY(me.speed); });
+      me.coinGroup.getChildren().forEach(function(c){ c.setVelocityY(me.speed * 0.7); });
+    }
+    
+    // ⭐ Close Call 检测：每帧检查玩家与障碍物的距离
+    if(!me.invincible && me.closeCallCooldown <= 0){
+      var px = me.player.x, py = me.player.y;
+      var closeCallDist = 35; // 险些碰撞的判定距离
+      
+      me.obsGroup.getChildren().forEach(function(obs){
+        var dx = px - obs.x;
+        var dy = py - obs.y;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if(dist < closeCallDist && dist > 22){ // >22 避免与实际碰撞重叠
+          triggerCloseCall(me);
+          me.closeCallCooldown = 800; // 800ms冷却
+          return false; // 每帧只触发一次
+        }
+      });
     }
   }
 };
@@ -378,127 +365,187 @@ var S_GameOver = {
     var me = this;
     var finalScore = Math.floor(me.scene.settings.data.score) || 0;
     
-    // 背景遮罩
     me.add.graphics().fillStyle(0x000000, 0.8).fillRect(0, 0, GW, GH);
+    me.add.graphics().fillStyle(0x1a1a2e).fillRoundedRect(GW/2-120, GH/2-160, 240, 320, 20);
     
-    // Game Over 面板
-    me.add.graphics().fillStyle(0x1a1a2e).fillRoundedRect(GW/2 - 120, GH/2 - 160, 240, 320, 20);
-    
-    // 标题
-    me.add.text(GW/2, GH/2 - 120, "💀 GAME OVER", {
-      fontSize: "28px",
-      fill: "#ff4444",
-      fontStyle: "bold",
-      stroke: "#000000",
-      strokeThickness: 4
+    me.add.text(GW/2, GH/2-120, "💀 GAME OVER", {
+      fontSize:"28px", fill:"#ff4444", fontStyle:"bold", stroke:"#000000", strokeThickness:4
     }).setOrigin(0.5);
     
-    // 分数
-    me.add.text(GW/2, GH/2 - 60, "Score: " + finalScore, {
-      fontSize: "22px",
-      fill: "#ffcc00",
-      fontStyle: "bold"
+    me.add.text(GW/2, GH/2-60, "Score: " + finalScore, {
+      fontSize:"22px", fill:"#ffcc00", fontStyle:"bold"
     }).setOrigin(0.5);
     
-    // 最高分
     try{
       var r = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
       var best = r.length > 0 ? r[0].s : 0;
-      me.add.text(GW/2, GH/2 - 20, "Best: " + best, {
-        fontSize: "16px",
-        fill: "#00ff88"
+      me.add.text(GW/2, GH/2-20, "Best: " + best, {
+        fontSize:"16px", fill:"#00ff88"
       }).setOrigin(0.5);
-    } catch(e) {}
+    } catch(e){}
     
-    // 按钮
-    btn(me, GW/2, GH/2 + 40, "🔄 RETRY", 0x00cc66, function(){ me.scene.start("S_Play"); });
-    btn(me, GW/2, GH/2 + 90, "🏠 MENU", 0x4488ff, function(){ me.scene.start("S_Menu"); });
+    // 显示本次最大连击
+    var maxCombo = me.scene.settings.data.maxCombo || 0;
+    if(maxCombo >= 3){
+      me.add.text(GW/2, GH/2+15, "Max Combo: x" + maxCombo, {
+        fontSize:"16px", fill:"#ff66aa", fontStyle:"bold"
+      }).setOrigin(0.5);
+    }
     
-    // 保存记录
+    btn(me, GW/2, GH/2+50, "🔄 RETRY", 0x00cc66, function(){ me.scene.start("S_Play"); });
+    btn(me, GW/2, GH/2+100, "🏠 MENU", 0x4488ff, function(){ me.scene.start("S_Menu"); });
+    
     try{
       var rc = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
-      rc.push({s: finalScore, t: Date.now()});
-      rc.sort(function(a, b){ return b.s - a.s; });
+      rc.push({s:finalScore, t:Date.now(), c:maxCombo});
+      rc.sort(function(a,b){return b.s-a.s;});
       rc = rc.slice(0, 5);
       localStorage.setItem("catEscapeRC", JSON.stringify(rc));
     } catch(e){}
   }
 };
 
-// ====== 辅助函数 ======
+// ============================================================
+//  🎮 辅助函数
+// ============================================================
 
 function spawnObstacle(){
   var me = this;
   if(me.gameOver) return;
   
-  var x = Phaser.Math.Between(36, GW - 36);
+  var x = Phaser.Math.Between(36, GW-36);
   var obs = me.obsGroup.create(x, -36, "obs");
   obs.setVelocityY(me.speed);
-  obs.setAngularVelocity(Phaser.Math.Between(-50, 50));
-  me.obsList.push(obs);
+  obs.setAngularVelocity(Phaser.Math.Between(-60, 60));
 }
 
 function spawnCoin(){
   var me = this;
   if(me.gameOver) return;
   
-  var x = Phaser.Math.Between(36, GW - 36);
+  var x = Phaser.Math.Between(36, GW-36);
   var coin = me.coinGroup.create(x, -24, "coin");
   coin.setVelocityY(me.speed * 0.7);
-  coin.setAngularVelocity(100);
-  me.coinList.push(coin);
+  coin.setAngularVelocity(120);
 }
 
+// ⭐ Close Call 反馈系统
+function triggerCloseCall(me){
+  // 随机选择一个提示文字
+  var texts = ["⚡ CLOSE!", "😰 SO CLOSE!", "💨 PHew!", "✨ NICE!", "🔥 SKILL!"];
+  var txt = Phaser.Math.RND.pick(texts);
+  
+  me.closeCallText.setText(txt);
+  me.closeCallText.setAlpha(1);
+  me.closeCallText.setScale(0.5);
+  
+  // 弹出动画 + 渐隐
+  me.tweens.add({
+    targets: me.closeCallText,
+    scaleX: 1.3, scaleY: 1.3,
+    alpha: 0,
+    duration: 600,
+    ease: "Back.easeOut",
+    onComplete: function(){ me.closeCallText.setAlpha(0); me.closeCallText.setScale(1); }
+  });
+  
+  // 轻微屏幕边缘闪烁（青色）
+  screenFlash(me, 0x00ffff, 0.08, 200);
+  
+  // 轻振动
+  vibrate(15);
+  
+  // 加少量分数奖励
+  me.score += 2;
+}
+
+// 💥 碰撞障碍物
 function hitObstacle(player, obs){
   var me = player.scene;
-  if(me.gameOver) return;
+  if(me.gameOver || me.invincible) return;
   
   obs.destroy();
   me.lives--;
   me.combo = 0;
+  me.comboText.setText("");
   
   // 更新生命显示
   var hearts = "";
   for(var i = 0; i < me.lives; i++) hearts += "❤";
-  me.livesText.setText(hearts);
+  me.livesText.setText(hearts || "💀");
   
-  // 闪烁效果
-  me.player.setTint(0xff0000);
-  me.time.delayedCall(200, function(){ me.player.clearTint(); });
+  // 红色闪烁 + 屏幕闪红
+  player.setTint(0xff0000);
+  screenFlash(me, 0xff0000, 0.25, 250);
+  
+  // 强振动
+  vibrate([50, 30, 50]);
+  
+  me.time.delayedCall(200, function(){ player.clearTint(); });
+  
+  // 无敌时间（短暂保护）
+  me.invincible = true;
+  me.time.delayedCall(1000, function(){ me.invincible = false; });
   
   if(me.lives <= 0){
     me.gameOver = true;
-    me.scene.start("S_GameOver", {score: me.score});
+    me.scene.start("S_GameOver", {score: me.score, maxCombo: me.maxCombo || 0});
   }
 }
 
+// 🪙 收集金币（带屏幕闪光效果）
 function collectCoin(player, coin){
   var me = player.scene;
   if(me.gameOver) return;
   
   coin.destroy();
   me.score += 10;
-  me.combo++;
   
-  // 金币特效：用简单的缩放动画代替particles
-  var fx = me.add.text(coin.x, coin.y, "+10", {fontSize:"14px", fill:"#ffcc00", fontStyle:"bold"}).setOrigin(0.5);
-  me.tweens.add({targets:fx, y:coin.y-30, alpha:0, duration:400, onComplete:function(){fx.destroy();}});
+  // 🔧 COMBO FIX: 连击基于连续收集金币
+  me.combo++;
+  me.lastCoinTime = me.time.now;
+  if(!me.maxCombo || me.combo > me.maxCombo) me.maxCombo = me.combo;
+  
+  // 显示连击
+  if(me.combo >= 2){
+    me.comboText.setText("🔥 COMBO x" + me.combo + "!");
+    me.comboText.setScale(1 + Math.min(me.combo, 10) * 0.08);
+    me.tweens.add({targets:me.comboText, scale:1, duration:200});
+  }
+  
+  // ⭐ 金币收集屏幕闪光（金色）
+  screenFlash(me, 0xffcc00, 0.12, 200);
+  
+  // 振动反馈
+  vibrate(25);
+  
+  // +10 上飘文字特效
+  var fx = me.add.text(coin.x, coin.y, "+10", {
+    fontSize:(14 + Math.min(me.combo, 8))+"px", 
+    fill:me.combo>=5?"#ff3300":me.combo>=3?"#ff6600":"#ffcc00", 
+    fontStyle:"bold"
+  }).setOrigin(0.5).setDepth(25);
+  
+  me.tweens.add({
+    targets:fx, y:coin.y-40, alpha:0, 
+    duration:450, 
+    onComplete:function(){ fx.destroy(); }
+  });
 }
 
 function btn(scene, x, y, txt, col, fn){
   var bg = scene.add.graphics();
   bg.fillStyle(col);
-  bg.fillRoundedRect(x - 60, y - 14, 120, 30, 12);
+  bg.fillRoundedRect(x-60, y-14, 120, 30, 12);
   
   var label = scene.add.text(x, y, txt, {
-    fontSize: "14px",
-    fill: "#ffffff",
-    fontStyle: "bold"
+    fontSize:"14px", fill:"#ffffff", fontStyle:"bold"
   }).setOrigin(0.5);
   
-  var zone = scene.add.zone(x, y, 120, 30).setInteractive({useHandCursor: true});
-  
+  var zone = scene.add.zone(x, y, 120, 30).setInteractive({useHandCursor:true});
   zone.on("pointerdown", function(){
+    label.setScale(0.95);
+    vibrate(20);
     scene.time.delayedCall(100, fn);
   });
 }
