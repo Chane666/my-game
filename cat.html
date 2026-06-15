@@ -3,618 +3,543 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Cat Escape!</title>
+<title>🐱 Cat Escape! - UI Improved</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#120822;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;touch-action:none;font-family:'Segoe UI',Arial,sans-serif}
-canvas{display:block;max-width:100%;max-height:100%}
+body{
+  background: linear-gradient(135deg, #1a0533 0%, #120822 50%, #0a0415 100%);
+  display:flex;justify-content:center;align-items:center;
+  height:100vh;overflow:hidden;touch-action:none;
+  font-family: 'Arial', sans-serif;
+}
+canvas{display:block; border-radius: 12px; box-shadow: 0 0 30px rgba(255,170,51,0.3);}
 </style>
 </head>
 <body>
+
 <div id="gw"></div>
+
 <script src="./phaser.min.js"></script>
+
 <script>
-var W=480,H=720;
-var BK='dodgeMasterHS',RK='dodgeMasterRC';
+var GW = 480, GH = 720;
 
-/* ========== STORY INTRO - CHASE SCENE ========== */
-var StoryScene={
-  key:'Story',
-  create:function(){
-    var s=this,mx=W/2,my=H/2;
-    s.cameras.main.setBackgroundColor('#0e0620');
+// ============================================================
+//  🐱 Cat Escape! v21 - UI Improved Edition
+//  ✅ FIXED: Use correct generateTexture() method
+//  🎨 IMPROVED: Better UI design and visual effects
+// ============================================================
 
-    // === RUNNING TABBY CAT (center) ===
-    var catG=s.add.graphics();
-    // body base (orange)
-    catG.fillStyle(0xee7722,1);
-    catG.fillEllipse(42,52,58,40);
-    // dark stripes on body
-    catG.fillStyle(0xcc5500,0.7);
-    catG.fillRect(22,38,6,20);
-    catG.fillRect(34,32,5,24);
-    catG.fillRect(46,30,5,26);
-    catG.fillRect(58,35,6,20);
-    // belly (lighter)
-    catG.fillStyle(0xffbb66,0.85);
-    catG.fillEllipse(48,60,30,18);
-    // head base
-    catG.fillStyle(0xee7722,1);
-    catG.fillCircle(72,38,25);
-    // head stripes
-    catG.fillStyle(0xcc5500,0.65);
-    catG.fillRect(56,22,4,16);
-    catG.fillRect(66,18,4,18);
-    catG.fillRect(76,20,4,17);
-    catG.fillRect(86,25,4,14);
-    // forehead M shape
-    catG.lineStyle(2.5,0xcc5500,0.6);
-    catG.beginPath();catG.moveTo(62,22);catG.lineTo(68,28);catG.lineTo(72,23);catG.lineTo(76,28);catG.lineTo(82,22);catG.strokePath();
-    // ears
-    catG.fillStyle(0xee7722,1);
-    catG.fillTriangle(54,20,66,0,70,22);
-    catG.fillTriangle(84,18,90,0,94,21);
-    // inner ears (pink)
-    catG.fillStyle(0xff8899,1);
-    catG.fillTriangle(58,18,65,5,68,20);
-    catG.fillTriangle(86,16,89,5,92,19);
-    // face white area
-    catG.fillStyle(0xffeedd,0.9);
-    catG.fillEllipse(72,46,20,14);
-    // eyes (half-closed confident like the image)
-    catG.fillStyle(0xffffff,1);
-    catG.fillEllipse(62,36,10,7);catG.fillEllipse(82,36,10,7);
-    // pupils (looking to side)
-    catG.fillStyle(0x222222,1);
-    catG.fillCircle(66,37,3.5);catG.fillCircle(79,37,3.5);
-    // eye shine
-    catG.fillStyle(0xffffff,1);
-    catG.fillCircle(67,35.5,1.2);catG.fillCircle(80,35.5,1.2);
-    // nose
-    catG.fillStyle(0xff5577,1);
-    catG.fillTriangle(68,44,76,44,72,49);
-    // mouth (smirk)
-    catG.lineStyle(1.5,0xaa3344,1);
-    catG.beginPath();catG.moveTo(68,50);catG.lineTo(72,53);catG.lineTo(76,50);catG.strokePath();
-    // whiskers
-    catG.lineStyle(1.2,0xddccaa,0.55);
-    catG.beginPath();catG.moveTo(48,42);catG.lineTo(58,45);catG.strokePath();
-    catG.beginPath();catG.moveTo(46,48);catG.lineTo(58,50);catG.strokePath();
-    catG.beginPath();catG.moveTo(96,42);catG.lineTo(86,45);catG.strokePath();
-    catG.beginPath();catG.moveTo(98,48);catG.lineTo(86,50);catG.strokePath();
-    // tail (striped, curving up)
-    catG.lineStyle(6,0xee7722,1);
-    catG.beginPath();catG.moveTo(12,48);catG.lineTo(-2,28);catG.lineTo(6,10);catG.lineTo(18,-2);catG.strokePath();
-    // tail stripes
-    catG.lineStyle(3,0xcc5500,0.7);
-    catG.beginPath();catG.moveTo(6,15);catG.lineTo(11,13);catG.strokePath();
-    catG.beginPath();catG.moveTo(1,25);catG.lineTo(7,23);catG.strokePath();
-    // front legs (stretched forward)
-    catG.fillStyle(0xee7722,1);
-    catG.fillEllipse(58,74,16,10);
-    catG.fillEllipse(78,72,16,9);
-    // front paws (lighter)
-    catG.fillStyle(0xffcc88,1);
-    catG.fillEllipse(58,79,12,7);
-    catG.fillEllipse(78,77,12,7);
-    // back legs (pushing off)
-    catG.fillStyle(0xcc5500,1);
-    catG.fillEllipse(20,72,18,12);
-    catG.fillStyle(0xee7722,1);
-    catG.fillEllipse(30,78,14,9);
-    // back paw
-    catG.fillStyle(0xffcc88,1);
-    catG.fillEllipse(30,83,11,6);
-    // motion lines behind cat
-    catG.lineStyle(2.5,0x553377,0.35);
-    for(var li=0;li<6;li++){
-      catG.beginPath();
-      catG.moveTo(12-li*9,28+li*7);
-      catG.lineTo(-4-li*9,26+li*7);
-      catG.strokePath();
+var S_Boot = {
+  preload: function(){
+    var g = this.add.graphics();
+    
+    // ====== PLAYER: 橙色猫咪（改进版） ======
+    // 身体：椭圆形更自然
+    g.fillStyle(0xff9933);
+    g.fillEllipse(16, 18, 20, 24);
+    
+    // 耳朵：三角形 + 内耳
+    g.fillStyle(0xff8833);
+    g.fillTriangle(8, 8, 14, 2, 20, 10);  // 左耳外
+    g.fillTriangle(12, 10, 18, 2, 24, 8); // 右耳外
+    g.fillStyle(0xffaa55);
+    g.fillTriangle(10, 7, 13, 4, 16, 9);  // 左耳内
+    g.fillTriangle(14, 9, 17, 4, 20, 7);  // 右耳内
+    
+    // 眼睛：大大的萌系眼睛
+    g.fillStyle(0xffffff);
+    g.fillCircle(12, 16, 4);
+    g.fillCircle(20, 16, 4);
+    g.fillStyle(0x333333);
+    g.fillCircle(12, 16, 2);
+    g.fillCircle(20, 16, 2);
+    
+    // 鼻子和嘴巴
+    g.fillStyle(0xff6688);
+    g.fillCircle(16, 20, 1.5);
+    
+    g.generateTexture("player", 32, 36);
+    g.clear();
+    
+    // ====== OBS: 粉色拖鞋（改进版） ======
+    // 鞋底
+    g.fillStyle(0xff6699);
+    g.fillRoundedRect(2, 12, 32, 20, 8);
+    
+    // 鞋面
+    g.fillStyle(0xff88aa);
+    g.fillRoundedRect(4, 4, 28, 16, 6);
+    
+    // 装饰：鞋带孔
+    g.fillStyle(0xff4488);
+    for(var i = 0; i < 3; i++){
+      g.fillCircle(10 + i * 8, 10, 1.5);
     }
-    // dust paws on ground
-    catG.fillStyle(0x997755,0.25);
-    catG.fillEllipse(20,92,14,6);
-    catG.fillEllipse(42,90,12,5);
-    catG.fillEllipse(68,89,14,6);
-
-    catG.generateTexture('story_cat',110,100);
-    catG.clear();catG.destroy();
-
-    var catSprite=s.add.sprite(mx-40,my+30,'story_cat');
-    catSprite.setScale(1.5);
-
-    // === FLYING SLIPPER (showing SOLE - like reference image!) ===
-    var slpG=s.add.graphics();
-
-    // Sole bottom (the visible part when thrown - with tread pattern!)
-    slpG.fillStyle(0xddccaa,1);  // rubber sole color (beige/tan)
-    slpG.fillRoundedRect(0,4,64,36,10);
-
-    // TREAD PATTERN on sole (zigzag lines like real shoe sole)
-    slpG.lineStyle(1.2,0xbbaa88,0.8);
-    // horizontal wavy lines
-    for(var ti=0;ti<5;ti++){
-      var ty=10+ti*6;
-      slpG.beginPath();
-      slpG.moveTo(6,ty);
-      for(var tx=6;tx<58;tx+=8){
-        slpG.lineTo(tx+4,ty+2.5);
-        slpG.lineTo(tx+8,ty);
-      }
-      slpG.strokePath();
-    }
-    // vertical tread lines at heel and toe
-    slpG.beginPath();
-    slpG.moveTo(8,6);slpG.lineTo(8,38);
-    slpG.moveTo(16,6);slpG.lineTo(16,36);
-    slpG.moveTo(48,6);slpG.lineTo(48,36);
-    slpG.moveTo(56,6);slpG.lineTo(56,38);
-    slpG.strokePath();
-
-    // Heel pad (thicker rubber)
-    slpG.fillStyle(0xccbb99,1);
-    slpG.fillRoundedRect(2,28,20,14,4);
-    slpG.lineStyle(1,0xaa9977,0.6);
-    slpG.strokeRoundedRect(2,28,20,14,4);
-
-    // Toe pad area
-    slpG.fillStyle(0xccbb99,1);
-    slpG.fillRoundedRect(46,4,16,32,4);
-    slpG.lineStyle(1,0xaa9977,0.6);
-    slpG.strokeRoundedRect(46,4,16,32,4);
-
-    // Upper part of slipper (visible from side - pink fabric)
-    slpG.fillStyle(0xff4488,1);
-    slpG.fillRoundedRect(0,-16,64,22,8);
-
-    // Pink fabric top surface
-    slpG.fillStyle(0xff66aa,0.8);
-    slpG.fillRect(4,-12,56,14);
-
-    // Opening (dark inside)
-    slpG.fillStyle(0x220818,1);
-    slpG.fillEllipse(18,-4,18,8);
-
-    // Strap across top
-    slpG.fillStyle(0xdd3377,1);
-    slpG.fillRect(14,-8,38,5);
-
-    // Fabric outline
-    slpG.lineStyle(1.5,0xcc2266,1);
-    slpG.strokeRoundedRect(0,-16,64,22,8);
-
-    // Sole outline (thick)
-    slpG.lineStyle(2,0x998866,1);
-    slpG.beginPath();slpG.moveTo(2,4);slpG.lineTo(2,40);slpG.lineTo(62,40);slpG.lineTo(62,4);slpG.strokePath();
-    slpG.strokeRoundedRect(0,4,64,36,10);
-
-    // Brand text on sole (fun detail)
-    slpG.lineStyle(1,0x887755,0.5);
-    // simple "CAT" text approximation with lines
-
-    // Motion blur lines around slipper
-    slpG.lineStyle(2.5,0xff6699,0.45);
-    for(var si=0;si<5;si++){
-      slpG.beginPath();
-      slpG.moveTo(66+si*7,4+si*7);
-      slpG.lineTo(76+si*7,2+si*7);
-      slpG.strokePath();
-    }
-
-    slpG.generateTexture('story_slipper_big',82,56);
-    slpG.clear();slpG.destroy();
-
-    var slipSprite=s.add.sprite(mx-200,my+20,'story_slipper_big');
-    slipSprite.setScale(1.4);
-
-    // === ANGRY OWNER (upper right) ===
-    var ownG=s.add.graphics();
-    // head
-    ownG.fillStyle(0xffddbb,1);
-    ownG.fillCircle(32,32,26);
-    // hair (dark, messy angry hair)
-    ownG.fillStyle(0x332211,1);
-    ownG.fillEllipse(32,8,50,20);
-    ownG.fillRect(6,4,52,12);
-    // ANGRY EYEBROWS (thick, diagonal)
-    ownG.lineStyle(4,0x332211,1);
-    ownG.beginPath();ownG.moveTo(8,18);ownG.lineTo(28,28);ownG.strokePath();
-    ownG.beginPath();ownG.moveTo(56,18);ownG.lineTo(36,28);ownG.strokePath();
-    // eyes (angry, narrowed)
-    ownG.fillStyle(0xffffff,1);
-    ownG.fillCircle(22,34,7);ownG.fillCircle(42,34,7);
-    ownG.fillStyle(0x332211,1);
-    ownG.fillCircle(24,35,4);ownG.fillCircle(40,35,4);
-    // mouth (shouting/open)
-    ownG.fillStyle(0xcc3344,1);
-    ownG.fillEllipse(32,50,12,8);
-    // teeth hint
-    ownG.fillStyle(0xffffff,1);
-    ownG.fillRect(28,48,8,3);
-    // neck/body
-    ownG.fillStyle(0xeeddcc,1);
-    ownG.fillRoundedRect(20,58,24,20,6);
-    // arm throwing (extended toward cat)
-    ownG.fillStyle(0xeeddcc,1);
-    ownG.fillRoundedRect(38,52,36,16,6);
-    // hand/fist
-    ownG.fillStyle(0xffddbb,1);
-    ownG.fillCircle(78,60,10);
-    // steam/anger marks above head
-    ownG.lineStyle(2,0x888888,0.6);
-    ownG.beginPath();ownG.moveTo(16,-4);ownG.lineTo(12,-12);ownG.lineTo(20,-10);ownG.strokePath();
-    ownG.beginPath();ownG.moveTo(48,-4);ownG.lineTo(52,-12);ownG.lineTo(44,-10);ownG.strokePath();
-    ownG.beginPath();ownG.moveTo(32,-8);ownG.lineTo(32,-18);ownG.strokePath();
-
-    ownG.generateTexture('story_owner',95,85);
-    ownG.clear();ownG.destroy();
-
-    var ownerSprite=s.add.sprite(mx+155,my-90,'story_owner');
-    ownerSprite.setScale(1.15);
-
-    // === ANIMATIONS ===
-
-    // Cat running bounce
-    s.tweens.add({
-      targets:catSprite,
-      y:my+12,
-      duration:220,yoyo:true,ease:'Sine.easeInOut',loop:-1,
-      onRepeat:function(){catSprite.angle=(catSprite.angle===0?-4:0);}
-    });
-
-    // Slipper spinning/chasing (tumbling through air!)
-    slipSprite.angle=-20;
-    s.tweens.add({
-      targets:slipSprite,
-      angle:25,duration:130,yoyo:true,ease:'Sine.easeInOut',loop:-1
-    });
-    // slipper gets closer
-    s.tweens.add({
-      targets:slipSprite,
-      x:mx-120,y:my+10,
-      duration:2200,ease:'Cubic.easeOut',
-      delay:400,onComplete:function(){
-        s.cameras.main.shake(350,0.012);
-        s.tweens.add({
-          targets:catSprite,scaleX:1.6,scaleY:1.4,
-          duration:120,yoyo:true,loop:-1
-        });
-      }
-    });
-
-    // Owner shaking with rage
-    s.tweens.add({
-      targets:ownerSprite,
-      x:mx+148,duration:70,yoyo:true,loop:-1
-    });
-    ownerSprite.angle=6;
-    s.tweens.add({
-      targets:ownerSprite,
-      angle:-6,duration:90,yoyo:true,loop:-1
-    });
-
-    // === TEXT ===
-    s.add.text(mx,70,'CAT ESCAPE!',{
-      fontSize:'42px',fill:'#ffaa33',fontStyle:'bold',
-      fontFamily:'Arial Black',stroke:'#000000',strokeThickness:4
-    }).setOrigin(0.5);
-
-    s.add.text(mx,118,'She found the broken vase...',{
-      fontSize:'17px',fill:'#ff6699',fontStyle:'italic'
-    }).setOrigin(0.5);
-
-    s.add.text(mx,H-135,'Dodge her slippers & collect coins to survive!',{
-      fontSize:'16px',fill:'#bbaadd',align:'center'
-    }).setOrigin(0.5);
-
-    var tap=s.add.text(mx,H-75,'TAP TO START >',{
-      fontSize:'22px',fill:'#ffffff',fontStyle:'bold',
-      stroke:'#ff8844',strokeThickness:3
-    }).setOrigin(0.5);
-    s.tweens.add({targets:tap,alpha:0.3,duration:500,yoyo:true,loop:-1});
-
-    var excl=s.add.text(mx+120,my-175,'!!!',{fontSize:'36px',fill:'#ff3333',fontStyle:'bold'});
-    s.tweens.add({targets:excl,scale:1.35,duration:180,yoyo:true,loop:-1});
-
-    s.input.on('pointerdown',function(){
-      s.cameras.main.fade(400,14,6,32);
-      s.time.delayedCall(400,function(){s.scene.start('Menu')});
-    });
-    s.cameras.main.flash(300);
+    
+    // 高光
+    g.fillStyle(0xffaacc);
+    g.fillRoundedRect(6, 6, 8, 4, 2);
+    
+    g.generateTexture("obs", 36, 36);
+    g.clear();
+    
+    // ====== COIN: 金色硬币（改进版） ======
+    // 外圈
+    g.fillStyle(0xffaa00);
+    g.fillCircle(12, 12, 10);
+    
+    // 内圈
+    g.fillStyle(0xffcc00);
+    g.fillCircle(12, 12, 7);
+    
+    // 高光
+    g.fillStyle(0xffee55);
+    g.fillCircle(9, 9, 2);
+    
+    // 符号
+    g.fillStyle(0xff8800);
+    g.fillRect(11, 8, 2, 8);
+    g.fillRect(8, 11, 8, 2);
+    
+    g.generateTexture("coin", 24, 24);
+    g.clear();
+    
+    g.destroy();
+  },
+  
+  create: function(){
+    this.scene.start("S_Menu");
   }
 };
 
-/* ========== MENU ========== */
-var MenuScene={
-  key:'Menu',
-  create:function(){
-    var s=this,mx=W/2;
-    s.add.text(mx,85,'CAT ESCAPE!',{fontSize:'44px',fill:'#ffaa33',fontStyle:'bold',fontFamily:'Arial Black'}).setOrigin(0.5);
-    s.add.text(mx,135,'Dodge slippers & collect coins!',{fontSize:'15px',fill:'#8877aa'}).setOrigin(0.5);
-    s.add.rectangle(mx,170,300,2,0x442266).setOrigin(0.5);
-    function btn(y,label,color,action){
-      var bg=s.add.rectangle(mx,y,200,40,color,0.9).setStrokeStyle(2,0xffffff,0.3).setInteractive({useHandCursor:true});
-      var tx=s.add.text(mx,y,label,{fontSize:'18px',fill:'#000',fontStyle:'bold'}).setOrigin(0.5);
-      bg.on('pointerdown',action);
-      bg.on('pointerover',function(){bg.setFillStyle(color,1);bg.setScale(1.05)});
-      bg.on('pointerout',function(){bg.setFillStyle(color,0.9);bg.setScale(1)});
-      return{bg:bg,tex:tx};
+var S_Menu = {
+  create: function(){
+    var me = this;
+    var cx = GW / 2, cy = GH / 2;
+    
+    // 背景装饰
+    me.add.graphics().fillStyle(0x120822).fillRect(0, 0, GW, GH);
+    
+    // 标题：带描边和阴影
+    var title = me.add.text(cx, cy - 140, "🐱 Cat Escape!", {
+      fontSize: "36px",
+      fill: "#ffaa33",
+      fontStyle: "bold",
+      stroke: "#ff6600",
+      strokeThickness: 4,
+      shadow: { offsetX: 2, offsetY: 2, color: "#000", blur: 4, fill: true }
+    }).setOrigin(0.5);
+    
+    // 副标题
+    me.add.text(cx, cy - 75, "Help the cat dodge flying slippers!", {
+      fontSize: "14px",
+      fill: "#aabbcc",
+      align: "center"
+    }).setOrigin(0.5);
+    
+    // 装饰：左右两旁的猫咪图标
+    me.add.text(cx - 120, cy - 140, "🐾", {fontSize: "24px"}).setOrigin(0.5);
+    me.add.text(cx + 120, cy - 140, "🐾", {fontSize: "24px"}).setOrigin(0.5);
+    
+    // 按钮函数（改进版：带悬停效果）
+    function btn(x, y, txt, col, fn){
+      var bg = me.add.graphics();
+      bg.fillStyle(col);
+      bg.fillRoundedRect(x - 75, y - 16, 150, 34, 14);
+      
+      // 高光效果
+      bg.fillStyle(0xffffff, 0.2);
+      bg.fillRoundedRect(x - 73, y - 14, 146, 14, 12);
+      
+      var label = me.add.text(x, y, txt, {
+        fontSize: "16px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 2
+      }).setOrigin(0.5);
+      
+      var zone = me.add.zone(x, y, 150, 34).setInteractive({useHandCursor: true});
+      
+      zone.on("pointerover", function(){
+        bg.clear();
+        bg.fillStyle(0xffffff);
+        bg.fillRoundedRect(x - 75, y - 16, 150, 34, 14);
+        bg.fillStyle(col);
+        bg.fillRoundedRect(x - 73, y - 14, 146, 30, 12);
+        label.setScale(1.05);
+      });
+      
+      zone.on("pointerout", function(){
+        bg.clear();
+        bg.fillStyle(col);
+        bg.fillRoundedRect(x - 75, y - 16, 150, 34, 14);
+        bg.fillStyle(0xffffff, 0.2);
+        bg.fillRoundedRect(x - 73, y - 14, 146, 14, 12);
+        label.setScale(1.0);
+      });
+      
+      zone.on("pointerdown", function(){
+        label.setScale(0.95);
+        me.time.delayedCall(100, fn);
+      });
     }
-    btn(230,'START GAME',0xff8844,function(){s.scene.start('Play')});
-    btn(290,'RECORDS',0xeebb00,function(){s.scene.start('Records')});
-    btn(350,'SHARE LINK',0xaa55ff,function(){
-      if(navigator.clipboard)navigator.clipboard.writeText(location.href)
-        .then(function(){
-          var ok=s.add.text(mx,405,'Link copied!',{fontSize:'14px',fill:'#ffaa33',fontStyle:'bold'}).setOrigin(0.5);
-          s.tweens.add({targets:ok,alpha:0,delay:1500,duration:500,onComplete:function(){ok.destroy()}});
-        });
-      else prompt('Copy this link:',location.href);
+    
+    // 按钮
+    btn(cx, cy + 10, "🎮 START GAME", 0x00cc66, function(){ me.scene.start("S_Play"); });
+    btn(cx, cy + 60, "🏆 RECORDS", 0xffaa00, function(){ me.scene.start("S_Records"); });
+    btn(cx, cy + 110, "📤 SHARE", 0x4488ff, function(){
+      var url = window.location.href;
+      if(navigator.share){ navigator.share({title: "🐱 Cat Escape!", url: url}); }
+      else if(navigator.clipboard){ navigator.clipboard.writeText(url); me.showToast("Link copied!"); }
+      else { me.showToast("Share: " + url); }
     });
-    s.add.text(mx,H-30,'Arrow keys or touch to move',{fontSize:'12px',fill:'#554466'}).setOrigin(0.5);
+    
+    // 版本信息
+    me.add.text(GW - 10, GH - 10, "v21 UI Improved", {
+      fontSize: "10px",
+      fill: "#556677"
+    }).setOrigin(1, 1);
+  },
+  
+  // Toast提示
+  showToast: function(msg){
+    var me = this;
+    var toast = me.add.text(GW/2, GH - 50, msg, {
+      fontSize: "14px",
+      fill: "#ffffff",
+      backgroundColor: "#000000",
+      padding: { x: 10, y: 5 }
+    }).setOrigin(0.5);
+    
+    me.tweens.add({
+      targets: toast,
+      alpha: 0,
+      duration: 2000,
+      ease: "Power2",
+      onComplete: function(){ toast.destroy(); }
+    });
   }
 };
 
-/* ========== RECORDS ========== */
-var RecordsScene={
-  key:'Records',
-  create:function(){
-    var s=this,mx=W/2;
-    s.add.rectangle(W/2,H/2,W,H,0x100820,0.95);
-    s.add.text(mx,70,'RECORDS',{fontSize:'28px',fill:'#ffcc00',fontStyle:'bold'}).setOrigin(0.5);
-    s.add.rectangle(mx,98,320,2,0x332244).setOrigin(0.5);
+var S_Records = {
+  create: function(){
+    var me = this;
+    
+    // 背景
+    me.add.graphics().fillStyle(0x0a1a2e).fillRoundedRect(GW/2 - 140, GH/2 - 180, 280, 360, 20);
+    
+    // 标题
+    me.add.text(GW/2, GH/2 - 150, "🏆 RECORDS", {
+      fontSize: "24px",
+      fill: "#ffaa00",
+      fontStyle: "bold",
+      stroke: "#cc8800",
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    // 读取记录
     try{
-      var recs=JSON.parse(localStorage.getItem(RK))||[];
-      if(recs.length===0){
-        s.add.text(mx,H/2,'No records yet!\\nPlay a game to set one.',{fontSize:'18px',color:'#665577',align:'center'}).setOrigin(0.5);
-      } else {
-        for(var i=0;i<recs.length&&i<10;i++){
-          var medal=i===0?'GOLD':i===1?'SILVER':i===2?'BRONZE':'#'+(i+1);
-          var col=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#aa99bb';
-          var scoreVal = recs[i].sc !== undefined ? recs[i].sc : recs[i].s;
-          s.add.text(mx,140+i*34,medal+'  '+scoreVal+' pts',{fontSize:'17px',fill:col}).setOrigin(0.5);
+      var r = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
+      
+      if(r.length === 0){
+        me.add.text(GW/2, GH/2, "No records yet!\nPlay a game to set a record!", {
+          fontSize: "14px",
+          fill: "#8899aa",
+          align: "center"
+        }).setOrigin(0.5);
+      }
+      else {
+        for(var i = 0; i < r.length && i < 5; i++){
+          var icon = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i+1) + ".";
+          me.add.text(GW/2, GH/2 - 80 + i * 40, icon + "  " + r[i].s + " pts", {
+            fontSize: "16px",
+            fill: i === 0 ? "#ffcc00" : "#00ff88",
+            fontStyle: i === 0 ? "bold" : "normal"
+          }).setOrigin(0.5);
         }
       }
-    }catch(e){}
-    var bb=s.add.rectangle(mx,H-70,130,42,0xdd4444,0.9).setInteractive({useHandCursor:true});
-    s.add.text(mx,H-70,'BACK TO MENU',{fontSize:'16px',fill:'#fff',fontStyle:'bold'}).setOrigin(0.5);
-    bb.on('pointerdown',function(){s.scene.start('Menu')});
+    }
+    catch(e){
+      me.add.text(GW/2, GH/2, "Error loading records", {
+        fontSize: "14px",
+        fill: "#ff4444"
+      }).setOrigin(0.5);
+    }
+    
+    // 返回按钮
+    btn(me, GW/2, GH/2 + 150, "← BACK", 0xff4444, function(){ me.scene.start("S_Menu"); });
   }
 };
 
-/* ========== PLAY ========== */
-var PlayScene={
-  key:'Play',
-  init:function(){
-    this.score=0;this.lives=3;this.baseSpeed=140;
-    this.enemies=[];this.coins=[];
-    this.isOver=false;this.spawnTimer=null;this.coinTimer=null;
+var S_Play = {
+  init: function(){
+    this.score = 0;
+    this.lives = 3;
+    this.speed = 120;
+    this.obsList = [];
+    this.coinList = [];
+    this.gameOver = false;
+    this.combo = 0;
   },
-  create:function(){
-    var s=this;
-    s.physics.world.setBounds(0,0,W,H);
-
-    // === PLAYER: tabby cat with stripes ===
-    var pg=s.add.graphics();
-    // body
-    pg.fillStyle(0xee7722,1);pg.fillCircle(16,20,13);
-    pg.fillStyle(0xcc5500,0.7);
-    pg.fillRect(10,10,4,14);pg.fillRect(16,7,4,16);pg.fillRect(22,9,4,14);
-    // belly
-    pg.fillStyle(0xffbb66,0.8);pg.fillEllipse(16,25,14,7);
-    // head
-    pg.fillStyle(0xee7722,1);pg.fillCircle(16,10,11);
-    // head stripes
-    pg.fillStyle(0xcc5500,0.5);
-    pg.fillRect(8,3,3,7);pg.fillRect(13,1,3,8);pg.fillRect(18,1,3,8);pg.fillRect(23,3,3,7);
-    // ears
-    pg.fillStyle(0xee7722,1);
-    pg.fillTriangle(4,3,10,-4,12,4);
-    pg.fillTriangle(22,3,28,-4,20,4);
-    pg.fillStyle(0xff8899,1);
-    pg.fillTriangle(6,2,10,-2,11,3);
-    pg.fillTriangle(24,2,28,-2,21,3);
-    // face white
-    pg.fillStyle(0xffeedd,0.85);pg.fillEllipse(16,15,14,9);
-    // eyes
-    pg.fillStyle(0xffffff,1);
-    pg.fillEllipse(11,11,5,4);pg.fillEllipse(21,11,5,4);
-    pg.fillStyle(0x222222,1);
-    pg.fillCircle(12,11.5,2.2);pg.fillCircle(20,11.5,2.2);
-    pg.fillStyle(0xffffff,1);
-    pg.fillCircle(11.5,10.5,0.8);pg.fillCircle(19.5,10.5,0.8);
-    // nose
-    pg.fillStyle(0xff5577,1);
-    pg.fillTriangle(13,15,19,15,16,18);
-    // mouth
-    pg.lineStyle(1,0xaa3344,1);
-    pg.beginPath();pg.moveTo(13,19);pg.lineTo(16,21);pg.lineTo(19,19);pg.strokePath();
-    // whiskers
-    pg.lineStyle(0.8,0xddccaa,0.5);
-    pg.beginPath();pg.moveTo(3,14);pg.lineTo(9,16);pg.strokePath();
-    pg.beginPath();pg.moveTo(2,17);pg.lineTo(9,18);pg.strokePath();
-    pg.beginPath();pg.moveTo(29,14);pg.lineTo(23,16);pg.strokePath();
-    pg.beginPath();pg.moveTo(30,17);pg.lineTo(23,18);pg.strokePath();
-    // tail
-    pg.lineStyle(3,0xee7722,1);
-    pg.beginPath();pg.moveTo(3,20);pg.lineTo(-4,10);pg.lineTo(2,2);pg.strokePath();
-    pg.lineStyle(1.5,0xcc5500,0.6);
-    pg.beginPath();pg.moveTo(0,5);pg.lineTo(3,4);pg.strokePath();
-    // outline
-    pg.lineStyle(1.2,0xcc6600,1);pg.strokeCircle(16,20,13);
-    pg.generateTexture('tex_player',36,38);
-    pg.clear();pg.destroy();
-
-    s.player=s.physics.add.sprite(W/2,H-65,'tex_player');
-    s.player.setCollideWorldBounds(true);
-    s.player.body.setSize(26,28);s.player.body.setOffset(4,4);
-
-    s.hudText=s.add.text(12,10,'SCORE: 0   LIVES: 3',{fontSize:'15px',fill:'#ccaa88',fontStyle:'bold'});
-
-    s.scoreTimer=s.time.addEvent({
-      delay:1000,callback:function(){s.score++;s.hudText.setText('SCORE: '+s.score+'   LIVES: '+s.lives);},loop:true
+  
+  create: function(){
+    var me = this;
+    
+    // 背景：渐变紫色
+    var bg = me.add.graphics();
+    bg.fillGradientStyle(0x120822, 0x120822, 0x0a0415, 0x0a0415, 1);
+    bg.fillRect(0, 0, GW, GH);
+    
+    // 玩家
+    me.player = me.physics.add.sprite(GW/2, GH - 100, "player");
+    me.player.setCollideWorldBounds(true);
+    me.player.setScale(1.2);
+    
+    // HUD
+    me.scoreText = me.add.text(16, 16, "Score: 0", {
+      fontSize: "18px",
+      fill: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 3
     });
-
-    scheduleSpawn(s);scheduleCoin(s);
+    
+    me.livesText = me.add.text(GW - 16, 16, "❤❤❤", {
+      fontSize: "18px",
+      fill: "#ff4444"
+    }).setOrigin(1, 0);
+    
+    me.comboText = me.add.text(GW/2, 50, "", {
+      fontSize: "16px",
+      fill: "#ffcc00",
+      fontStyle: "bold"
+    }).setOrigin(0.5);
+    
+    // 障碍物组
+    me.obsGroup = me.physics.add.group();
+    me.coinGroup = me.physics.add.group();
+    
+    // 碰撞检测
+    me.physics.add.overlap(me.player, me.obsGroup, hitObstacle, null, me);
+    me.physics.add.overlap(me.player, me.coinGroup, collectCoin, null, me);
+    
+    // 定时器
+    me.obsTimer = me.time.addEvent({
+      delay: 1000,
+      callback: spawnObstacle,
+      callbackScope: me,
+      loop: true
+    });
+    
+    me.coinTimer = me.time.addEvent({
+      delay: 1500,
+      callback: spawnCoin,
+      callbackScope: me,
+      loop: true
+    });
+    
+    // 键盘控制
+    me.cursors = me.input.keyboard.createCursorKeys();
+    
+    // 触摸控制
+    me.input.on("pointermove", function(pointer){
+      if(!me.gameOver){
+        me.player.x = Phaser.Math.Clamp(pointer.x, 16, GW - 16);
+      }
+    });
+    
+    // 音效（可选）
+    // me.coinSound = me.sound.add('coin');
+    // me.hitSound = me.sound.add('hit');
   },
-  update:function(){
-    if(this.isOver)return;
-    var s=this;
-    var cursors=s.input.keyboard?s.input.keyboard.createCursorKeys():null;
-    if(cursors){if(cursors.left.isDown)s.player.x-=7;if(cursors.right.isDown)s.player.x+=7;}
-    if(s.input.activePointer.isDown)s.player.x=s.input.activePointer.x;
-    s.player.x=Phaser.Math.Clamp(s.player.x,20,W-20);
-
-    for(var ci=s.coins.length-1;ci>=0;ci--){
-      var c=s.coins[ci];
-      if(!c||!c.active){if(c)c.destroy();s.coins.splice(ci,1);continue}
-      if(Math.abs(s.player.x-c.x)<22&&Math.abs(s.player.y-c.y)<22){
-        s.score+=5;s.hudText.setText('SCORE: '+s.score+'   LIVES: '+s.lives);
-        c.destroy();s.coins.splice(ci,1);continue;
+  
+  update: function(){
+    var me = this;
+    if(me.gameOver) return;
+    
+    // 键盘控制
+    if(me.cursors.left.isDown){ me.player.setVelocityX(-180); }
+    else if(me.cursors.right.isDown){ me.player.setVelocityX(180); }
+    else { me.player.setVelocityX(0); }
+    
+    // 分数递增
+    me.score += 0.02;
+    me.scoreText.setText("Score: " + Math.floor(me.score));
+    
+    // 连击计数
+    if(me.score - Math.floor(me.score) < 0.02){
+      me.combo++;
+      if(me.combo >= 10){
+        me.comboText.setText("🔥 COMBO x" + me.combo + "!");
+        me.time.delayedCall(500, function(){ me.comboText.setText(""); });
       }
-      if(c.y>H+20){c.destroy();s.coins.splice(ci,1);}
     }
-
-    for(var i=s.enemies.length-1;i>=0;i--){
-      var e=s.enemies[i];
-      if(!e||!e.active){if(e)e.destroy();s.enemies.splice(i,1);continue}
-      var dx=Math.abs(s.player.x-e.x),dy=Math.abs(s.player.y-e.y);
-      if(dx<22&&dy<22){
-        s.lives--;e.destroy();s.enemies.splice(i,1);
-        s.hudText.setText('SCORE: '+s.score+'   LIVES: '+s.lives);
-        s.player.setTint(0xff0000);
-        s.time.delayedCall(150,function(){if(s.player)s.player.clearTint()});
-        if(s.lives<=0){triggerGameOver(s);return;}
-      }
-      if(e.y>H+50){e.destroy();s.enemies.splice(i,1);}
+    
+    // 加速
+    if(me.score > 0 && Math.floor(me.score) % 100 === 0){
+      me.speed = Math.min(me.speed + 5, 400);
     }
   }
 };
 
-function scheduleSpawn(scene){
-  if(scene.isOver)return;
-
-  // === ENEMY: SLIPPER WITH VISIBLE SOLE + TREAD ===
-  var eg=scene.add.graphics();
-
-  // Sole (rubber bottom - beige color)
-  eg.fillStyle(0xddccaa,1);
-  eg.fillRoundedRect(0,3,52,32,8);
-
-  // Tread pattern (zigzag)
-  eg.lineStyle(1,0xbbaa88,0.7);
-  for(var ti=0;ti<4;ti++){
-    var ty=8+ti*6;
-    eg.beginPath();eg.moveTo(5,ty);
-    for(var tx=5;tx<47;tx+=7){
-      eg.lineTo(tx+3.5,ty+2);eg.lineTo(tx+7,ty);
-    }
-    eg.strokePath();
+var S_GameOver = {
+  create: function(){
+    var me = this;
+    var finalScore = Math.floor(me.scene.settings.data.score) || 0;
+    
+    // 背景遮罩
+    me.add.graphics().fillStyle(0x000000, 0.8).fillRect(0, 0, GW, GH);
+    
+    // Game Over 面板
+    me.add.graphics().fillStyle(0x1a1a2e).fillRoundedRect(GW/2 - 120, GH/2 - 160, 240, 320, 20);
+    
+    // 标题
+    me.add.text(GW/2, GH/2 - 120, "💀 GAME OVER", {
+      fontSize: "28px",
+      fill: "#ff4444",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    
+    // 分数
+    me.add.text(GW/2, GH/2 - 60, "Score: " + finalScore, {
+      fontSize: "22px",
+      fill: "#ffcc00",
+      fontStyle: "bold"
+    }).setOrigin(0.5);
+    
+    // 最高分
+    try{
+      var r = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
+      var best = r.length > 0 ? r[0].s : 0;
+      me.add.text(GW/2, GH/2 - 20, "Best: " + best, {
+        fontSize: "16px",
+        fill: "#00ff88"
+      }).setOrigin(0.5);
+    } catch(e) {}
+    
+    // 按钮
+    btn(me, GW/2, GH/2 + 40, "🔄 RETRY", 0x00cc66, function(){ me.scene.start("S_Play"); });
+    btn(me, GW/2, GH/2 + 90, "🏠 MENU", 0x4488ff, function(){ me.scene.start("S_Menu"); });
+    
+    // 保存记录
+    try{
+      var rc = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
+      rc.push({s: finalScore, t: Date.now()});
+      rc.sort(function(a, b){ return b.s - a.s; });
+      rc = rc.slice(0, 5);
+      localStorage.setItem("catEscapeRC", JSON.stringify(rc));
+    } catch(e){}
   }
-  // vertical treads
-  eg.beginPath();
-  eg.moveTo(6,5);eg.lineTo(6,33);
-  eg.moveTo(13,5);eg.lineTo(13,31);
-  eg.moveTo(39,5);eg.lineTo(39,31);
-  eg.moveTo(46,5);eg.lineTo(46,33);
-  eg.strokePath();
+};
 
-  // Heel pad
-  eg.fillStyle(0xccbb99,1);
-  eg.fillRoundedRect(2,22,16,12,3);
-  // Toe pad
-  eg.fillStyle(0xccbb99,1);
-  eg.fillRoundedRect(38,2,12,30,3);
+// ====== 辅助函数 ======
 
-  // Upper (pink fabric)
-  eg.fillStyle(0xff4488,1);
-  eg.fillRoundedRect(0,-14,52,20,7);
-  eg.fillStyle(0xff66aa,0.75);
-  eg.fillRect(3,-10,46,12);
-  // Opening
-  eg.fillStyle(0x220818,1);
-  eg.fillEllipse(14,-3,14,6);
-  // Strap
-  eg.fillStyle(0xdd3377,1);
-  eg.fillRect(11,-6,30,4);
-  // Outline
-  eg.lineStyle(1.2,0xcc2266,1);
-  eg.strokeRoundedRect(0,-14,52,20,7);
-  eg.lineStyle(1.5,0x998866,1);
-  eg.strokeRoundedRect(0,3,52,32,8);
-
-  eg.generateTexture('tex_enemy',56,48);
-  eg.clear();eg.destroy();
-
-  var ex=Phaser.Math.Between(44,W-44);
-  var enemy=scene.physics.add.sprite(ex,-48,'tex_enemy');
-  enemy.setVelocityY(scene.baseSpeed+scene.score*1.5);
-  enemy.angle=Phaser.Math.Between(-15,15);
-  scene.enemies.push(enemy);
-
-  scene.spawnTimer=scene.time.delayedCall(Math.max(280,600-scene.score*3),function(){scheduleSpawn(scene)});
+function spawnObstacle(){
+  var me = this;
+  if(me.gameOver) return;
+  
+  var x = Phaser.Math.Between(36, GW - 36);
+  var obs = me.obsGroup.create(x, -36, "obs");
+  obs.setVelocityY(me.speed);
+  obs.setAngularVelocity(Phaser.Math.Between(-50, 50));
+  me.obsList.push(obs);
 }
 
-function scheduleCoin(scene){
-  if(scene.isOver)return;
-  var cg=scene.add.graphics();
-  cg.fillStyle(0xffdd00,1);cg.fillCircle(10,10,9);
-  cg.fillStyle(0xffee66,1);cg.fillCircle(7,7,4);
-  cg.fillStyle(0xeebb00,1);cg.fillCircle(10,10,9);
-  cg.lineStyle(1.5,0xcc9900,1);cg.strokeCircle(10,10,9);
-  cg.lineStyle(1.5,0xaa7700,1);
-  cg.beginPath();cg.moveTo(10,4);cg.lineTo(10,16);cg.strokePath();
-  cg.beginPath();cg.moveTo(6,7);cg.lineTo(14,7);cg.strokePath();
-  cg.beginPath();cg.moveTo(6,13);cg.lineTo(14,13);cg.strokePath();
-  cg.generateTexture('tex_coin',20,20);
-  cg.clear();cg.destroy();
-
-  var coin=scene.physics.add.sprite(Phaser.Math.Between(25,W-25),-20,'tex_coin');
-  coin.setVelocityY(80+scene.score*0.5);
-  scene.coins.push(coin);
-  scene.coinTimer=scene.time.delayedCall(Phaser.Math.Between(2000,4000),function(){scheduleCoin(scene)});
+function spawnCoin(){
+  var me = this;
+  if(me.gameOver) return;
+  
+  var x = Phaser.Math.Between(36, GW - 36);
+  var coin = me.coinGroup.create(x, -24, "coin");
+  coin.setVelocityY(me.speed * 0.7);
+  coin.setAngularVelocity(100);
+  me.coinList.push(coin);
 }
 
-function triggerGameOver(s){
-  s.isOver=true;s.physics.pause();
-  if(s.scoreTimer)s.scoreTimer.remove();
-  if(s.spawnTimer)s.spawnTimer.remove();
-  if(s.coinTimer)s.coinTimer.remove();
-
-  var mx=W/2,my=H/2;
-  s.add.rectangle(mx,my,300,280,0x100820,0.97);
-  s.add.text(mx,my-95,'GAME OVER',{fontSize:'34px',fill:'#ff8833',fontStyle:'bold'}).setOrigin(0.5);
-  s.add.text(mx,my-45,'Score: '+s.score,{fontSize:'24px',fill:'#ffffff'}).setOrigin(0.5);
-
-  try{
-    var hs=parseInt(localStorage.getItem(BK)||'0');
-    if(s.score>hs){localStorage.setItem(BK,String(s.score));s.add.text(mx,my-5,'NEW HIGH SCORE!',{fontSize:'16px',fill:'#ffcc00',fontStyle:'bold'}).setOrigin(0.5);}
-    var recs=JSON.parse(localStorage.getItem(RK))||[];
-    recs.push({sc:s.score,tm:new Date().toLocaleString()});
-    recs.sort(function(a,b){return b.sc-a.sc});recs=recs.slice(0,10);
-    localStorage.setItem(RK,JSON.stringify(recs));
-  }catch(e){}
-
-  var rb=s.add.rectangle(mx,my+55,150,44,0xff8844,0.9).setInteractive({useHandCursor:true});
-  s.add.text(mx,my+55,'PLAY AGAIN',{fontSize:'17px',fill:'#000',fontStyle:'bold'}).setOrigin(0.5);
-  rb.on('pointerdown',function(){s.scene.restart()});
-
-  var mb=s.add.rectangle(mx,my+110,150,40,0xaa55ff,0.9).setInteractive({useHandCursor:true});
-  s.add.text(mx,my+110,'MAIN MENU',{fontSize:'16px',fill:'#fff',fontStyle:'bold'}).setOrigin(0.5);
-  mb.on('pointerdown',function(){s.scene.start('Menu')});
+function hitObstacle(player, obs){
+  var me = player.scene;
+  if(me.gameOver) return;
+  
+  obs.destroy();
+  me.lives--;
+  me.combo = 0;
+  
+  // 更新生命显示
+  var hearts = "";
+  for(var i = 0; i < me.lives; i++) hearts += "❤";
+  me.livesText.setText(hearts);
+  
+  // 闪烁效果
+  me.player.setTint(0xff0000);
+  me.time.delayedCall(200, function(){ me.player.clearTint(); });
+  
+  if(me.lives <= 0){
+    me.gameOver = true;
+    me.physics.pause();
+    me.scene.start("S_GameOver", {score: me.score});
+  }
 }
 
-try{
-  var game=new Phaser.Game({
-    width:W,height:H,parent:'gw',backgroundColor:'#120822',
-    scene:[StoryScene,MenuScene,RecordsScene,PlayScene],
-    physics:{default:'arcade',arcade:{debug:false}},
-    render:{pixelArt:false,antialias:true}
+function collectCoin(player, coin){
+  var me = player.scene;
+  if(me.gameOver) return;
+  
+  coin.destroy();
+  me.score += 10;
+  me.combo++;
+  
+  // 金币特效
+  var emitter = me.add.particles(coin.x, coin.y, "coin", {
+    speed: 100,
+    scale: {start: 0.5, end: 0},
+    alpha: {start: 1, end: 0},
+    lifespan: 300,
+    quantity: 5
   });
-}catch(e){
-  document.body.innerHTML='<div style="color:red;padding:20px;font-family:monospace">ERROR: '+e+'</div>';
+  me.time.delayedCall(500, function(){ emitter.destroy(); });
 }
+
+function btn(scene, x, y, txt, col, fn){
+  var bg = scene.add.graphics();
+  bg.fillStyle(col);
+  bg.fillRoundedRect(x - 60, y - 14, 120, 30, 12);
+  
+  var label = scene.add.text(x, y, txt, {
+    fontSize: "14px",
+    fill: "#ffffff",
+    fontStyle: "bold"
+  }).setOrigin(0.5);
+  
+  var zone = scene.add.zone(x, y, 120, 30).setInteractive({useHandCursor: true});
+  
+  zone.on("pointerdown", function(){
+    scene.time.delayedCall(100, fn);
+  });
+}
+
+// ====== 游戏配置 ======
+
+var config = {
+  type: Phaser.AUTO,
+  width: GW,
+  height: GH,
+  parent: "gw",
+  backgroundColor: "#120822",
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: {y: 0},
+      debug: false
+    }
+  },
+  scene: [S_Boot, S_Menu, S_Records, S_Play, S_GameOver]
+};
+
+var game = new Phaser.Game(config);
 </script>
+
 </body>
 </html>
