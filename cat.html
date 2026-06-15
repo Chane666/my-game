@@ -34,53 +34,38 @@ var S_Boot = {
   preload: function(){
     var g = this.add.graphics();
     
-    // ====== PLAYER: 橙色猫咪（改进版） ======
-    // 身体：椭圆形更自然
+    // ====== PLAYER: 橙色猫咪（仅使用已验证安全的API） ======
+    // 身体（圆形）
     g.fillStyle(0xff9933);
-    g.fillEllipse(16, 18, 20, 24);
+    g.fillCircle(16, 18, 12);
     
-    // 耳朵：三角形 + 内耳
+    // 左耳（小圆形模拟）
     g.fillStyle(0xff8833);
-    g.fillTriangle(8, 8, 14, 2, 20, 10);  // 左耳外
-    g.fillTriangle(12, 10, 18, 2, 24, 8); // 右耳外
-    g.fillStyle(0xffaa55);
-    g.fillTriangle(10, 7, 13, 4, 16, 9);  // 左耳内
-    g.fillTriangle(14, 9, 17, 4, 20, 7);  // 右耳内
+    g.fillCircle(8, 7, 5);
     
-    // 眼睛：大大的萌系眼睛
+    // 右耳
+    g.fillCircle(24, 7, 5);
+    
+    // 眼睛
     g.fillStyle(0xffffff);
-    g.fillCircle(12, 16, 4);
-    g.fillCircle(20, 16, 4);
-    g.fillStyle(0x333333);
-    g.fillCircle(12, 16, 2);
-    g.fillCircle(20, 16, 2);
+    g.fillCircle(11, 16, 3);
+    g.fillCircle(21, 16, 3);
+    g.fillStyle(0x222222);
+    g.fillCircle(11, 16, 1.5);
+    g.fillCircle(21, 16, 1.5);
     
-    // 鼻子和嘴巴
+    // 鼻子
     g.fillStyle(0xff6688);
-    g.fillCircle(16, 20, 1.5);
+    g.fillRect(15, 20, 2, 2);
     
     g.generateTexture("player", 32, 36);
     g.clear();
     
-    // ====== OBS: 粉色拖鞋（改进版） ======
-    // 鞋底
+    // ====== OBS: 粉色拖鞋 ======
     g.fillStyle(0xff6699);
-    g.fillRoundedRect(2, 12, 32, 20, 8);
-    
-    // 鞋面
-    g.fillStyle(0xff88aa);
-    g.fillRoundedRect(4, 4, 28, 16, 6);
-    
-    // 装饰：鞋带孔
-    g.fillStyle(0xff4488);
-    for(var i = 0; i < 3; i++){
-      g.fillCircle(10 + i * 8, 10, 1.5);
-    }
-    
-    // 高光
-    g.fillStyle(0xffaacc);
-    g.fillRoundedRect(6, 6, 8, 4, 2);
-    
+    g.fillRoundedRect(4, 4, 28, 28, 6);
+    g.lineStyle(2, 0xcc4488);
+    g.strokeRoundedRect(4, 4, 28, 28, 6);
     g.generateTexture("obs", 36, 36);
     g.clear();
     
