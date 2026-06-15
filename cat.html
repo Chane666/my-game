@@ -31,6 +31,7 @@ var GW = 480, GH = 720;
 // ============================================================
 
 var S_Boot = {
+  key: "S_Boot",
   preload: function(){
     var g = this.add.graphics();
     
@@ -99,6 +100,7 @@ var S_Boot = {
 };
 
 var S_Menu = {
+  key: "S_Menu",
   create: function(){
     var me = this;
     var cx = GW / 2, cy = GH / 2;
@@ -209,6 +211,7 @@ var S_Menu = {
 };
 
 var S_Records = {
+  key: "S_Records",
   create: function(){
     var me = this;
     
@@ -259,6 +262,7 @@ var S_Records = {
 };
 
 var S_Play = {
+  key: "S_Play",
   init: function(){
     this.score = 0;
     this.lives = 3;
@@ -369,6 +373,7 @@ var S_Play = {
 };
 
 var S_GameOver = {
+  key: "S_GameOver",
   create: function(){
     var me = this;
     var finalScore = Math.floor(me.scene.settings.data.score) || 0;
