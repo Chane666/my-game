@@ -287,9 +287,9 @@ var S_Play = {
   create: function(){
     var me = this;
     
-    // 背景：渐变紫色
+    // 背景：纯色
     var bg = me.add.graphics();
-    bg.fillGradientStyle(0x120822, 0x120822, 0x0a0415, 0x0a0415, 1);
+    bg.fillStyle(0x120822);
     bg.fillRect(0, 0, GW, GH);
     
     // 玩家
@@ -478,7 +478,6 @@ function hitObstacle(player, obs){
   
   if(me.lives <= 0){
     me.gameOver = true;
-    me.physics.pause();
     me.scene.start("S_GameOver", {score: me.score});
   }
 }
@@ -491,15 +490,9 @@ function collectCoin(player, coin){
   me.score += 10;
   me.combo++;
   
-  // 金币特效
-  var emitter = me.add.particles(coin.x, coin.y, "coin", {
-    speed: 100,
-    scale: {start: 0.5, end: 0},
-    alpha: {start: 1, end: 0},
-    lifespan: 300,
-    quantity: 5
-  });
-  me.time.delayedCall(500, function(){ emitter.destroy(); });
+  // 金币特效：用简单的缩放动画代替particles
+  var fx = me.add.text(coin.x, coin.y, "+10", {fontSize:"14px", fill:"#ffcc00", fontStyle:"bold"}).setOrigin(0.5);
+  me.tweens.add({targets:fx, y:coin.y-30, alpha:0, duration:400, onComplete:function(){fx.destroy();}});
 }
 
 function btn(scene, x, y, txt, col, fn){
