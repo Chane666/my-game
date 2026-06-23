@@ -3,573 +3,613 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>🐱 Cat Escape! - v22 Phase 1</title>
+<title>Cat Escape - 小猫大逃亡</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  background: linear-gradient(135deg, #1a0533 0%, #120822 50%, #0a0415 100%);
-  display:flex;justify-content:center;align-items:center;
-  height:100vh;overflow:hidden;touch-action:none;
-  font-family: 'Arial', sans-serif;
-}
-canvas{display:block; border-radius: 12px; box-shadow: 0 0 30px rgba(255,170,51,0.3);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden}
+  body{
+    background:#10151c;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:Arial,"Microsoft YaHei",sans-serif;
+    touch-action:none;
+    color:#fff;
+  }
+  #gw{
+    width:min(100vw,480px);
+    height:min(100vh,720px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  canvas{
+    display:block;
+    max-width:100vw;
+    max-height:100vh;
+    border-radius:10px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
 </style>
 </head>
 <body>
-
 <div id="gw"></div>
-
 <script src="./phaser.min.js"></script>
-
 <script>
-var GW = 480, GH = 720;
+"use strict";
 
-// ============================================================
-//  🐱 Cat Escape! v22 - Phase 1 Edition
-//  ✅ Combo Bug Fix
-//  ✅ Close Call Feedback (险些碰撞反馈)
-//  ✅ Coin Flash Effect (金币收集闪光)
-//  ✅ Vibration Feedback (移动端振动)
-// ============================================================
+var GW = 480;
+var GH = 720;
+var STORE_KEY = "catEscapeRecordsV2";
 
-var S_Boot = {
-  key: "S_Boot",
-  preload: function(){
-    var g = this.add.graphics();
-    
-    // ====== PLAYER: 橙色猫咪 ======
-    g.fillStyle(0xff9933);
-    g.fillCircle(16, 18, 12);
-    g.fillStyle(0xff8833);
-    g.fillCircle(8, 7, 5);
-    g.fillCircle(24, 7, 5);
-    g.fillStyle(0xffffff);
-    g.fillCircle(11, 16, 3);
-    g.fillCircle(21, 16, 3);
-    g.fillStyle(0x222222);
-    g.fillCircle(11, 16, 1.5);
-    g.fillCircle(21, 16, 1.5);
-    g.fillStyle(0xff6688);
-    g.fillRect(15, 20, 2, 2);
-    g.generateTexture("player", 32, 36);
-    g.clear();
-    
-    // ====== OBS: 粉色拖鞋 ======
-    g.fillStyle(0xff6699);
-    g.fillRoundedRect(4, 4, 28, 28, 6);
-    g.lineStyle(2, 0xcc4488);
-    g.strokeRoundedRect(4, 4, 28, 28, 6);
-    g.generateTexture("obs", 36, 36);
-    g.clear();
-    
-    // ====== COIN: 金色硬币 ======
-    g.fillStyle(0xffaa00);
-    g.fillCircle(12, 12, 10);
-    g.fillStyle(0xffcc00);
-    g.fillCircle(12, 12, 7);
-    g.fillStyle(0xffee55);
-    g.fillCircle(9, 9, 2);
-    g.fillStyle(0xff8800);
-    g.fillRect(11, 8, 2, 8);
-    g.fillRect(8, 11, 8, 2);
-    g.generateTexture("coin", 24, 24);
-    g.clear();
-    
-    g.destroy();
-  },
-  
-  create: function(){
-    this.scene.start("S_Menu");
-  }
-};
+function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
-// ====== 振动工具函数 ======
 function vibrate(pattern){
   if(navigator.vibrate){
     try{ navigator.vibrate(pattern); }catch(e){}
   }
 }
 
-// ====== 屏幕闪光效果 ======
-function screenFlash(scene, color, alpha, duration){
-  var flash = scene.add.graphics();
-  flash.fillStyle(color, alpha);
-  flash.fillRect(0, 0, GW, GH);
+function readRecords(){
+  try{
+    var data = JSON.parse(localStorage.getItem(STORE_KEY) || "[]");
+    return Array.isArray(data) ? data : [];
+  }catch(e){
+    return [];
+  }
+}
+
+function saveRecord(record){
+  var records = readRecords();
+  records.push(record);
+  records.sort(function(a,b){ return b.score - a.score; });
+  records = records.slice(0, 8);
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(records)); }catch(e){}
+  return records;
+}
+
+function flash(scene, color, alpha, duration){
+  var g = scene.add.graphics().setDepth(90);
+  g.fillStyle(color, alpha).fillRect(0,0,GW,GH);
   scene.tweens.add({
-    targets: flash,
-    alpha: 0,
-    duration: duration,
-    onComplete: function(){ flash.destroy(); }
+    targets:g,
+    alpha:0,
+    duration:duration,
+    onComplete:function(){ g.destroy(); }
   });
 }
 
-var S_Menu = {
-  key: "S_Menu",
-  create: function(){
-    var me = this;
-    var cx = GW / 2, cy = GH / 2;
-    
-    me.add.graphics().fillStyle(0x120822).fillRect(0, 0, GW, GH);
-    
-    me.add.text(cx, cy - 140, "🐱 Cat Escape!", {
-      fontSize: "36px",
-      fill: "#ffaa33",
-      fontStyle: "bold",
-      stroke: "#ff6600",
-      strokeThickness: 4,
-      shadow: { offsetX: 2, offsetY: 2, color: "#000", blur: 4, fill: true }
-    }).setOrigin(0.5);
-    
-    me.add.text(cx, cy - 75, "Help the cat dodge flying slippers!", {
-      fontSize: "14px",
-      fill: "#aabbcc",
-      align: "center"
-    }).setOrigin(0.5);
-    
-    me.add.text(cx - 120, cy - 140, "🐾", {fontSize:"24px"}).setOrigin(0.5);
-    me.add.text(cx + 120, cy - 140, "🐾", {fontSize:"24px"}).setOrigin(0.5);
-    
-    function btn(x, y, txt, col, fn){
-      var bg = me.add.graphics();
-      bg.fillStyle(col);
-      bg.fillRoundedRect(x - 75, y - 16, 150, 34, 14);
-      bg.fillStyle(0xffffff, 0.2);
-      bg.fillRoundedRect(x - 73, y - 14, 146, 14, 12);
-      
-      var label = me.add.text(x, y, txt, {
-        fontSize: "16px",
-        fill: "#ffffff",
-        fontStyle: "bold",
-        stroke: "#000000",
-        strokeThickness: 2
-      }).setOrigin(0.5);
-      
-      var zone = me.add.zone(x, y, 150, 34).setInteractive({useHandCursor:true});
-      
-      zone.on("pointerover", function(){
-        bg.clear();
-        bg.fillStyle(0xffffff);
-        bg.fillRoundedRect(x - 75, y - 16, 150, 34, 14);
-        bg.fillStyle(col);
-        bg.fillRoundedRect(x - 73, y - 14, 146, 30, 12);
-        label.setScale(1.05);
-      });
-      
-      zone.on("pointerout", function(){
-        bg.clear();
-        bg.fillStyle(col);
-        bg.fillRoundedRect(x - 75, y - 16, 150, 34, 14);
-        bg.fillStyle(0xffffff, 0.2);
-        bg.fillRoundedRect(x - 73, y - 14, 146, 14, 12);
-        label.setScale(1.0);
-      });
-      
-      zone.on("pointerdown", function(){
-        label.setScale(0.95);
-        vibrate(20);
-        me.time.delayedCall(100, fn);
-      });
-    }
-    
-    btn(cx, cy + 10, "🎮 START GAME", 0x00cc66, function(){ me.scene.start("S_Play"); });
-    btn(cx, cy + 60, "🏆 RECORDS", 0xffaa00, function(){ me.scene.start("S_Records"); });
-    btn(cx, cy + 110, "📤 SHARE", 0x4488ff, function(){
-      var url = window.location.href;
-      if(navigator.share){ navigator.share({title:"🐱 Cat Escape!", url:url}); }
-      else if(navigator.clipboard){ navigator.clipboard.writeText(url); showToast(me,"Link copied!"); }
-      else { showToast(me,"Share: "+url); }
-    });
-    
-    me.add.text(GW-10, GH-10, "v22 Phase 1", {fontSize:"10px", fill:"#556677"}).setOrigin(1,1);
-  },
-  
-  showToast: function(msg){
-    var toast = this.add.text(GW/2, GH-50, msg, {
-      fontSize:"14px", fill:"#ffffff", backgroundColor:"#000000", padding:{x:10,y:5}
-    }).setOrigin(0.5);
-    this.tweens.add({targets:toast, alpha:0, duration:2000, ease:"Power2", onComplete:function(){toast.destroy();}});
-  }
-};
-
-function showToast(scene, msg){
-  var toast = scene.add.text(GW/2, GH-50, msg, {
-    fontSize:"14px", fill:"#ffffff", backgroundColor:"#000000", padding:{x:10,y:5}
-  }).setOrigin(0.5);
-  scene.tweens.add({targets:toast, alpha:0, duration:2000, ease:"Power2", onComplete:function(){toast.destroy();}});
+function toast(scene, text, color){
+  var msg = scene.add.text(GW/2, GH - 92, text, {
+    fontSize:"16px",
+    color:color || "#ffffff",
+    fontStyle:"bold",
+    backgroundColor:"rgba(0,0,0,.62)",
+    padding:{x:14,y:8}
+  }).setOrigin(.5).setDepth(100);
+  scene.tweens.add({
+    targets:msg,
+    y:msg.y - 24,
+    alpha:0,
+    duration:1100,
+    ease:"Quad.easeOut",
+    onComplete:function(){ msg.destroy(); }
+  });
 }
 
-var S_Records = {
-  key: "S_Records",
-  create: function(){
+function makeButton(scene, x, y, w, label, color, onClick){
+  var bg = scene.add.graphics();
+  var text = scene.add.text(x, y, label, {
+    fontSize:"17px",
+    color:"#ffffff",
+    fontStyle:"bold"
+  }).setOrigin(.5);
+  function draw(fill, scale){
+    bg.clear();
+    bg.fillStyle(0x000000,.22).fillRoundedRect(x - w/2 + 3, y - 18 + 4, w, 38, 10);
+    bg.fillStyle(fill,1).fillRoundedRect(x - w/2, y - 18, w, 38, 10);
+    bg.fillStyle(0xffffff,.18).fillRoundedRect(x - w/2 + 4, y - 15, w - 8, 13, 8);
+    text.setScale(scale || 1);
+  }
+  draw(color,1);
+  var zone = scene.add.zone(x,y,w,42).setInteractive({useHandCursor:true});
+  zone.on("pointerover",function(){ draw(0xffffff,1.04); text.setColor("#17202a"); });
+  zone.on("pointerout",function(){ draw(color,1); text.setColor("#ffffff"); });
+  zone.on("pointerdown",function(){
+    vibrate(18);
+    text.setScale(.95);
+    scene.time.delayedCall(90,onClick);
+  });
+  return {bg:bg,text:text,zone:zone};
+}
+
+function gradientBackground(scene){
+  var g = scene.add.graphics();
+  g.fillStyle(0x10151c,1).fillRect(0,0,GW,GH);
+  g.fillStyle(0x132530,.72).fillRect(0,0,GW,GH * .52);
+  g.lineStyle(1,0xffffff,.05);
+  for(var y=80;y<GH;y+=80){ g.lineBetween(28,y,GW-28,y); }
+  for(var x=48;x<GW;x+=96){ g.lineBetween(x,0,x,GH); }
+  return g;
+}
+
+var BootScene = {
+  key:"BootScene",
+  preload:function(){
+    var g = this.add.graphics();
+
+    g.fillStyle(0xf7a941,1).fillCircle(24,24,17).fillRect(8,20,32,10);
+    g.fillStyle(0xf7a941,1).fillCircle(13,10,7).fillCircle(35,10,7);
+    g.fillStyle(0xffcf6b,1).fillCircle(14,11,4).fillCircle(34,11,4);
+    g.fillStyle(0xffffff,1).fillCircle(18,22,4).fillCircle(30,22,4);
+    g.fillStyle(0x222a33,1).fillCircle(18,22,1.8).fillCircle(30,22,1.8);
+    g.fillStyle(0xf46c8c,1).fillRoundedRect(21,28,6,4,2);
+    g.lineStyle(1,0x5c3724,.7).lineBetween(13,29,3,26).lineBetween(13,31,3,34).lineBetween(35,29,45,26).lineBetween(35,31,45,34);
+    g.generateTexture("cat",48,48);
+    g.clear();
+
+    g.fillStyle(0xd5a46c,1).fillRoundedRect(5,7,38,20,7);
+    g.fillStyle(0xc58c58,1).fillRoundedRect(10,12,28,10,5);
+    g.fillStyle(0x6d4630,.65).fillRoundedRect(15,16,18,7,4);
+    g.lineStyle(2,0xf1c084,1).strokeRoundedRect(5,7,38,20,7);
+    g.generateTexture("slipper",48,34);
+    g.clear();
+
+    g.fillStyle(0xffc83d,1).fillCircle(14,14,12);
+    g.fillStyle(0xffe47a,1).fillCircle(14,14,8);
+    g.lineStyle(2,0xd98500,1).strokeCircle(14,14,10);
+    g.fillStyle(0xd98500,1).fillRect(13,7,2,14).fillRect(8,13,12,2);
+    g.generateTexture("coin",28,28);
+    g.clear();
+
+    g.fillStyle(0x65d6ff,1).fillCircle(17,17,14);
+    g.fillStyle(0xffffff,.38).fillCircle(12,11,5);
+    g.lineStyle(3,0xe7fbff,.9).strokeCircle(17,17,11);
+    g.generateTexture("shield",34,34);
+    g.clear();
+
+    g.fillStyle(0xffffff,1).fillRect(2,2,4,18).fillRect(12,2,4,18);
+    g.generateTexture("pauseIcon",18,22);
+    g.clear();
+
+    g.destroy();
+  },
+  create:function(){ this.scene.start("MenuScene"); }
+};
+
+var MenuScene = {
+  key:"MenuScene",
+  create:function(){
     var me = this;
-    me.add.graphics().fillStyle(0x0a1a2e).fillRoundedRect(GW/2-140, GH/2-180, 280, 360, 20);
-    
-    me.add.text(GW/2, GH/2-150, "🏆 RECORDS", {
-      fontSize:"24px", fill:"#ffaa00", fontStyle:"bold", stroke:"#cc8800", strokeThickness:3
-    }).setOrigin(0.5);
-    
-    try{
-      var r = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
-      if(r.length === 0){
-        me.add.text(GW/2, GH/2, "No records yet!\nPlay a game to set a record!", {
-          fontSize:"14px", fill:"#8899aa", align:"center"
-        }).setOrigin(0.5);
-      }else{
-        for(var i = 0; i < r.length && i < 5; i++){
-          var icon = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
-          me.add.text(GW/2, GH/2-80+i*40, icon+"  "+r[i].s+" pts", {
-            fontSize:"16px", fill:i===0?"#ffcc00":"#00ff88", fontStyle:i===0?"bold":"normal"
-          }).setOrigin(0.5);
-        }
-      }
-    }catch(e){
-      me.add.text(GW/2, GH/2, "Error loading records", {fontSize:"14px", fill:"#ff4444"}).setOrigin(0.5);
+    gradientBackground(me);
+    for(var i=0;i<18;i++){
+      var star = me.add.circle(Phaser.Math.Between(24,GW-24),Phaser.Math.Between(30,GH-30),Phaser.Math.Between(1,3),0xfff1b8,.5);
+      me.tweens.add({targets:star,alpha:.12,duration:Phaser.Math.Between(900,1800),yoyo:true,repeat:-1});
     }
-    
-    btn(me, GW/2, GH/2+150, "← BACK", 0xff4444, function(){ me.scene.start("S_Menu"); });
+    var cat = me.add.image(GW/2,145,"cat").setScale(2.1);
+    me.tweens.add({targets:cat,y:155,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    me.add.text(GW/2,245,"小猫大逃亡",{
+      fontSize:"40px",
+      color:"#ffd56f",
+      fontStyle:"bold",
+      stroke:"#56361c",
+      strokeThickness:5
+    }).setOrigin(.5);
+    me.add.text(GW/2,292,"左右移动，躲开拖鞋，收集金币和护盾",{
+      fontSize:"16px",
+      color:"#cbd7e3"
+    }).setOrigin(.5);
+
+    var best = readRecords()[0];
+    me.add.text(GW/2,340,best ? "最高分 " + best.score + "  |  最佳连击 x" + (best.combo || 0) : "还没有记录，先跑一局",{
+      fontSize:"16px",
+      color:"#8fe3b0",
+      fontStyle:"bold"
+    }).setOrigin(.5);
+
+    makeButton(me,GW/2,410,190,"开始游戏",0x22b86f,function(){ me.scene.start("PlayScene"); });
+    makeButton(me,GW/2,464,190,"记录榜",0xf3a326,function(){ me.scene.start("RecordsScene"); });
+    makeButton(me,GW/2,518,190,"分享",0x4a8fe7,function(){
+      var url = location.href;
+      if(navigator.share){
+        navigator.share({title:"小猫大逃亡",text:"来挑战小猫大逃亡！",url:url}).catch(function(){});
+      }else if(navigator.clipboard){
+        navigator.clipboard.writeText(url).then(function(){ toast(me,"链接已复制","#ffffff"); });
+      }else{
+        toast(me,url,"#ffffff");
+      }
+    });
+    me.add.text(GW/2,GH-34,"键盘 A/D 或 ←/→，手机拖动小猫",{
+      fontSize:"14px",
+      color:"#8b9bad"
+    }).setOrigin(.5);
   }
 };
 
-var S_Play = {
-  key: "S_Play",
-  init: function(){
+var RecordsScene = {
+  key:"RecordsScene",
+  create:function(){
+    var me = this;
+    gradientBackground(me);
+    me.add.text(GW/2,82,"记录榜",{
+      fontSize:"34px",
+      color:"#ffd56f",
+      fontStyle:"bold"
+    }).setOrigin(.5);
+    var panel = me.add.graphics();
+    panel.fillStyle(0x182631,.92).fillRoundedRect(46,130,388,420,10);
+    panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,130,388,420,10);
+    var records = readRecords();
+    if(!records.length){
+      me.add.text(GW/2,330,"暂无记录\n完成一局后会自动保存",{
+        fontSize:"18px",
+        color:"#9fb0c1",
+        align:"center",
+        lineSpacing:10
+      }).setOrigin(.5);
+    }else{
+      records.slice(0,8).forEach(function(item,index){
+        var y = 166 + index * 46;
+        var rankColor = index === 0 ? "#ffd56f" : index < 3 ? "#9de6ff" : "#d6e2ee";
+        me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5);
+        me.add.text(112,y,"得分 " + item.score,{fontSize:"18px",color:"#ffffff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5);
+        me.add.text(300,y,"x" + (item.combo || 0),{fontSize:"16px",color:"#ffb7d1",fontStyle:"bold"}).setOrigin(.5);
+        me.add.text(390,y,new Date(item.time).toLocaleDateString(),{fontSize:"13px",color:"#91a0ae"}).setOrigin(1,.5);
+      });
+    }
+    makeButton(me,GW/2,610,178,"返回菜单",0xe65353,function(){ me.scene.start("MenuScene"); });
+  }
+};
+
+var PlayScene = {
+  key:"PlayScene",
+  init:function(){
     this.score = 0;
     this.lives = 3;
-    this.speed = 120;
-    this.obsList = [];
-    this.coinList = [];
-    this.gameOver = false;
-    // 🔧 FIX: combo 现在基于连续收集金币计数，不再用分数小数位
     this.combo = 0;
-    this.lastCoinTime = 0;
-    this.closeCallCooldown = 0;
-    this.invincible = false;
+    this.maxCombo = 0;
+    this.level = 1;
+    this.speed = 155;
+    this.spawnDelay = 820;
+    this.coinDelay = 1280;
+    this.shielded = false;
+    this.invincible = 0;
+    this.closeCallTimer = 0;
+    this.comboTimer = 0;
+    this.isPaused = false;
+    this.startedAt = 0;
   },
-  
-  create: function(){
+  create:function(){
     var me = this;
-    
-    // 背景
-    me.bgGraphic = me.add.graphics();
-    me.bgGraphic.fillStyle(0x120822).fillRect(0, 0, GW, GH);
-    
-    // 玩家
-    me.player = me.physics.add.sprite(GW/2, GH-100, "player");
+    [
+      "spawnObstacle",
+      "spawnCoin",
+      "spawnShield",
+      "collectCoin",
+      "collectShield",
+      "hitObstacle",
+      "checkCloseCalls",
+      "cleanWorld",
+      "floatText",
+      "togglePause",
+      "finishGame"
+    ].forEach(function(name){ me[name] = PlayScene[name]; });
+    me.bg = gradientBackground(me);
+    me.laneGraphics = me.add.graphics().setDepth(1);
+    for(var x=96;x<GW;x+=96){
+      me.laneGraphics.lineStyle(2,0xffffff,.08).lineBetween(x,0,x,GH);
+    }
+
+    me.obstacles = me.physics.add.group();
+    me.coins = me.physics.add.group();
+    me.powerups = me.physics.add.group();
+    me.player = me.physics.add.sprite(GW/2,GH-92,"cat").setScale(1.18).setDepth(20);
     me.player.setCollideWorldBounds(true);
-    me.player.setScale(1.2);
-    me.player.setDepth(10);
-    
-    // HUD
-    me.scoreText = me.add.text(16, 16, "Score: 0", {
-      fontSize:"18px", fill:"#ffffff", stroke:"#000000", strokeThickness:3
+    me.player.body.setCircle(16,8,9);
+
+    me.scoreText = me.add.text(18,18,"0",{
+      fontSize:"28px",
+      color:"#ffffff",
+      fontStyle:"bold",
+      stroke:"#000000",
+      strokeThickness:4
+    }).setDepth(30);
+    me.metaText = me.add.text(18,55,"等级 1",{
+      fontSize:"14px",
+      color:"#b7c6d6"
+    }).setDepth(30);
+    me.lifeText = me.add.text(GW-18,20,"♥ ♥ ♥",{
+      fontSize:"22px",
+      color:"#ff6b87",
+      fontStyle:"bold",
+      stroke:"#000000",
+      strokeThickness:3
+    }).setOrigin(1,0).setDepth(30);
+    me.comboText = me.add.text(GW/2,82,"",{
+      fontSize:"22px",
+      color:"#ffd56f",
+      fontStyle:"bold",
+      stroke:"#573a12",
+      strokeThickness:3
+    }).setOrigin(.5).setDepth(35);
+
+    var pauseBg = me.add.graphics().setDepth(40);
+    pauseBg.fillStyle(0x000000,.35).fillRoundedRect(GW-62,64,44,44,9);
+    me.add.image(GW-40,86,"pauseIcon").setDepth(41).setScale(.85);
+    me.add.zone(GW-40,86,52,52).setInteractive({useHandCursor:true}).setDepth(42).on("pointerdown",function(){
+      me.togglePause();
     });
-    
-    me.livesText = me.add.text(GW-16, 16, "❤❤❤", {
-      fontSize:"18px", fill:"#ff4444"
-    }).setOrigin(1, 0);
-    
-    me.comboText = me.add.text(GW/2, 50, "", {
-      fontSize:"18px", fill:"#ffcc00", fontStyle:"bold"
-    }).setOrigin(0.5).setDepth(20);
-    
-    // Close Call 提示文字
-    me.closeCallText = me.add.text(GW/2, GH/2 - 80, "", {
-      fontSize:"28px", fill:"#00ffff", fontStyle:"bold",
-      stroke:"#008888", strokeThickness:3
-    }).setOrigin(0.5).setDepth(20).setAlpha(0);
-    
-    // 障碍物组 / 金币组
-    me.obsGroup = me.physics.add.group();
-    me.coinGroup = me.physics.add.group();
-    
-    // 碰撞检测
-    me.physics.add.overlap(me.player, me.obsGroup, hitObstacle, null, me);
-    me.physics.add.overlap(me.player, me.coinGroup, collectCoin, null, me);
-    
-    // 定时器
-    me.obsTimer = me.time.addEvent({
-      delay: 1000, callback: spawnObstacle, callbackScope: me, loop: true
-    });
-    me.coinTimer = me.time.addEvent({
-      delay: 1500, callback: spawnCoin, callbackScope: me, loop: true
-    });
-    
-    // 键盘控制
+
+    me.physics.add.overlap(me.player,me.obstacles,me.hitObstacle,null,me);
+    me.physics.add.overlap(me.player,me.coins,me.collectCoin,null,me);
+    me.physics.add.overlap(me.player,me.powerups,me.collectShield,null,me);
+
+    me.obstacleTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnObstacle,callbackScope:me,loop:true});
+    me.coinTimer = me.time.addEvent({delay:me.coinDelay,callback:me.spawnCoin,callbackScope:me,loop:true});
+    me.powerTimer = me.time.addEvent({delay:7600,callback:me.spawnShield,callbackScope:me,loop:true});
     me.cursors = me.input.keyboard.createCursorKeys();
-    
-    // 触摸控制
-    me.input.on("pointermove", function(pointer){
-      if(!me.gameOver && !me.invincible){
-        me.player.x = Phaser.Math.Clamp(pointer.x, 16, GW-16);
+    me.keys = me.input.keyboard.addKeys("A,D,SPACE,P");
+    me.input.keyboard.on("keydown-P",function(){ me.togglePause(); });
+    me.input.keyboard.on("keydown-SPACE",function(){ me.togglePause(); });
+    me.input.on("pointermove",function(pointer){
+      if(!me.isPaused){
+        me.player.x = clamp(pointer.x,28,GW-28);
       }
     });
+    me.startedAt = me.time.now;
+    toast(me,"开始！","#ffffff");
   },
-  
-  update: function(){
+  update:function(time,delta){
     var me = this;
-    if(me.gameOver) return;
-    
-    // 键盘控制
-    if(me.cursors.left.isDown){ me.player.setVelocityX(-180); }
-    else if(me.cursors.right.isDown){ me.player.setVelocityX(180); }
-    else { me.player.setVelocityX(0); }
-    
-    // 分数递增（存活时间）
-    me.score += 0.02;
-    me.scoreText.setText("Score: " + Math.floor(me.score));
-    
-    // 🔧 COMBO FIX: 基于连续收集金币，2秒内不收集则重置
-    if(me.combo > 0 && me.time.now - me.lastCoinTime > 2000){
-      me.combo = 0;
-      me.comboText.setText("");
-    }
-    
-    // Close Call 冷却递减
-    if(me.closeCallCooldown > 0){
-      me.closeCallCooldown -= me.game.loop.delta;
-    }
-    
-    // 难度渐进加速
-    var newSpeed = 120 + Math.floor(me.score / 50) * 8;
-    newSpeed = Math.min(newSpeed, 450);
-    if(newSpeed !== me.speed){
-      me.speed = newSpeed;
-      // 更新已有障碍物速度
-      me.obsGroup.getChildren().forEach(function(o){ o.setVelocityY(me.speed); });
-      me.coinGroup.getChildren().forEach(function(c){ c.setVelocityY(me.speed * 0.7); });
-    }
-    
-    // ⭐ Close Call 检测：每帧检查玩家与障碍物的距离
-    if(!me.invincible && me.closeCallCooldown <= 0){
-      var px = me.player.x, py = me.player.y;
-      var closeCallDist = 35; // 险些碰撞的判定距离
-      
-      me.obsGroup.getChildren().forEach(function(obs){
-        var dx = px - obs.x;
-        var dy = py - obs.y;
-        var dist = Math.sqrt(dx*dx + dy*dy);
-        
-        if(dist < closeCallDist && dist > 22){ // >22 避免与实际碰撞重叠
-          triggerCloseCall(me);
-          me.closeCallCooldown = 800; // 800ms冷却
-          return false; // 每帧只触发一次
-        }
-      });
-    }
-  }
-};
+    if(me.isPaused){ return; }
+    var dt = delta / 1000;
+    me.score += dt * 7;
+    me.scoreText.setText(String(Math.floor(me.score)));
 
-var S_GameOver = {
-  key: "S_GameOver",
-  create: function(){
+    var targetLevel = 1 + Math.floor(me.score / 130);
+    if(targetLevel !== me.level){
+      me.level = targetLevel;
+      me.speed = Math.min(155 + (me.level - 1) * 22, 430);
+      me.spawnDelay = Math.max(360, 820 - (me.level - 1) * 42);
+      me.obstacleTimer.delay = me.spawnDelay;
+      me.metaText.setText("等级 " + me.level);
+      toast(me,"等级 " + me.level,"#ffd56f");
+    }
+
+    var vx = 0;
+    if(me.cursors.left.isDown || me.keys.A.isDown){ vx = -260; }
+    if(me.cursors.right.isDown || me.keys.D.isDown){ vx = 260; }
+    me.player.setVelocityX(vx);
+
+    if(me.invincible > 0){
+      me.invincible -= delta;
+      me.player.alpha = me.invincible % 180 < 90 ? .45 : 1;
+      if(me.invincible <= 0){ me.player.alpha = 1; }
+    }
+    if(me.closeCallTimer > 0){ me.closeCallTimer -= delta; }
+    if(me.combo > 0){
+      me.comboTimer -= delta;
+      if(me.comboTimer <= 0){
+        me.combo = 0;
+        me.comboText.setText("");
+      }
+    }
+    me.checkCloseCalls();
+    me.cleanWorld();
+  },
+  spawnObstacle:function(){
+    if(this.isPaused){ return; }
+    var x = Phaser.Math.Between(38,GW-38);
+    var obs = this.obstacles.create(x,-34,"slipper").setScale(Phaser.Math.FloatBetween(.95,1.18));
+    obs.body.setCircle(15,9,2);
+    obs.setVelocityY(this.speed + Phaser.Math.Between(0,38));
+    obs.setAngularVelocity(Phaser.Math.Between(-150,150));
+    if(this.level >= 5 && Math.random() < .22){
+      obs.setVelocityX(Phaser.Math.Between(-45,45));
+      obs.setBounce(1,0);
+      obs.setCollideWorldBounds(true);
+    }
+  },
+  spawnCoin:function(){
+    if(this.isPaused){ return; }
+    var coin = this.coins.create(Phaser.Math.Between(34,GW-34),-28,"coin");
+    coin.body.setCircle(12,2,2);
+    coin.setVelocityY(this.speed * .72);
+    coin.setAngularVelocity(160);
+  },
+  spawnShield:function(){
+    if(this.isPaused || this.shielded || Math.random() > .72){ return; }
+    var shield = this.powerups.create(Phaser.Math.Between(36,GW-36),-34,"shield");
+    shield.body.setCircle(14,3,3);
+    shield.setVelocityY(this.speed * .62);
+    shield.setAngularVelocity(80);
+  },
+  collectCoin:function(player,coin){
     var me = this;
-    var finalScore = Math.floor(me.scene.settings.data.score) || 0;
-    
-    me.add.graphics().fillStyle(0x000000, 0.8).fillRect(0, 0, GW, GH);
-    me.add.graphics().fillStyle(0x1a1a2e).fillRoundedRect(GW/2-120, GH/2-160, 240, 320, 20);
-    
-    me.add.text(GW/2, GH/2-120, "💀 GAME OVER", {
-      fontSize:"28px", fill:"#ff4444", fontStyle:"bold", stroke:"#000000", strokeThickness:4
-    }).setOrigin(0.5);
-    
-    me.add.text(GW/2, GH/2-60, "Score: " + finalScore, {
-      fontSize:"22px", fill:"#ffcc00", fontStyle:"bold"
-    }).setOrigin(0.5);
-    
-    try{
-      var r = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
-      var best = r.length > 0 ? r[0].s : 0;
-      me.add.text(GW/2, GH/2-20, "Best: " + best, {
-        fontSize:"16px", fill:"#00ff88"
-      }).setOrigin(0.5);
-    } catch(e){}
-    
-    // 显示本次最大连击
-    var maxCombo = me.scene.settings.data.maxCombo || 0;
-    if(maxCombo >= 3){
-      me.add.text(GW/2, GH/2+15, "Max Combo: x" + maxCombo, {
-        fontSize:"16px", fill:"#ff66aa", fontStyle:"bold"
-      }).setOrigin(0.5);
-    }
-    
-    btn(me, GW/2, GH/2+50, "🔄 RETRY", 0x00cc66, function(){ me.scene.start("S_Play"); });
-    btn(me, GW/2, GH/2+100, "🏠 MENU", 0x4488ff, function(){ me.scene.start("S_Menu"); });
-    
-    try{
-      var rc = JSON.parse(localStorage.getItem("catEscapeRC")) || [];
-      rc.push({s:finalScore, t:Date.now(), c:maxCombo});
-      rc.sort(function(a,b){return b.s-a.s;});
-      rc = rc.slice(0, 5);
-      localStorage.setItem("catEscapeRC", JSON.stringify(rc));
-    } catch(e){}
-  }
-};
-
-// ============================================================
-//  🎮 辅助函数
-// ============================================================
-
-function spawnObstacle(){
-  var me = this;
-  if(me.gameOver) return;
-  
-  var x = Phaser.Math.Between(36, GW-36);
-  var obs = me.obsGroup.create(x, -36, "obs");
-  obs.setVelocityY(me.speed);
-  obs.setAngularVelocity(Phaser.Math.Between(-60, 60));
-}
-
-function spawnCoin(){
-  var me = this;
-  if(me.gameOver) return;
-  
-  var x = Phaser.Math.Between(36, GW-36);
-  var coin = me.coinGroup.create(x, -24, "coin");
-  coin.setVelocityY(me.speed * 0.7);
-  coin.setAngularVelocity(120);
-}
-
-// ⭐ Close Call 反馈系统
-function triggerCloseCall(me){
-  // 随机选择一个提示文字
-  var texts = ["⚡ CLOSE!", "😰 SO CLOSE!", "💨 PHew!", "✨ NICE!", "🔥 SKILL!"];
-  var txt = Phaser.Math.RND.pick(texts);
-  
-  me.closeCallText.setText(txt);
-  me.closeCallText.setAlpha(1);
-  me.closeCallText.setScale(0.5);
-  
-  // 弹出动画 + 渐隐
-  me.tweens.add({
-    targets: me.closeCallText,
-    scaleX: 1.3, scaleY: 1.3,
-    alpha: 0,
-    duration: 600,
-    ease: "Back.easeOut",
-    onComplete: function(){ me.closeCallText.setAlpha(0); me.closeCallText.setScale(1); }
-  });
-  
-  // 轻微屏幕边缘闪烁（青色）
-  screenFlash(me, 0x00ffff, 0.08, 200);
-  
-  // 轻振动
-  vibrate(15);
-  
-  // 加少量分数奖励
-  me.score += 2;
-}
-
-// 💥 碰撞障碍物
-function hitObstacle(player, obs){
-  var me = player.scene;
-  if(me.gameOver || me.invincible) return;
-  
-  obs.destroy();
-  me.lives--;
-  me.combo = 0;
-  me.comboText.setText("");
-  
-  // 更新生命显示
-  var hearts = "";
-  for(var i = 0; i < me.lives; i++) hearts += "❤";
-  me.livesText.setText(hearts || "💀");
-  
-  // 红色闪烁 + 屏幕闪红
-  player.setTint(0xff0000);
-  screenFlash(me, 0xff0000, 0.25, 250);
-  
-  // 强振动
-  vibrate([50, 30, 50]);
-  
-  me.time.delayedCall(200, function(){ player.clearTint(); });
-  
-  // 无敌时间（短暂保护）
-  me.invincible = true;
-  me.time.delayedCall(1000, function(){ me.invincible = false; });
-  
-  if(me.lives <= 0){
-    me.gameOver = true;
-    me.scene.start("S_GameOver", {score: me.score, maxCombo: me.maxCombo || 0});
-  }
-}
-
-// 🪙 收集金币（带屏幕闪光效果）
-function collectCoin(player, coin){
-  var me = player.scene;
-  if(me.gameOver) return;
-  
-  coin.destroy();
-  me.score += 10;
-  
-  // 🔧 COMBO FIX: 连击基于连续收集金币
-  me.combo++;
-  me.lastCoinTime = me.time.now;
-  if(!me.maxCombo || me.combo > me.maxCombo) me.maxCombo = me.combo;
-  
-  // 显示连击
-  if(me.combo >= 2){
-    me.comboText.setText("🔥 COMBO x" + me.combo + "!");
-    me.comboText.setScale(1 + Math.min(me.combo, 10) * 0.08);
-    me.tweens.add({targets:me.comboText, scale:1, duration:200});
-  }
-  
-  // ⭐ 金币收集屏幕闪光（金色）
-  screenFlash(me, 0xffcc00, 0.12, 200);
-  
-  // 振动反馈
-  vibrate(25);
-  
-  // +10 上飘文字特效
-  var fx = me.add.text(coin.x, coin.y, "+10", {
-    fontSize:(14 + Math.min(me.combo, 8))+"px", 
-    fill:me.combo>=5?"#ff3300":me.combo>=3?"#ff6600":"#ffcc00", 
-    fontStyle:"bold"
-  }).setOrigin(0.5).setDepth(25);
-  
-  me.tweens.add({
-    targets:fx, y:coin.y-40, alpha:0, 
-    duration:450, 
-    onComplete:function(){ fx.destroy(); }
-  });
-}
-
-function btn(scene, x, y, txt, col, fn){
-  var bg = scene.add.graphics();
-  bg.fillStyle(col);
-  bg.fillRoundedRect(x-60, y-14, 120, 30, 12);
-  
-  var label = scene.add.text(x, y, txt, {
-    fontSize:"14px", fill:"#ffffff", fontStyle:"bold"
-  }).setOrigin(0.5);
-  
-  var zone = scene.add.zone(x, y, 120, 30).setInteractive({useHandCursor:true});
-  zone.on("pointerdown", function(){
-    label.setScale(0.95);
+    var x = coin.x;
+    var y = coin.y;
+    coin.destroy();
+    me.combo++;
+    me.maxCombo = Math.max(me.maxCombo,me.combo);
+    me.comboTimer = 2200;
+    var bonus = 12 + Math.min(me.combo - 1,8) * 3;
+    me.score += bonus;
+    me.comboText.setText(me.combo >= 2 ? "连击 x" + me.combo : "");
+    me.comboText.setScale(1.25);
+    me.tweens.add({targets:me.comboText,scale:1,duration:180,ease:"Back.easeOut"});
+    me.floatText(x,y,"+" + bonus,me.combo >= 5 ? "#ff7b54" : "#ffd56f");
+    flash(me,0xffd56f,.11,150);
     vibrate(20);
-    scene.time.delayedCall(100, fn);
-  });
-}
+  },
+  collectShield:function(player,shield){
+    var me = this;
+    shield.destroy();
+    me.shielded = true;
+    me.player.setTint(0x7de4ff);
+    me.floatText(me.player.x,me.player.y - 28,"护盾","#7de4ff");
+    toast(me,"获得护盾","#7de4ff");
+    vibrate([20,30,20]);
+  },
+  hitObstacle:function(player,obs){
+    var me = this;
+    if(me.invincible > 0){ return; }
+    obs.destroy();
+    me.combo = 0;
+    me.comboText.setText("");
+    if(me.shielded){
+      me.shielded = false;
+      me.player.clearTint();
+      me.invincible = 850;
+      me.floatText(player.x,player.y - 36,"护盾抵挡","#7de4ff");
+      flash(me,0x65d6ff,.16,190);
+      vibrate([24,24,24]);
+      return;
+    }
+    me.lives--;
+    me.lifeText.setText(Array(Math.max(me.lives,0)+1).join("♥ "));
+    me.player.setTint(0xff3157);
+    me.invincible = 1200;
+    flash(me,0xff3157,.22,230);
+    vibrate([60,30,60]);
+    me.time.delayedCall(180,function(){
+      if(!me.shielded){ me.player.clearTint(); }
+    });
+    if(me.lives <= 0){
+      me.finishGame();
+    }
+  },
+  checkCloseCalls:function(){
+    var me = this;
+    if(me.closeCallTimer > 0 || me.invincible > 0){ return; }
+    var px = me.player.x;
+    var py = me.player.y;
+    me.obstacles.getChildren().some(function(obs){
+      if(obs.y < py - 45 || obs.y > py + 36){ return false; }
+      var dx = Math.abs(px - obs.x);
+      var dy = Math.abs(py - obs.y);
+      if(dx < 46 && dy < 38 && dx > 24){
+        me.score += 5;
+        me.closeCallTimer = 780;
+        me.floatText(px,py - 44,"惊险 +5","#7de4ff");
+        flash(me,0x65d6ff,.08,140);
+        vibrate(12);
+        return true;
+      }
+      return false;
+    });
+  },
+  cleanWorld:function(){
+    function destroyOffscreen(item){
+      if(item.y > GH + 70 || item.x < -80 || item.x > GW + 80){ item.destroy(); }
+    }
+    this.obstacles.getChildren().forEach(destroyOffscreen);
+    this.coins.getChildren().forEach(destroyOffscreen);
+    this.powerups.getChildren().forEach(destroyOffscreen);
+  },
+  floatText:function(x,y,text,color){
+    var fx = this.add.text(x,y,text,{
+      fontSize:"18px",
+      color:color,
+      fontStyle:"bold",
+      stroke:"#000000",
+      strokeThickness:3
+    }).setOrigin(.5).setDepth(70);
+    this.tweens.add({
+      targets:fx,
+      y:y-42,
+      alpha:0,
+      duration:520,
+      ease:"Quad.easeOut",
+      onComplete:function(){ fx.destroy(); }
+    });
+  },
+  togglePause:function(){
+    var me = this;
+    me.isPaused = !me.isPaused;
+    me.physics.world.isPaused = me.isPaused;
+    if(me.isPaused){
+      me.pauseLayer = me.add.container(0,0).setDepth(120);
+      var g = me.add.graphics();
+      g.fillStyle(0x000000,.62).fillRect(0,0,GW,GH);
+      var title = me.add.text(GW/2,270,"已暂停",{
+        fontSize:"34px",
+        color:"#ffffff",
+        fontStyle:"bold"
+      }).setOrigin(.5);
+      var hint = me.add.text(GW/2,316,"点击继续或按 P / 空格",{
+        fontSize:"16px",
+        color:"#cbd7e3"
+      }).setOrigin(.5);
+      me.pauseLayer.add([g,title,hint]);
+      var resume = makeButton(me,GW/2,382,170,"继续",0x22b86f,function(){ me.togglePause(); });
+      me.pauseLayer.add([resume.bg,resume.text,resume.zone]);
+    }else if(me.pauseLayer){
+      me.pauseLayer.destroy(true);
+    }
+  },
+  finishGame:function(){
+    var finalScore = Math.floor(this.score);
+    saveRecord({score:finalScore,combo:this.maxCombo,level:this.level,time:Date.now()});
+    this.scene.start("GameOverScene",{
+      score:finalScore,
+      combo:this.maxCombo,
+      level:this.level
+    });
+  }
+};
 
-// ====== 游戏配置 ======
+var GameOverScene = {
+  key:"GameOverScene",
+  create:function(data){
+    var me = this;
+    gradientBackground(me);
+    me.add.text(GW/2,150,"游戏结束",{
+      fontSize:"38px",
+      color:"#ff6b87",
+      fontStyle:"bold",
+      stroke:"#35131c",
+      strokeThickness:5
+    }).setOrigin(.5);
+    me.add.image(GW/2,224,"cat").setScale(1.8).setAlpha(.82);
+    me.add.text(GW/2,310,String(data.score || 0),{
+      fontSize:"56px",
+      color:"#ffd56f",
+      fontStyle:"bold"
+    }).setOrigin(.5);
+    me.add.text(GW/2,362,"最高连击 x" + (data.combo || 0) + "  |  等级 " + (data.level || 1),{
+      fontSize:"18px",
+      color:"#cbd7e3"
+    }).setOrigin(.5);
+    var best = readRecords()[0];
+    me.add.text(GW/2,402,best ? "当前最高分 " + best.score : "",{
+      fontSize:"16px",
+      color:"#8fe3b0",
+      fontStyle:"bold"
+    }).setOrigin(.5);
+    makeButton(me,GW/2,474,190,"再来一局",0x22b86f,function(){ me.scene.start("PlayScene"); });
+    makeButton(me,GW/2,528,190,"记录榜",0xf3a326,function(){ me.scene.start("RecordsScene"); });
+    makeButton(me,GW/2,582,190,"返回菜单",0x4a8fe7,function(){ me.scene.start("MenuScene"); });
+  }
+};
 
 var config = {
-  type: Phaser.AUTO,
-  width: GW,
-  height: GH,
-  parent: "gw",
-  backgroundColor: "#120822",
-  physics: {
-    default: "arcade",
-    arcade: {
-      gravity: {y: 0},
-      debug: false
-    }
+  type:Phaser.AUTO,
+  width:GW,
+  height:GH,
+  parent:"gw",
+  backgroundColor:"#10151c",
+  scale:{
+    mode:Phaser.Scale.FIT,
+    autoCenter:Phaser.Scale.CENTER_BOTH
   },
-  scene: [S_Boot, S_Menu, S_Records, S_Play, S_GameOver]
+  physics:{
+    default:"arcade",
+    arcade:{gravity:{y:0},debug:false}
+  },
+  scene:[BootScene,MenuScene,RecordsScene,PlayScene,GameOverScene]
 };
 
-var game = new Phaser.Game(config);
+new Phaser.Game(config);
 </script>
-
 </body>
 </html>
