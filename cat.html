@@ -125,8 +125,15 @@ function makeButton(scene, x, y, w, label, color, onClick){
 
 function gradientBackground(scene){
   var g = scene.add.graphics();
-  g.fillStyle(0x10151c,1).fillRect(0,0,GW,GH);
-  g.fillStyle(0x132530,.72).fillRect(0,0,GW,GH * .52);
+  var bands = [
+    0x132530,0x12242f,0x12232e,0x11222d,
+    0x11212b,0x10202a,0x101e28,0x101c26,
+    0x101a24,0x101922,0x101720,0x10151c
+  ];
+  var bandH = Math.ceil(GH / bands.length);
+  for(var i=0;i<bands.length;i++){
+    g.fillStyle(bands[i],1).fillRect(0,i*bandH,GW,bandH+1);
+  }
   g.lineStyle(1,0xffffff,.05);
   for(var y=80;y<GH;y+=80){ g.lineBetween(28,y,GW-28,y); }
   for(var x=48;x<GW;x+=96){ g.lineBetween(x,0,x,GH); }
