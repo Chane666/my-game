@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Cat Escape - 小猫大逃亡</title>
+<title>Jelly Star Run - 团子星际跑酷</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{width:100%;height:100%;overflow:hidden}
@@ -40,7 +40,7 @@
 
 var GW = 480;
 var GH = 720;
-var STORE_KEY = "catEscapeRecordsV2";
+var STORE_KEY = "jellyStarRunRecordsV1";
 
 function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
@@ -145,28 +145,27 @@ var BootScene = {
   preload:function(){
     var g = this.add.graphics();
 
-    g.fillStyle(0xf7a941,1).fillCircle(24,24,17).fillRect(8,20,32,10);
-    g.fillStyle(0xf7a941,1).fillCircle(13,10,7).fillCircle(35,10,7);
-    g.fillStyle(0xffcf6b,1).fillCircle(14,11,4).fillCircle(34,11,4);
-    g.fillStyle(0xffffff,1).fillCircle(18,22,4).fillCircle(30,22,4);
-    g.fillStyle(0x222a33,1).fillCircle(18,22,1.8).fillCircle(30,22,1.8);
-    g.fillStyle(0xf46c8c,1).fillRoundedRect(21,28,6,4,2);
-    g.lineStyle(1,0x5c3724,.7).lineBetween(13,29,3,26).lineBetween(13,31,3,34).lineBetween(35,29,45,26).lineBetween(35,31,45,34);
-    g.generateTexture("cat",48,48);
+    g.fillStyle(0x6ee7d8,1).fillCircle(24,24,17).fillRoundedRect(10,20,28,17,10);
+    g.fillStyle(0xa8fff3,.7).fillCircle(17,16,6);
+    g.fillStyle(0xffffff,1).fillCircle(18,23,4).fillCircle(30,23,4);
+    g.fillStyle(0x17202a,1).fillCircle(18,23,1.8).fillCircle(30,23,1.8);
+    g.fillStyle(0xff7fb1,1).fillCircle(24,30,2.6);
+    g.lineStyle(2,0x4fc8bc,1).strokeCircle(24,24,17);
+    g.generateTexture("hero",48,48);
     g.clear();
 
-    g.fillStyle(0xd5a46c,1).fillRoundedRect(5,7,38,20,7);
-    g.fillStyle(0xc58c58,1).fillRoundedRect(10,12,28,10,5);
-    g.fillStyle(0x6d4630,.65).fillRoundedRect(15,16,18,7,4);
-    g.lineStyle(2,0xf1c084,1).strokeRoundedRect(5,7,38,20,7);
-    g.generateTexture("slipper",48,34);
+    g.fillStyle(0xff8a54,1).fillCircle(24,17,14);
+    g.fillStyle(0xffc06b,1).fillCircle(19,12,5);
+    g.fillStyle(0xba4b3f,1).fillCircle(29,21,6);
+    g.lineStyle(2,0xffd08a,1).strokeCircle(24,17,13);
+    g.generateTexture("meteor",48,34);
     g.clear();
 
     g.fillStyle(0xffc83d,1).fillCircle(14,14,12);
     g.fillStyle(0xffe47a,1).fillCircle(14,14,8);
     g.lineStyle(2,0xd98500,1).strokeCircle(14,14,10);
-    g.fillStyle(0xd98500,1).fillRect(13,7,2,14).fillRect(8,13,12,2);
-    g.generateTexture("coin",28,28);
+    g.fillStyle(0xd98500,1).fillCircle(14,14,2).fillRect(13,7,2,14).fillRect(8,13,12,2);
+    g.generateTexture("starcoin",28,28);
     g.clear();
 
     g.fillStyle(0x65d6ff,1).fillCircle(17,17,14);
@@ -193,16 +192,16 @@ var MenuScene = {
       var star = me.add.circle(Phaser.Math.Between(24,GW-24),Phaser.Math.Between(30,GH-30),Phaser.Math.Between(1,3),0xfff1b8,.5);
       me.tweens.add({targets:star,alpha:.12,duration:Phaser.Math.Between(900,1800),yoyo:true,repeat:-1});
     }
-    var cat = me.add.image(GW/2,145,"cat").setScale(2.1);
-    me.tweens.add({targets:cat,y:155,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
-    me.add.text(GW/2,245,"小猫大逃亡",{
+    var hero = me.add.image(GW/2,145,"hero").setScale(2.1);
+    me.tweens.add({targets:hero,y:155,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    me.add.text(GW/2,245,"团子星际跑酷",{
       fontSize:"40px",
       color:"#ffd56f",
       fontStyle:"bold",
       stroke:"#56361c",
       strokeThickness:5
     }).setOrigin(.5);
-    me.add.text(GW/2,292,"左右移动，躲开拖鞋，收集金币和护盾",{
+    me.add.text(GW/2,292,"左右移动，躲开流星，收集星币和能量护盾",{
       fontSize:"16px",
       color:"#cbd7e3"
     }).setOrigin(.5);
@@ -219,14 +218,14 @@ var MenuScene = {
     makeButton(me,GW/2,518,190,"分享",0x4a8fe7,function(){
       var url = location.href;
       if(navigator.share){
-        navigator.share({title:"小猫大逃亡",text:"来挑战小猫大逃亡！",url:url}).catch(function(){});
+        navigator.share({title:"团子星际跑酷",text:"来挑战团子的星际冒险！",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){ toast(me,"链接已复制","#ffffff"); });
       }else{
         toast(me,url,"#ffffff");
       }
     });
-    me.add.text(GW/2,GH-34,"键盘 A/D 或 ←/→，手机拖动小猫",{
+    me.add.text(GW/2,GH-34,"键盘 A/D 或 ←/→，手机拖动团子",{
       fontSize:"14px",
       color:"#8b9bad"
     }).setOrigin(.5);
@@ -310,7 +309,7 @@ var PlayScene = {
     me.obstacles = me.physics.add.group();
     me.coins = me.physics.add.group();
     me.powerups = me.physics.add.group();
-    me.player = me.physics.add.sprite(GW/2,GH-92,"cat").setScale(1.18).setDepth(20);
+    me.player = me.physics.add.sprite(GW/2,GH-92,"hero").setScale(1.18).setDepth(20);
     me.player.setCollideWorldBounds(true);
     me.player.body.setCircle(16,8,9);
 
@@ -325,9 +324,9 @@ var PlayScene = {
       fontSize:"14px",
       color:"#b7c6d6"
     }).setDepth(30);
-    me.lifeText = me.add.text(GW-18,20,"♥ ♥ ♥",{
+    me.lifeText = me.add.text(GW-18,20,"● ● ●",{
       fontSize:"22px",
-      color:"#ff6b87",
+      color:"#7de4ff",
       fontStyle:"bold",
       stroke:"#000000",
       strokeThickness:3
@@ -407,7 +406,7 @@ var PlayScene = {
   spawnObstacle:function(){
     if(this.isPaused){ return; }
     var x = Phaser.Math.Between(38,GW-38);
-    var obs = this.obstacles.create(x,-34,"slipper").setScale(Phaser.Math.FloatBetween(.95,1.18));
+    var obs = this.obstacles.create(x,-34,"meteor").setScale(Phaser.Math.FloatBetween(.95,1.18));
     obs.body.setCircle(15,9,2);
     obs.setVelocityY(this.speed + Phaser.Math.Between(0,38));
     obs.setAngularVelocity(Phaser.Math.Between(-150,150));
@@ -419,7 +418,7 @@ var PlayScene = {
   },
   spawnCoin:function(){
     if(this.isPaused){ return; }
-    var coin = this.coins.create(Phaser.Math.Between(34,GW-34),-28,"coin");
+    var coin = this.coins.create(Phaser.Math.Between(34,GW-34),-28,"starcoin");
     coin.body.setCircle(12,2,2);
     coin.setVelocityY(this.speed * .72);
     coin.setAngularVelocity(160);
@@ -473,7 +472,7 @@ var PlayScene = {
       return;
     }
     me.lives--;
-    me.lifeText.setText(Array(Math.max(me.lives,0)+1).join("♥ "));
+    me.lifeText.setText(Array(Math.max(me.lives,0)+1).join("● "));
     me.player.setTint(0xff3157);
     me.invincible = 1200;
     flash(me,0xff3157,.22,230);
@@ -577,7 +576,7 @@ var GameOverScene = {
       stroke:"#35131c",
       strokeThickness:5
     }).setOrigin(.5);
-    me.add.image(GW/2,224,"cat").setScale(1.8).setAlpha(.82);
+    me.add.image(GW/2,224,"hero").setScale(1.8).setAlpha(.82);
     me.add.text(GW/2,310,String(data.score || 0),{
       fontSize:"56px",
       color:"#ffd56f",
