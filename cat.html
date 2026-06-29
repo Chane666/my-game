@@ -277,6 +277,7 @@ var PlayScene = {
   key:"PlayScene",
   init:function(){
     this.score = 0;
+    this.maxCapacity = 5;
     this.capacity = 5;
     this.combo = 0;
     this.maxCombo = 0;
@@ -412,8 +413,14 @@ var PlayScene = {
   collectBoost:function(player,boost){
     boost.destroy();
     this.rushTimer = 5000;
+    var healed = false;
+    if(this.capacity < this.maxCapacity){
+      this.capacity++;
+      healed = true;
+      this.updateHud();
+    }
     this.taskText.setText("霓虹加班：得分 x2");
-    this.floatText(player.x,player.y-42,"加班 x2","#7de4ff");
+    this.floatText(player.x,player.y-42,healed ? "加班 x2  +1" : "加班 x2  满仓","#7de4ff");
     flash(this,0x7de4ff,.10,160);
     sfx("boost");
     vibrate([16,24,16]);
