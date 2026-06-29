@@ -63,8 +63,16 @@ function shareUrl(score){
 }
 
 var audioCtx = null;
+var activeScene = null;
+var assetSfxReady = false;
 function sfx(type){
   try{
+    if(assetSfxReady && activeScene && activeScene.sound){
+      var key = "sfx_" + type;
+      if(activeScene.cache.audio.exists(key)){
+        activeScene.sound.play(key,{volume:type === "bad" ? .9 : type === "combo" ? 1 : .82,detune:type === "tap" ? -80 : 0});
+      }
+    }
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if(audioCtx.state === "suspended"){ audioCtx.resume(); }
     var now = audioCtx.currentTime;
@@ -194,6 +202,11 @@ function laneOfX(x){
 var BootScene = {
   key:"BootScene",
   preload:function(){
+    this.load.audio("sfx_tap","audio/tap.ogg");
+    this.load.audio("sfx_ok","audio/ok.ogg");
+    this.load.audio("sfx_boost","audio/boost.ogg");
+    this.load.audio("sfx_combo","audio/combo.ogg");
+    this.load.audio("sfx_bad","audio/bad.ogg");
     var g = this.add.graphics();
 
     g.fillStyle(0x122234,.62).fillRoundedRect(3,13,42,25,10);
@@ -266,12 +279,13 @@ var BootScene = {
     g.clear();
     g.destroy();
   },
-  create:function(){ this.scene.start("MenuScene"); }
+  create:function(){ assetSfxReady = true; this.scene.start("MenuScene"); }
 };
 
 var MenuScene = {
   key:"MenuScene",
   create:function(){
+    activeScene = this;
     var me = this, cx = GW/2;
     var target = challengeScore();
     var centerY = GH / 2;
@@ -328,6 +342,7 @@ var MenuScene = {
 var RecordsScene = {
   key:"RecordsScene",
   create:function(){
+    activeScene = this;
     var me = this;
     gradientBackground(me);
     me.add.text(GW/2,82,"记录榜",{fontSize:"34px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
@@ -380,6 +395,7 @@ var PlayScene = {
     this.bestBeatenShown = false;
   },
   create:function(){
+    activeScene = this;
     var me = this;
     ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
@@ -387,6 +403,7 @@ var PlayScene = {
     me.rails = me.add.graphics().setDepth(1);
     me.laneFx = me.add.graphics().setDepth(2);
     me.portals = [];
+    me.portalGlow = [];
     LANE_X.forEach(function(x,i){
       me.rails.lineStyle(6,COLORS[i].hex,.07).lineBetween(x,90,x,GH-78);
       me.rails.lineStyle(2,COLORS[i].hex,.36).lineBetween(x,88,x,GH-78);
@@ -394,6 +411,7 @@ var PlayScene = {
         me.rails.lineStyle(1,COLORS[i].hex,.20).lineBetween(x-12,yy,x+12,yy+10);
       }
       me.portals[i] = me.add.image(x,GH-62,"portal_"+COLORS[i].key).setDepth(5);
+      me.portalGlow[i] = me.add.circle(x,GH-62,34,COLORS[i].hex,.08).setDepth(4);
       me.add.text(x,GH-34,COLORS[i].name,{fontSize:"13px",color:COLORS[i].text,fontStyle:"bold"}).setOrigin(.5).setDepth(6);
     });
 
@@ -402,11 +420,15 @@ var PlayScene = {
     me.player = me.physics.add.sprite(LANE_X[me.lane],GH-116,"shuttle").setDepth(20).setScale(1.2);
     me.player.body.setSize(38,30).setOffset(5,12);
     me.trail = me.add.circle(me.player.x,me.player.y+4,18,0x53e5ff,.18).setDepth(18);
+    me.engineGlow = me.add.circle(me.player.x,me.player.y+22,10,0x7de4ff,.20).setDepth(19);
     me.carryBadge = me.add.circle(me.player.x,me.player.y-34,10,0xffffff,0).setDepth(24);
     me.carryText = me.add.text(me.player.x,me.player.y-34,"",{fontSize:"12px",color:"#101820",fontStyle:"bold"}).setOrigin(.5).setDepth(25);
 
     var hudBg = me.add.graphics().setDepth(28);
     hudBg.fillStyle(0x071018,.62).fillRoundedRect(10,10,GW-20,76,12);
+    hudBg.fillStyle(0xffffff,.07).fillRoundedRect(18,16,GW-36,12,7);
+    hudBg.fillStyle(0x7de4ff,.18).fillRoundedRect(18,78,96,3,2);
+    hudBg.fillStyle(0xffdf75,.18).fillRoundedRect(GW-114,78,96,3,2);
     hudBg.lineStyle(2,0xffffff,.08).strokeRoundedRect(10,10,GW-20,76,12);
     me.scoreText = me.add.text(18,18,"0",{fontSize:"30px",color:"#fff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setDepth(30);
     me.metaText = me.add.text(18,56,"等级 1",{fontSize:"14px",color:"#b7c6d6"}).setDepth(30);
@@ -473,11 +495,21 @@ var PlayScene = {
       me.trail.x += (me.player.x - me.trail.x) * .24;
       me.trail.y = me.player.y + 4;
     }
+    if(me.engineGlow){
+      me.engineGlow.x = me.player.x;
+      me.engineGlow.y = me.player.y + 22;
+      me.engineGlow.setScale(1 + Math.sin(time/70)*.18);
+    }
+    if(me.portalGlow){
+      me.portalGlow.forEach(function(glow,i){ glow.setScale(1 + Math.sin(time/160 + i)*.07); });
+    }
     me.packages.getChildren().forEach(function(pkg){
       if(pkg.glow){ pkg.glow.x = pkg.x; pkg.glow.y = pkg.y; pkg.glow.setAlpha(.10 + Math.sin(time/120 + pkg.y*.02)*.04); }
+      if(pkg.tag){ pkg.tag.x = pkg.x; pkg.tag.y = pkg.y + 1; pkg.tag.setAngle(pkg.angle * .35); }
     });
     me.boosts.getChildren().forEach(function(boost){
       if(boost.aura){ boost.aura.x = boost.x; boost.aura.y = boost.y; boost.aura.setScale(1 + Math.sin(time/100)*.12); }
+      if(boost.label){ boost.label.x = boost.x; boost.label.y = boost.y + 25; }
     });
     if(me.challenge && !me.challengeShown && me.score > me.challenge){
       me.challengeShown = true;
@@ -526,6 +558,8 @@ var PlayScene = {
     pkg.setAngularVelocity(Phaser.Math.Between(-28,28));
     var glow = this.add.circle(pkg.x,pkg.y,15,c.hex,.12).setDepth(11);
     pkg.glow = glow;
+    var tag = this.add.text(pkg.x,pkg.y+1,c.name,{fontSize:"10px",color:"#101820",fontStyle:"bold"}).setOrigin(.5).setDepth(13);
+    pkg.tag = tag;
   },
   spawnBoost:function(){
     if(this.isPaused || Math.random() > .62){ return; }
@@ -537,6 +571,7 @@ var PlayScene = {
     boost.setVelocityY(this.speed * .82);
     boost.setAngularVelocity(90);
     boost.aura = this.add.circle(boost.x,boost.y,18,kind === "auto" ? 0xffdf75 : kind === "loop" ? 0x9d7cff : 0x7de4ff,.18).setDepth(12);
+    boost.label = this.add.text(boost.x,boost.y+25,kind === "auto" ? "AUTO" : kind === "loop" ? "LOOP" : "x2",{fontSize:"9px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5).setDepth(14);
   },
   collectPackage:function(player,pkg){
     var me = this;
@@ -546,6 +581,7 @@ var PlayScene = {
     }
     me.carry = {key:pkg.colorKey,name:pkg.colorName,hex:pkg.colorHex};
     if(pkg.glow){ pkg.glow.destroy(); }
+    if(pkg.tag){ pkg.tag.destroy(); }
     pkg.destroy();
     me.taskText.setText("送到" + me.carry.name + "色门");
     me.player.setTint(me.carry.hex);
@@ -556,6 +592,7 @@ var PlayScene = {
   collectBoost:function(player,boost){
     var kind = boost.kind || "boost";
     if(boost.aura){ boost.aura.destroy(); }
+    if(boost.label){ boost.label.destroy(); }
     boost.destroy();
     if(kind === "auto"){
       this.autoTimer = 6200;
@@ -673,6 +710,7 @@ var PlayScene = {
       return;
     }
     if(pkg && pkg.glow){ pkg.glow.destroy(); }
+    if(pkg && pkg.tag){ pkg.tag.destroy(); }
     if(pkg && pkg.destroy){ pkg.destroy(); }
     this.capacity--;
     this.missed++;
@@ -693,6 +731,7 @@ var PlayScene = {
     me.boosts.getChildren().forEach(function(boost){
       if(boost.y > GH + 40){
         if(boost.aura){ boost.aura.destroy(); }
+        if(boost.label){ boost.label.destroy(); }
         boost.destroy();
       }
     });
@@ -864,6 +903,7 @@ var PlayScene = {
 var GameOverScene = {
   key:"GameOverScene",
   create:function(data){
+    activeScene = this;
     var me = this;
     var won = data.challenge && data.score > data.challenge;
     gradientBackground(me);
