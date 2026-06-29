@@ -209,14 +209,14 @@ var BootScene = {
     this.load.audio("sfx_bad","audio/bad.ogg");
     var g = this.add.graphics();
 
-    g.fillStyle(0x122234,.62).fillRoundedRect(3,13,42,25,10);
-    g.fillStyle(0x53e5ff,1).fillRoundedRect(6,12,36,24,8);
-    g.fillStyle(0x8ff6ff,.78).fillRoundedRect(10,14,28,8,5);
-    g.fillStyle(0xffffff,.32).fillRoundedRect(13,16,22,4,3);
-    g.fillStyle(0x1a2735,1).fillRoundedRect(13,25,22,7,4);
+    g.fillStyle(0x0c1520,.48).fillRoundedRect(3,13,42,25,10);
+    g.fillStyle(0xf2f6fb,1).fillRoundedRect(6,12,36,24,8);
+    g.fillStyle(0xffffff,.88).fillRoundedRect(10,14,28,8,5);
+    g.fillStyle(0xffffff,.42).fillRoundedRect(13,16,22,4,3);
+    g.fillStyle(0x27313f,1).fillRoundedRect(13,25,22,7,4);
     g.fillStyle(0xffcf45,1).fillCircle(14,24,3).fillCircle(34,24,3);
     g.fillStyle(0xfff4a0,.9).fillCircle(14,24,1).fillCircle(34,24,1);
-    g.lineStyle(2,0x9bf4ff,1).strokeRoundedRect(6,12,36,24,8);
+    g.lineStyle(2,0xe7edf5,1).strokeRoundedRect(6,12,36,24,8);
     g.lineStyle(1,0xffffff,.45).lineBetween(12,34,36,34);
     g.generateTexture("shuttle",48,48);
     g.clear();
@@ -398,7 +398,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -420,8 +420,8 @@ var PlayScene = {
     me.boosts = me.physics.add.group();
     me.player = me.physics.add.sprite(LANE_X[me.lane],GH-116,"shuttle").setDepth(20).setScale(1.2);
     me.player.body.setSize(38,30).setOffset(5,12);
-    me.trail = me.add.circle(me.player.x,me.player.y+4,18,0x53e5ff,.18).setDepth(18);
-    me.engineGlow = me.add.circle(me.player.x,me.player.y+22,10,0x7de4ff,.20).setDepth(19);
+    me.trail = me.add.circle(me.player.x,me.player.y+4,18,0xf2f6fb,.14).setDepth(18);
+    me.engineGlow = me.add.circle(me.player.x,me.player.y+22,10,0xffffff,.16).setDepth(19);
     me.carryBadge = me.add.circle(me.player.x,me.player.y-34,10,0xffffff,0).setDepth(24);
     me.carryText = me.add.text(me.player.x,me.player.y-34,"",{fontSize:"12px",color:"#101820",fontStyle:"bold"}).setOrigin(.5).setDepth(25);
 
@@ -458,6 +458,8 @@ var PlayScene = {
     me.physics.add.overlap(me.player,me.boosts,me.collectBoost,null,me);
     me.packageTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnPackage,callbackScope:me,loop:true});
     me.boostTimer = me.time.addEvent({delay:9000,callback:me.spawnBoost,callbackScope:me,loop:true});
+    me.refreshPlayerStyle();
+    me.drawLaneFx();
     me.cursors = me.input.keyboard.createCursorKeys();
     me.keys = me.input.keyboard.addKeys("A,D,SPACE,P");
     me.input.keyboard.on("keydown-LEFT",function(){me.moveLane(-1);});
@@ -581,7 +583,7 @@ var PlayScene = {
     if(pkg.glow){ pkg.glow.destroy(); }
     pkg.destroy();
     me.taskText.setText("送到" + me.carry.name + "色门");
-    me.player.setTint(me.carry.hex);
+    me.refreshPlayerStyle();
     me.floatText(player.x,player.y-42,"接单","#eaf7ff");
     sfx("tap");
     vibrate(12);
@@ -678,7 +680,8 @@ var PlayScene = {
       sfx("combo");
     }
     this.carry = null;
-    this.player.clearTint();
+    this.refreshPlayerStyle();
+    this.drawLaneFx();
     this.updateHud();
     this.checkPositiveGoals();
     sfx("ok");
@@ -690,7 +693,8 @@ var PlayScene = {
     this.comboText.setText("");
     this.floatText(this.player.x,this.player.y-48,"丢弃 -1","#ff7a8e");
     this.carry = null;
-    this.player.clearTint();
+    this.refreshPlayerStyle();
+    this.drawLaneFx();
     this.updateHud();
     flash(this,0xff4f6d,.16,180);
     sfx("bad");
@@ -752,11 +756,21 @@ var PlayScene = {
   drawLaneFx:function(){
     if(!this.laneFx){ return; }
     this.laneFx.clear();
-    var x = LANE_X[this.lane], color = COLORS[this.lane].hex;
-    this.laneFx.fillStyle(color,.075).fillRoundedRect(x-39,86,78,GH-154,18);
-    this.laneFx.lineStyle(4,color,.42).strokeRoundedRect(x-34,92,68,GH-166,16);
+    var x = LANE_X[this.lane], color = this.carry ? this.carry.hex : 0xe7edf5;
+    this.laneFx.fillStyle(color,this.carry ? .075 : .045).fillRoundedRect(x-39,86,78,GH-154,18);
+    this.laneFx.lineStyle(4,color,this.carry ? .42 : .28).strokeRoundedRect(x-34,92,68,GH-166,16);
     this.laneFx.lineStyle(1,0xffffff,.22).lineBetween(x-20,104,x-20,GH-92).lineBetween(x+20,104,x+20,GH-92);
-    if(this.trail){ this.trail.setFillStyle(color,.18); }
+    this.refreshPlayerStyle();
+  },
+  refreshPlayerStyle:function(){
+    var color = this.carry ? this.carry.hex : 0xf2f6fb;
+    var glow = this.carry ? this.carry.hex : 0xffffff;
+    if(this.player){
+      if(this.carry){ this.player.setTint(color); }
+      else{ this.player.clearTint(); }
+    }
+    if(this.trail){ this.trail.setFillStyle(color,this.carry ? .20 : .14); }
+    if(this.engineGlow){ this.engineGlow.setFillStyle(glow,this.carry ? .24 : .16); }
   },
   pulsePortal:function(lane,color){
     var portal = this.portals && this.portals[lane];
