@@ -289,11 +289,11 @@ var MenuScene = {
     var me = this, cx = GW/2;
     var target = challengeScore();
     var centerY = GH / 2;
-    var iconY = centerY - 220;
-    var titleY = centerY - 128;
-    var subtitleY = centerY - 78;
-    var statusY = centerY - 26;
-    var firstButtonY = centerY + 46;
+    var iconY = centerY - 236;
+    var titleY = centerY - 150;
+    var subtitleY = centerY - 102;
+    var statusY = centerY - 56;
+    var firstButtonY = centerY + 12;
     gradientBackground(me);
     for(var i=0;i<26;i++){
       var dot = me.add.circle(Phaser.Math.Between(22,GW-22),Phaser.Math.Between(28,GH-28),Phaser.Math.Between(1,3),COLORS[i%4].hex,.45);
@@ -310,17 +310,18 @@ var MenuScene = {
     me.add.text(cx,statusY,target ? "好友挑战 " + target + " 分，超过就分享反击" : (best ? "最高分 " + best.score + "  |  最佳连送 x" + (best.combo || 0) : "还没有记录，先跑一局"),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
+    var panelY = Math.min(firstButtonY + 156, GH - 174);
     var tipPanel = me.add.graphics();
-    tipPanel.fillStyle(0x101a24,.72).fillRoundedRect(42,firstButtonY+158,396,104,10);
-    tipPanel.lineStyle(2,0xffffff,.09).strokeRoundedRect(42,firstButtonY+158,396,104,10);
+    tipPanel.fillStyle(0x101a24,.72).fillRoundedRect(42,panelY,396,92,10);
+    tipPanel.lineStyle(2,0xffffff,.09).strokeRoundedRect(42,panelY,396,92,10);
     [
-      {img:"boost",x:86,t:"加班",d:"得分 x2 + 补仓",c:"#7de4ff"},
-      {img:"auto",x:218,t:"自动",d:"自动追包送门",c:"#ffdf75"},
+      {img:"boost",x:86,t:"加班",d:"x2 + 补仓",c:"#7de4ff"},
+      {img:"auto",x:218,t:"自动",d:"追包送门",c:"#ffdf75"},
       {img:"loop",x:350,t:"循环",d:"漏件回流",c:"#c8b8ff"}
     ].forEach(function(item){
-      me.add.image(item.x,firstButtonY+188,item.img).setScale(1.05).setDepth(2);
-      me.add.text(item.x,firstButtonY+222,item.t,{fontSize:"15px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
-      me.add.text(item.x,firstButtonY+244,item.d,{fontSize:"12px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
+      me.add.image(item.x,panelY+30,item.img).setScale(.98).setDepth(2);
+      me.add.text(item.x,panelY+60,item.t,{fontSize:"14px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
+      me.add.text(item.x,panelY+78,item.d,{fontSize:"11px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
     });
     makeButton(me,cx,firstButtonY,190,"开始分拣",0x20c879,function(){me.scene.start("PlayScene");});
     makeButton(me,cx,firstButtonY + 54,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
@@ -505,7 +506,6 @@ var PlayScene = {
     }
     me.packages.getChildren().forEach(function(pkg){
       if(pkg.glow){ pkg.glow.x = pkg.x; pkg.glow.y = pkg.y; pkg.glow.setAlpha(.10 + Math.sin(time/120 + pkg.y*.02)*.04); }
-      if(pkg.tag){ pkg.tag.x = pkg.x; pkg.tag.y = pkg.y + 1; pkg.tag.setAngle(pkg.angle * .35); }
     });
     me.boosts.getChildren().forEach(function(boost){
       if(boost.aura){ boost.aura.x = boost.x; boost.aura.y = boost.y; boost.aura.setScale(1 + Math.sin(time/100)*.12); }
@@ -558,8 +558,6 @@ var PlayScene = {
     pkg.setAngularVelocity(Phaser.Math.Between(-28,28));
     var glow = this.add.circle(pkg.x,pkg.y,15,c.hex,.12).setDepth(11);
     pkg.glow = glow;
-    var tag = this.add.text(pkg.x,pkg.y+1,c.name,{fontSize:"10px",color:"#101820",fontStyle:"bold"}).setOrigin(.5).setDepth(13);
-    pkg.tag = tag;
   },
   spawnBoost:function(){
     if(this.isPaused || Math.random() > .62){ return; }
@@ -581,7 +579,6 @@ var PlayScene = {
     }
     me.carry = {key:pkg.colorKey,name:pkg.colorName,hex:pkg.colorHex};
     if(pkg.glow){ pkg.glow.destroy(); }
-    if(pkg.tag){ pkg.tag.destroy(); }
     pkg.destroy();
     me.taskText.setText("送到" + me.carry.name + "色门");
     me.player.setTint(me.carry.hex);
@@ -710,7 +707,6 @@ var PlayScene = {
       return;
     }
     if(pkg && pkg.glow){ pkg.glow.destroy(); }
-    if(pkg && pkg.tag){ pkg.tag.destroy(); }
     if(pkg && pkg.destroy){ pkg.destroy(); }
     this.capacity--;
     this.missed++;
