@@ -218,6 +218,19 @@ var BootScene = {
     g.generateTexture("boost",34,34);
     g.clear();
 
+    g.fillStyle(0xffdf75,1).fillCircle(17,17,14);
+    g.fillStyle(0x111820,.55).fillRoundedRect(9,9,16,16,5);
+    g.fillStyle(0xffffff,.9).fillCircle(17,17,4);
+    g.lineStyle(3,0xffffff,.82).strokeCircle(17,17,11);
+    g.generateTexture("auto",34,34);
+    g.clear();
+
+    g.fillStyle(0x9d7cff,1).fillCircle(17,17,14);
+    g.lineStyle(4,0xffffff,.86).beginPath().arc(17,17,8,0.25,5.05,false).strokePath();
+    g.fillStyle(0xffffff,.92).fillCircle(23,10,3);
+    g.generateTexture("loop",34,34);
+    g.clear();
+
     g.fillStyle(0xffffff,1).fillRect(2,2,4,18).fillRect(12,2,4,18);
     g.generateTexture("pauseIcon",18,22);
     g.clear();
@@ -314,6 +327,8 @@ var PlayScene = {
     this.speed = 106;
     this.spawnDelay = 1450;
     this.rushTimer = 0;
+    this.autoTimer = 0;
+    this.loopTimer = 0;
     this.isPaused = false;
     this.challenge = challengeScore();
     this.challengeShown = false;
@@ -324,7 +339,7 @@ var PlayScene = {
   },
   create:function(){
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -350,6 +365,9 @@ var PlayScene = {
     me.comboText = me.add.text(GW/2,82,"",{fontSize:"22px",color:"#ffdf75",fontStyle:"bold",stroke:"#3a2609",strokeThickness:3}).setOrigin(.5).setDepth(35);
     me.goalText = me.add.text(GW/2,48,me.bestScore ? "距离纪录 " + me.bestScore + " 分" : "首局冲榜",{
       fontSize:"14px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3
+    }).setOrigin(.5).setDepth(35);
+    me.powerText = me.add.text(GW/2,146,"",{
+      fontSize:"14px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(.5).setDepth(35);
     me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "接包裹 -> 送同色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
@@ -385,6 +403,13 @@ var PlayScene = {
       me.rushTimer -= delta;
       if(me.rushTimer <= 0){ me.taskText.setText("接包裹 -> 送同色门"); }
     }
+    if(me.autoTimer > 0){ me.autoTimer -= delta; }
+    if(me.loopTimer > 0){ me.loopTimer -= delta; }
+    if(me.autoTimer > 0 || me.loopTimer > 0){
+      me.powerText.setText((me.autoTimer > 0 ? "自动分拣 " + Math.ceil(me.autoTimer/1000) + "s" : "") + (me.autoTimer > 0 && me.loopTimer > 0 ? "  |  " : "") + (me.loopTimer > 0 ? "循环带 " + Math.ceil(me.loopTimer/1000) + "s" : ""));
+    }else{
+      me.powerText.setText("");
+    }
     if(me.trail){
       me.trail.x += (me.player.x - me.trail.x) * .24;
       me.trail.y = me.player.y + 4;
@@ -407,6 +432,7 @@ var PlayScene = {
       toast(me,"速度升级","#ffdf75");
     }
     me.cleanWorld();
+    if(me.autoTimer > 0){ me.autoAssist(); }
     if(me.carry && COLORS[me.lane].key === me.carry.key){ me.deliver(); }
     me.updateCarryBadge();
   },
@@ -437,7 +463,10 @@ var PlayScene = {
   spawnBoost:function(){
     if(this.isPaused || Math.random() > .62){ return; }
     var lane = Phaser.Math.Between(0,LANE_X.length-1);
-    var boost = this.boosts.create(LANE_X[lane],-34,"boost").setDepth(13);
+    var roll = Math.random();
+    var kind = roll < .46 ? "boost" : roll < .74 ? "auto" : "loop";
+    var boost = this.boosts.create(LANE_X[lane],-34,kind).setDepth(13);
+    boost.kind = kind;
     boost.setVelocityY(this.speed * .82);
     boost.setAngularVelocity(90);
   },
@@ -456,7 +485,30 @@ var PlayScene = {
     vibrate(12);
   },
   collectBoost:function(player,boost){
+    var kind = boost.kind || "boost";
     boost.destroy();
+    if(kind === "auto"){
+      this.autoTimer = 6200;
+      this.taskText.setText("自动分拣：系统接管");
+      this.floatText(player.x,player.y-42,"自动分拣 6s","#ffdf75");
+      this.bumpScore(this.powerText,1.16);
+      this.spark(player.x,player.y,0xffdf75,12);
+      flash(this,0xffdf75,.10,160);
+      sfx("combo");
+      vibrate([12,18,12]);
+      return;
+    }
+    if(kind === "loop"){
+      this.loopTimer = 7600;
+      this.taskText.setText("循环带：漏件回流");
+      this.floatText(player.x,player.y-42,"循环带 8s","#c8b8ff");
+      this.bumpScore(this.powerText,1.16);
+      this.spark(player.x,player.y,0x9d7cff,12);
+      flash(this,0x9d7cff,.10,160);
+      sfx("boost");
+      vibrate([12,18,12]);
+      return;
+    }
     this.rushTimer = 5000;
     var healed = false;
     if(this.capacity < this.maxCapacity){
@@ -472,6 +524,25 @@ var PlayScene = {
     flash(this,0x7de4ff,.10,160);
     sfx("boost");
     vibrate([16,24,16]);
+  },
+  autoAssist:function(){
+    var me = this;
+    if(me.carry){
+      var target = COLORS.findIndex ? COLORS.findIndex(function(c){return c.key === me.carry.key;}) : -1;
+      if(target >= 0 && target !== me.lane){ me.moveLane(target - me.lane); }
+      return;
+    }
+    var best = null, bestY = -9999;
+    me.packages.getChildren().forEach(function(pkg){
+      if(pkg.y > 30 && pkg.y < me.player.y + 28 && pkg.y > bestY){
+        best = pkg;
+        bestY = pkg.y;
+      }
+    });
+    if(best){
+      var targetLane = laneOfX(best.x);
+      if(targetLane !== me.lane){ me.moveLane(targetLane - me.lane); }
+    }
   },
   deliver:function(){
     if(!this.carry){ return; }
@@ -520,6 +591,14 @@ var PlayScene = {
     if(this.capacity <= 0){ this.finishGame(); }
   },
   missPackage:function(pkg,label){
+    if(pkg && this.loopTimer > 0 && label !== "堵车 -1"){
+      pkg.y = -42;
+      pkg.setVelocityY(this.speed + Phaser.Math.Between(0,26));
+      this.floatText(pkg.x,GH-122,"回流","#c8b8ff");
+      this.spark(pkg.x,GH-110,0x9d7cff,8);
+      sfx("tap");
+      return;
+    }
     if(pkg && pkg.destroy){ pkg.destroy(); }
     this.capacity--;
     this.missed++;
