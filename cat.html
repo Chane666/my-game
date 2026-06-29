@@ -172,6 +172,13 @@ function gradientBackground(scene){
   for(var i=0;i<bands.length;i++){ g.fillStyle(bands[i],1).fillRect(0,i*h,GW,h+1); }
   g.lineStyle(1,0xffffff,.045);
   for(var y=80;y<GH;y+=80){ g.lineBetween(28,y,GW-28,y); }
+  g.lineStyle(1,0x5bdcff,.05);
+  for(var x=42;x<GW;x+=54){ g.lineBetween(x,96,x,GH-86); }
+  g.fillStyle(0x071018,.22).fillRoundedRect(20,96,GW-40,GH-182,18);
+  g.lineStyle(2,0xffffff,.045).strokeRoundedRect(20,96,GW-40,GH-182,18);
+  for(var s=0;s<9;s++){
+    g.fillStyle(s%2 ? 0x5bdcff : 0xffdf75,.035).fillRoundedRect(34 + s*46,116 + (s%3)*18,28,6,3);
+  }
   return g;
 }
 
@@ -189,27 +196,36 @@ var BootScene = {
   preload:function(){
     var g = this.add.graphics();
 
+    g.fillStyle(0x122234,.62).fillRoundedRect(3,13,42,25,10);
     g.fillStyle(0x53e5ff,1).fillRoundedRect(6,12,36,24,8);
-    g.fillStyle(0xffffff,.22).fillRoundedRect(11,15,26,8,4);
-    g.fillStyle(0x1a2735,1).fillRoundedRect(14,25,20,6,3);
+    g.fillStyle(0x8ff6ff,.78).fillRoundedRect(10,14,28,8,5);
+    g.fillStyle(0xffffff,.32).fillRoundedRect(13,16,22,4,3);
+    g.fillStyle(0x1a2735,1).fillRoundedRect(13,25,22,7,4);
     g.fillStyle(0xffcf45,1).fillCircle(14,24,3).fillCircle(34,24,3);
+    g.fillStyle(0xfff4a0,.9).fillCircle(14,24,1).fillCircle(34,24,1);
     g.lineStyle(2,0x9bf4ff,1).strokeRoundedRect(6,12,36,24,8);
+    g.lineStyle(1,0xffffff,.45).lineBetween(12,34,36,34);
     g.generateTexture("shuttle",48,48);
     g.clear();
 
     COLORS.forEach(function(c){
+      g.fillStyle(0x000000,.28).fillRoundedRect(8,9,28,25,7);
       g.fillStyle(c.hex,1).fillRoundedRect(5,6,30,24,6);
-      g.fillStyle(0xffffff,.22).fillRoundedRect(9,9,22,7,4);
-      g.fillStyle(0x101820,.22).fillRect(9,21,22,3);
-      g.lineStyle(2,0xffffff,.55).strokeRoundedRect(5,6,30,24,6);
+      g.fillStyle(0xffffff,.24).fillRoundedRect(9,9,22,7,4);
+      g.fillStyle(0x101820,.18).fillRect(9,21,22,3);
+      g.lineStyle(1,0xffffff,.26).lineBetween(12,9,31,28);
+      g.lineStyle(2,0xffffff,.58).strokeRoundedRect(5,6,30,24,6);
+      g.fillStyle(0x101820,.26).fillCircle(29,25,2);
       g.generateTexture("pkg_"+c.key,40,40);
       g.clear();
     });
 
     COLORS.forEach(function(c){
+      g.fillStyle(c.hex,.10).fillRoundedRect(1,5,70,34,15);
       g.lineStyle(5,c.hex,1).strokeRoundedRect(4,8,64,28,12);
       g.lineStyle(2,0xffffff,.7).strokeRoundedRect(9,13,54,18,9);
-      g.fillStyle(c.hex,.18).fillRoundedRect(9,13,54,18,9);
+      g.fillStyle(c.hex,.22).fillRoundedRect(9,13,54,18,9);
+      g.lineStyle(1,0xffffff,.28).lineBetween(18,22,54,22);
       g.generateTexture("portal_"+c.key,72,44);
       g.clear();
     });
@@ -220,19 +236,25 @@ var BootScene = {
     g.generateTexture("jam",40,40);
     g.clear();
 
+    g.fillStyle(0x071018,.32).fillCircle(19,19,14);
     g.fillStyle(0x7de4ff,1).fillCircle(17,17,14);
     g.fillStyle(0xffffff,.35).fillCircle(12,11,5);
+    g.fillStyle(0x082032,.35).fillRoundedRect(10,16,14,4,2);
+    g.fillStyle(0xffffff,.8).fillRect(16,8,3,18).fillRect(8,16,18,3);
     g.lineStyle(3,0xe7fbff,.9).strokeCircle(17,17,11);
     g.generateTexture("boost",34,34);
     g.clear();
 
+    g.fillStyle(0x071018,.32).fillCircle(19,19,14);
     g.fillStyle(0xffdf75,1).fillCircle(17,17,14);
     g.fillStyle(0x111820,.55).fillRoundedRect(9,9,16,16,5);
     g.fillStyle(0xffffff,.9).fillCircle(17,17,4);
+    g.lineStyle(2,0xffffff,.78).lineBetween(17,5,17,10).lineBetween(17,24,17,29).lineBetween(5,17,10,17).lineBetween(24,17,29,17);
     g.lineStyle(3,0xffffff,.82).strokeCircle(17,17,11);
     g.generateTexture("auto",34,34);
     g.clear();
 
+    g.fillStyle(0x071018,.32).fillCircle(19,19,14);
     g.fillStyle(0x9d7cff,1).fillCircle(17,17,14);
     g.lineStyle(4,0xffffff,.86).beginPath().arc(17,17,8,0.25,5.05,false).strokePath();
     g.fillStyle(0xffffff,.92).fillCircle(23,10,3);
@@ -366,7 +388,11 @@ var PlayScene = {
     me.laneFx = me.add.graphics().setDepth(2);
     me.portals = [];
     LANE_X.forEach(function(x,i){
-      me.rails.lineStyle(2,COLORS[i].hex,.35).lineBetween(x,88,x,GH-78);
+      me.rails.lineStyle(6,COLORS[i].hex,.07).lineBetween(x,90,x,GH-78);
+      me.rails.lineStyle(2,COLORS[i].hex,.36).lineBetween(x,88,x,GH-78);
+      for(var yy=112;yy<GH-98;yy+=34){
+        me.rails.lineStyle(1,COLORS[i].hex,.20).lineBetween(x-12,yy,x+12,yy+10);
+      }
       me.portals[i] = me.add.image(x,GH-62,"portal_"+COLORS[i].key).setDepth(5);
       me.add.text(x,GH-34,COLORS[i].name,{fontSize:"13px",color:COLORS[i].text,fontStyle:"bold"}).setOrigin(.5).setDepth(6);
     });
@@ -447,6 +473,12 @@ var PlayScene = {
       me.trail.x += (me.player.x - me.trail.x) * .24;
       me.trail.y = me.player.y + 4;
     }
+    me.packages.getChildren().forEach(function(pkg){
+      if(pkg.glow){ pkg.glow.x = pkg.x; pkg.glow.y = pkg.y; pkg.glow.setAlpha(.10 + Math.sin(time/120 + pkg.y*.02)*.04); }
+    });
+    me.boosts.getChildren().forEach(function(boost){
+      if(boost.aura){ boost.aura.x = boost.x; boost.aura.y = boost.y; boost.aura.setScale(1 + Math.sin(time/100)*.12); }
+    });
     if(me.challenge && !me.challengeShown && me.score > me.challenge){
       me.challengeShown = true;
       me.score += 50;
@@ -492,6 +524,8 @@ var PlayScene = {
     pkg.colorHex = c.hex;
     pkg.setVelocityY(this.speed + Phaser.Math.Between(0,26));
     pkg.setAngularVelocity(Phaser.Math.Between(-28,28));
+    var glow = this.add.circle(pkg.x,pkg.y,15,c.hex,.12).setDepth(11);
+    pkg.glow = glow;
   },
   spawnBoost:function(){
     if(this.isPaused || Math.random() > .62){ return; }
@@ -502,6 +536,7 @@ var PlayScene = {
     boost.kind = kind;
     boost.setVelocityY(this.speed * .82);
     boost.setAngularVelocity(90);
+    boost.aura = this.add.circle(boost.x,boost.y,18,kind === "auto" ? 0xffdf75 : kind === "loop" ? 0x9d7cff : 0x7de4ff,.18).setDepth(12);
   },
   collectPackage:function(player,pkg){
     var me = this;
@@ -510,6 +545,7 @@ var PlayScene = {
       return;
     }
     me.carry = {key:pkg.colorKey,name:pkg.colorName,hex:pkg.colorHex};
+    if(pkg.glow){ pkg.glow.destroy(); }
     pkg.destroy();
     me.taskText.setText("送到" + me.carry.name + "色门");
     me.player.setTint(me.carry.hex);
@@ -519,6 +555,7 @@ var PlayScene = {
   },
   collectBoost:function(player,boost){
     var kind = boost.kind || "boost";
+    if(boost.aura){ boost.aura.destroy(); }
     boost.destroy();
     if(kind === "auto"){
       this.autoTimer = 6200;
@@ -635,6 +672,7 @@ var PlayScene = {
       sfx("tap");
       return;
     }
+    if(pkg && pkg.glow){ pkg.glow.destroy(); }
     if(pkg && pkg.destroy){ pkg.destroy(); }
     this.capacity--;
     this.missed++;
@@ -653,7 +691,10 @@ var PlayScene = {
       if(pkg.y > GH + 40){ me.missPackage(pkg,"漏件 -1"); }
     });
     me.boosts.getChildren().forEach(function(boost){
-      if(boost.y > GH + 40){ boost.destroy(); }
+      if(boost.y > GH + 40){
+        if(boost.aura){ boost.aura.destroy(); }
+        boost.destroy();
+      }
     });
   },
   floatText:function(x,y,text,color){
@@ -712,17 +753,21 @@ var PlayScene = {
     g.fillStyle(0x071018,.76).fillRoundedRect(34,178,GW-68,104,14);
     g.lineStyle(3,color,.88).strokeRoundedRect(34,178,GW-68,104,14);
     g.fillStyle(color,.18).fillRoundedRect(44,188,GW-88,84,11);
+    g.fillStyle(0xffffff,.08).fillRoundedRect(52,196,GW-104,10,6);
+    g.lineStyle(1,0xffffff,.10).lineBetween(52,232,GW-52,232).lineBetween(52,258,GW-52,258);
     var icon = this.add.image(86,230,texture).setScale(1.55);
+    var iconHalo = this.add.circle(86,230,28,color,.14);
     var titleText = this.add.text(126,210,title,{
       fontSize:"26px",color:"#ffffff",fontStyle:"bold",stroke:"#000",strokeThickness:5
     }).setOrigin(0,.5);
     var descText = this.add.text(126,246,desc,{
       fontSize:"15px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(0,.5);
-    layer.add([g,icon,titleText,descText]);
+    layer.add([g,iconHalo,icon,titleText,descText]);
     layer.setScale(.92);
     layer.setAlpha(0);
     this.tweens.add({targets:layer,alpha:1,scale:1,duration:130,ease:"Back.easeOut"});
+    this.tweens.add({targets:iconHalo,scale:1.25,alpha:.04,duration:520,yoyo:true,repeat:1,ease:"Sine.easeInOut"});
     this.tweens.add({targets:icon,angle:360,duration:700,ease:"Quad.easeOut"});
     this.time.delayedCall(980,function(){
       if(layer && layer.scene){
