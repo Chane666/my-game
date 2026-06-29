@@ -69,14 +69,14 @@ function sfx(type){
     if(audioCtx.state === "suspended"){ audioCtx.resume(); }
     var now = audioCtx.currentTime;
     var master = audioCtx.createGain();
-    master.gain.value = 1.28;
+    master.gain.value = 1.8;
     master.connect(audioCtx.destination);
     var presets = {
-      tap:[[420,.00,.055,"triangle",.04],[620,.035,.06,"sine",.03]],
-      ok:[[620,.00,.075,"triangle",.052],[860,.055,.09,"sine",.048],[1180,.118,.11,"sine",.04]],
-      boost:[[540,.00,.08,"sine",.052],[900,.055,.10,"triangle",.055],[1420,.12,.16,"sine",.045]],
-      combo:[[760,.00,.08,"triangle",.06],[1080,.05,.10,"sine",.065],[1520,.11,.15,"sine",.052],[1880,.19,.12,"sine",.035]],
-      bad:[[180,.00,.12,"sawtooth",.06],[112,.055,.18,"square",.044]]
+      tap:[[420,.00,.055,"triangle",.06],[620,.035,.06,"sine",.045]],
+      ok:[[620,.00,.075,"triangle",.078],[860,.055,.09,"sine",.072],[1180,.118,.11,"sine",.06]],
+      boost:[[540,.00,.08,"sine",.078],[900,.055,.10,"triangle",.082],[1420,.12,.16,"sine",.068]],
+      combo:[[760,.00,.08,"triangle",.09],[1080,.05,.10,"sine",.095],[1520,.11,.15,"sine",.078],[1880,.19,.12,"sine",.052]],
+      bad:[[180,.00,.12,"sawtooth",.09],[112,.055,.18,"square",.066]]
     };
     (presets[type] || presets.tap).forEach(function(n){
       var osc = audioCtx.createOscillator();
@@ -100,7 +100,7 @@ function sfx(type){
       var noise = audioCtx.createBufferSource();
       var ngain = audioCtx.createGain();
       noise.buffer = buffer;
-      ngain.gain.setValueAtTime(.026, now);
+      ngain.gain.setValueAtTime(.04, now);
       ngain.gain.exponentialRampToValueAtTime(.0001, now + .12);
       noise.connect(ngain);
       ngain.connect(master);
@@ -339,7 +339,7 @@ var PlayScene = {
   },
   create:function(){
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -367,7 +367,7 @@ var PlayScene = {
       fontSize:"14px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(.5).setDepth(35);
     me.powerText = me.add.text(GW/2,146,"",{
-      fontSize:"14px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3
+      fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:4
     }).setOrigin(.5).setDepth(35);
     me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "接包裹 -> 送同色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
@@ -407,8 +407,11 @@ var PlayScene = {
     if(me.loopTimer > 0){ me.loopTimer -= delta; }
     if(me.autoTimer > 0 || me.loopTimer > 0){
       me.powerText.setText((me.autoTimer > 0 ? "自动分拣 " + Math.ceil(me.autoTimer/1000) + "s" : "") + (me.autoTimer > 0 && me.loopTimer > 0 ? "  |  " : "") + (me.loopTimer > 0 ? "循环带 " + Math.ceil(me.loopTimer/1000) + "s" : ""));
+      me.powerText.setColor(me.autoTimer > 0 ? "#ffdf75" : "#c8b8ff");
+      me.powerText.setScale(1 + Math.sin(time / 95) * .045);
     }else{
       me.powerText.setText("");
+      me.powerText.setScale(1);
     }
     if(me.trail){
       me.trail.x += (me.player.x - me.trail.x) * .24;
@@ -491,9 +494,10 @@ var PlayScene = {
       this.autoTimer = 6200;
       this.taskText.setText("自动分拣：系统接管");
       this.floatText(player.x,player.y-42,"自动分拣 6s","#ffdf75");
-      this.bumpScore(this.powerText,1.16);
-      this.spark(player.x,player.y,0xffdf75,12);
-      flash(this,0xffdf75,.10,160);
+      this.powerText.setText("自动分拣 6s  |  自动追包送门");
+      this.powerBanner("自动分拣", "6 秒自动追包、自动送到同色门", 0xffdf75, "auto");
+      this.powerBurst(player.x,player.y,0xffdf75);
+      this.bumpScore(this.powerText,1.32);
       sfx("combo");
       vibrate([12,18,12]);
       return;
@@ -502,9 +506,10 @@ var PlayScene = {
       this.loopTimer = 7600;
       this.taskText.setText("循环带：漏件回流");
       this.floatText(player.x,player.y-42,"循环带 8s","#c8b8ff");
-      this.bumpScore(this.powerText,1.16);
-      this.spark(player.x,player.y,0x9d7cff,12);
-      flash(this,0x9d7cff,.10,160);
+      this.powerText.setText("循环带 8s  |  漏件回到顶部");
+      this.powerBanner("循环带", "8 秒内漏件会回流，不扣仓容", 0x9d7cff, "loop");
+      this.powerBurst(player.x,player.y,0x9d7cff);
+      this.bumpScore(this.powerText,1.32);
       sfx("boost");
       vibrate([12,18,12]);
       return;
@@ -518,10 +523,11 @@ var PlayScene = {
     }
     this.taskText.setText("霓虹加班：得分 x2");
     this.floatText(player.x,player.y-42,healed ? "加班 x2  +1" : "加班 x2  满仓","#7de4ff");
+    this.powerText.setText(healed ? "加班 5s  |  得分 x2 + 补仓" : "加班 5s  |  得分 x2");
+    this.powerBanner("霓虹加班", healed ? "5 秒得分翻倍，并补回 1 点仓容" : "5 秒得分翻倍，满仓保持", 0x7de4ff, "boost");
+    this.powerBurst(player.x,player.y,0x7de4ff);
     this.bumpScore(this.scoreText,1.12);
-    this.bumpScore(this.capacityText,1.1);
-    this.spark(player.x,player.y,0x7de4ff,9);
-    flash(this,0x7de4ff,.10,160);
+    this.bumpScore(this.capacityText,1.18);
     sfx("boost");
     vibrate([16,24,16]);
   },
@@ -663,6 +669,47 @@ var PlayScene = {
         alpha:0,
         scale:.2,
         duration:Phaser.Math.Between(240,430),
+        ease:"Quad.easeOut",
+        onComplete:function(tween,targets){targets[0].destroy();}
+      });
+    }
+  },
+  powerBanner:function(title,desc,color,texture){
+    if(this.powerLayer){ this.powerLayer.destroy(true); }
+    var layer = this.add.container(0,0).setDepth(115);
+    this.powerLayer = layer;
+    var g = this.add.graphics();
+    g.fillStyle(0x071018,.76).fillRoundedRect(34,178,GW-68,104,14);
+    g.lineStyle(3,color,.88).strokeRoundedRect(34,178,GW-68,104,14);
+    g.fillStyle(color,.18).fillRoundedRect(44,188,GW-88,84,11);
+    var icon = this.add.image(86,230,texture).setScale(1.55);
+    var titleText = this.add.text(126,210,title,{
+      fontSize:"26px",color:"#ffffff",fontStyle:"bold",stroke:"#000",strokeThickness:5
+    }).setOrigin(0,.5);
+    var descText = this.add.text(126,246,desc,{
+      fontSize:"15px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:3
+    }).setOrigin(0,.5);
+    layer.add([g,icon,titleText,descText]);
+    layer.setScale(.92);
+    layer.setAlpha(0);
+    this.tweens.add({targets:layer,alpha:1,scale:1,duration:130,ease:"Back.easeOut"});
+    this.tweens.add({targets:icon,angle:360,duration:700,ease:"Quad.easeOut"});
+    this.time.delayedCall(980,function(){
+      if(layer && layer.scene){
+        this.tweens.add({targets:layer,y:-18,alpha:0,duration:220,ease:"Quad.easeIn",onComplete:function(){layer.destroy(true);}});
+      }
+    },null,this);
+  },
+  powerBurst:function(x,y,color){
+    flash(this,color,.16,220);
+    this.spark(x,y,color,22);
+    for(var i=0;i<3;i++){
+      var ring = this.add.circle(x,y,22 + i * 12,color,.16).setDepth(77);
+      this.tweens.add({
+        targets:ring,
+        scale:2.2 + i * .35,
+        alpha:0,
+        duration:360 + i * 90,
         ease:"Quad.easeOut",
         onComplete:function(tween,targets){targets[0].destroy();}
       });
