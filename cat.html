@@ -68,19 +68,44 @@ function sfx(type){
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if(audioCtx.state === "suspended"){ audioCtx.resume(); }
     var now = audioCtx.currentTime;
-    var osc = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
-    var freq = type === "ok" ? 660 : type === "bad" ? 160 : type === "boost" ? 920 : 420;
-    osc.type = type === "bad" ? "sawtooth" : "sine";
-    osc.frequency.setValueAtTime(freq, now);
-    osc.frequency.exponentialRampToValueAtTime(type === "bad" ? 80 : freq * 1.45, now + 0.12);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(type === "bad" ? 0.08 : 0.05, now + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.18);
+    var master = audioCtx.createGain();
+    master.gain.value = 0.72;
+    master.connect(audioCtx.destination);
+    var presets = {
+      tap:[[420,.00,.055,"triangle",.028],[620,.035,.06,"sine",.018]],
+      ok:[[620,.00,.075,"triangle",.032],[860,.055,.09,"sine",.034],[1180,.118,.11,"sine",.028]],
+      boost:[[540,.00,.08,"sine",.03],[900,.055,.10,"triangle",.034],[1420,.12,.16,"sine",.028]],
+      combo:[[760,.00,.08,"triangle",.035],[1080,.05,.10,"sine",.038],[1520,.11,.15,"sine",.032]],
+      bad:[[180,.00,.12,"sawtooth",.045],[112,.055,.18,"square",.03]]
+    };
+    (presets[type] || presets.tap).forEach(function(n){
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      var start = now + n[1], end = start + n[2];
+      osc.type = n[3];
+      osc.frequency.setValueAtTime(n[0], start);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(48, type === "bad" ? n[0] * .55 : n[0] * 1.18), end);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(n[4], start + .014);
+      gain.gain.exponentialRampToValueAtTime(0.0001, end);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(start);
+      osc.stop(end + .02);
+    });
+    if(type === "bad"){
+      var buffer = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * .12), audioCtx.sampleRate);
+      var data = buffer.getChannelData(0);
+      for(var i=0;i<data.length;i++){ data[i] = (Math.random() * 2 - 1) * (1 - i / data.length); }
+      var noise = audioCtx.createBufferSource();
+      var ngain = audioCtx.createGain();
+      noise.buffer = buffer;
+      ngain.gain.setValueAtTime(.018, now);
+      ngain.gain.exponentialRampToValueAtTime(.0001, now + .12);
+      noise.connect(ngain);
+      ngain.connect(master);
+      noise.start(now);
+    }
   }catch(e){}
 }
 
@@ -292,16 +317,19 @@ var PlayScene = {
     this.isPaused = false;
     this.challenge = challengeScore();
     this.challengeShown = false;
+    this.lastLane = 1;
   },
   create:function(){
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
+    me.laneFx = me.add.graphics().setDepth(2);
+    me.portals = [];
     LANE_X.forEach(function(x,i){
       me.rails.lineStyle(2,COLORS[i].hex,.35).lineBetween(x,88,x,GH-78);
-      me.add.image(x,GH-62,"portal_"+COLORS[i].key).setDepth(5);
+      me.portals[i] = me.add.image(x,GH-62,"portal_"+COLORS[i].key).setDepth(5);
       me.add.text(x,GH-34,COLORS[i].name,{fontSize:"13px",color:COLORS[i].text,fontStyle:"bold"}).setOrigin(.5).setDepth(6);
     });
 
@@ -309,6 +337,7 @@ var PlayScene = {
     me.boosts = me.physics.add.group();
     me.player = me.physics.add.sprite(LANE_X[me.lane],GH-116,"shuttle").setDepth(20).setScale(1.2);
     me.player.body.setSize(38,30).setOffset(5,12);
+    me.trail = me.add.circle(me.player.x,me.player.y+4,18,0x53e5ff,.18).setDepth(18);
     me.carryBadge = me.add.circle(me.player.x,me.player.y-34,10,0xffffff,0).setDepth(24);
     me.carryText = me.add.text(me.player.x,me.player.y-34,"",{fontSize:"12px",color:"#101820",fontStyle:"bold"}).setOrigin(.5).setDepth(25);
 
@@ -340,6 +369,7 @@ var PlayScene = {
       var target = laneOfX(pointer.x);
       me.moveLane(target - me.lane);
     });
+    me.drawLaneFx();
     toast(me,"开工！同色投递","#fff");
   },
   update:function(time,delta){
@@ -348,6 +378,10 @@ var PlayScene = {
     if(me.rushTimer > 0){
       me.rushTimer -= delta;
       if(me.rushTimer <= 0){ me.taskText.setText("接包裹 -> 送同色门"); }
+    }
+    if(me.trail){
+      me.trail.x += (me.player.x - me.trail.x) * .24;
+      me.trail.y = me.player.y + 4;
     }
     if(me.challenge && !me.challengeShown && me.score > me.challenge){
       me.challengeShown = true;
@@ -374,8 +408,13 @@ var PlayScene = {
     if(this.isPaused){ return; }
     var next = Math.max(0,Math.min(LANE_X.length-1,this.lane + delta));
     if(next === this.lane){ return; }
+    var fromX = this.player.x;
+    var fromLane = this.lane;
     this.lane = next;
     this.tweens.add({targets:this.player,x:LANE_X[next],duration:110,ease:"Quad.easeOut"});
+    this.drawLaneFx();
+    var dash = this.add.circle(fromX,this.player.y+2,15,COLORS[fromLane].hex,.22).setDepth(17);
+    this.tweens.add({targets:dash,x:LANE_X[next],alpha:0,scaleX:1.65,scaleY:.72,duration:170,ease:"Quad.easeOut",onComplete:function(){dash.destroy();}});
     vibrate(8);
   },
   spawnPackage:function(){
@@ -421,6 +460,7 @@ var PlayScene = {
     }
     this.taskText.setText("霓虹加班：得分 x2");
     this.floatText(player.x,player.y-42,healed ? "加班 x2  +1" : "加班 x2  满仓","#7de4ff");
+    this.spark(player.x,player.y,0x7de4ff,9);
     flash(this,0x7de4ff,.10,160);
     sfx("boost");
     vibrate([16,24,16]);
@@ -435,13 +475,18 @@ var PlayScene = {
     this.combo++;
     this.maxCombo = Math.max(this.maxCombo,this.combo);
     this.floatText(this.player.x,this.player.y-54,"+" + gain,this.carry.hex === 0xffcf45 ? "#ffdf75" : "#ffffff");
+    this.pulsePortal(this.lane,this.carry.hex);
+    this.spark(this.player.x,GH-74,this.carry.hex,6 + Math.min(this.combo,8));
     this.comboText.setText(this.combo >= 2 ? "连送 x" + this.combo : "");
     this.comboText.setScale(1.24);
     this.tweens.add({targets:this.comboText,scale:1,duration:180,ease:"Back.easeOut"});
     if(this.combo > 0 && this.combo % 6 === 0){
       this.rushTimer = 5000;
       this.taskText.setText("完美连线：得分 x2");
+      this.comboText.setText("爆发 x" + this.combo);
+      this.spark(this.player.x,this.player.y-22,0xffdf75,14);
       flash(this,0xffdf75,.12,200);
+      sfx("combo");
     }
     this.carry = null;
     this.player.clearTint();
@@ -499,6 +544,37 @@ var PlayScene = {
     }else{
       this.carryBadge.setFillStyle(0xffffff,0);
       this.carryText.setText("");
+    }
+  },
+  drawLaneFx:function(){
+    if(!this.laneFx){ return; }
+    this.laneFx.clear();
+    var x = LANE_X[this.lane], color = COLORS[this.lane].hex;
+    this.laneFx.fillStyle(color,.075).fillRoundedRect(x-39,86,78,GH-154,18);
+    this.laneFx.lineStyle(4,color,.42).strokeRoundedRect(x-34,92,68,GH-166,16);
+    this.laneFx.lineStyle(1,0xffffff,.22).lineBetween(x-20,104,x-20,GH-92).lineBetween(x+20,104,x+20,GH-92);
+    if(this.trail){ this.trail.setFillStyle(color,.18); }
+  },
+  pulsePortal:function(lane,color){
+    var portal = this.portals && this.portals[lane];
+    if(!portal){ return; }
+    var ring = this.add.circle(portal.x,portal.y,32,color,.18).setDepth(4);
+    this.tweens.add({targets:portal,scaleX:1.18,scaleY:1.18,duration:90,yoyo:true,ease:"Quad.easeOut"});
+    this.tweens.add({targets:ring,scale:1.65,alpha:0,duration:260,ease:"Quad.easeOut",onComplete:function(){ring.destroy();}});
+  },
+  spark:function(x,y,color,count){
+    for(var i=0;i<count;i++){
+      var dot = this.add.circle(x,y,Phaser.Math.Between(2,4),color,.8).setDepth(78);
+      this.tweens.add({
+        targets:dot,
+        x:x + Phaser.Math.Between(-38,38),
+        y:y + Phaser.Math.Between(-46,18),
+        alpha:0,
+        scale:.2,
+        duration:Phaser.Math.Between(240,430),
+        ease:"Quad.easeOut",
+        onComplete:function(tween,targets){targets[0].destroy();}
+      });
     }
   },
   updateHud:function(){
