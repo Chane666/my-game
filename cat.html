@@ -69,14 +69,14 @@ function sfx(type){
     if(audioCtx.state === "suspended"){ audioCtx.resume(); }
     var now = audioCtx.currentTime;
     var master = audioCtx.createGain();
-    master.gain.value = 0.72;
+    master.gain.value = 1.28;
     master.connect(audioCtx.destination);
     var presets = {
-      tap:[[420,.00,.055,"triangle",.028],[620,.035,.06,"sine",.018]],
-      ok:[[620,.00,.075,"triangle",.032],[860,.055,.09,"sine",.034],[1180,.118,.11,"sine",.028]],
-      boost:[[540,.00,.08,"sine",.03],[900,.055,.10,"triangle",.034],[1420,.12,.16,"sine",.028]],
-      combo:[[760,.00,.08,"triangle",.035],[1080,.05,.10,"sine",.038],[1520,.11,.15,"sine",.032]],
-      bad:[[180,.00,.12,"sawtooth",.045],[112,.055,.18,"square",.03]]
+      tap:[[420,.00,.055,"triangle",.04],[620,.035,.06,"sine",.03]],
+      ok:[[620,.00,.075,"triangle",.052],[860,.055,.09,"sine",.048],[1180,.118,.11,"sine",.04]],
+      boost:[[540,.00,.08,"sine",.052],[900,.055,.10,"triangle",.055],[1420,.12,.16,"sine",.045]],
+      combo:[[760,.00,.08,"triangle",.06],[1080,.05,.10,"sine",.065],[1520,.11,.15,"sine",.052],[1880,.19,.12,"sine",.035]],
+      bad:[[180,.00,.12,"sawtooth",.06],[112,.055,.18,"square",.044]]
     };
     (presets[type] || presets.tap).forEach(function(n){
       var osc = audioCtx.createOscillator();
@@ -100,7 +100,7 @@ function sfx(type){
       var noise = audioCtx.createBufferSource();
       var ngain = audioCtx.createGain();
       noise.buffer = buffer;
-      ngain.gain.setValueAtTime(.018, now);
+      ngain.gain.setValueAtTime(.026, now);
       ngain.gain.exponentialRampToValueAtTime(.0001, now + .12);
       noise.connect(ngain);
       ngain.connect(master);
@@ -318,10 +318,13 @@ var PlayScene = {
     this.challenge = challengeScore();
     this.challengeShown = false;
     this.lastLane = 1;
+    this.bestScore = (readRecords()[0] || {}).score || 0;
+    this.bestHintShown = false;
+    this.bestBeatenShown = false;
   },
   create:function(){
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -345,6 +348,9 @@ var PlayScene = {
     me.metaText = me.add.text(18,56,"等级 1",{fontSize:"14px",color:"#b7c6d6"}).setDepth(30);
     me.capacityText = me.add.text(GW-18,20,"● ● ● ● ●",{fontSize:"20px",color:"#7de4ff",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(1,0).setDepth(30);
     me.comboText = me.add.text(GW/2,82,"",{fontSize:"22px",color:"#ffdf75",fontStyle:"bold",stroke:"#3a2609",strokeThickness:3}).setOrigin(.5).setDepth(35);
+    me.goalText = me.add.text(GW/2,48,me.bestScore ? "距离纪录 " + me.bestScore + " 分" : "首局冲榜",{
+      fontSize:"14px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3
+    }).setOrigin(.5).setDepth(35);
     me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "接包裹 -> 送同色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
     var pbg = me.add.graphics().setDepth(40);
@@ -460,6 +466,8 @@ var PlayScene = {
     }
     this.taskText.setText("霓虹加班：得分 x2");
     this.floatText(player.x,player.y-42,healed ? "加班 x2  +1" : "加班 x2  满仓","#7de4ff");
+    this.bumpScore(this.scoreText,1.12);
+    this.bumpScore(this.capacityText,1.1);
     this.spark(player.x,player.y,0x7de4ff,9);
     flash(this,0x7de4ff,.10,160);
     sfx("boost");
@@ -480,6 +488,9 @@ var PlayScene = {
     this.comboText.setText(this.combo >= 2 ? "连送 x" + this.combo : "");
     this.comboText.setScale(1.24);
     this.tweens.add({targets:this.comboText,scale:1,duration:180,ease:"Back.easeOut"});
+    if(this.combo > 0 && this.combo % 5 === 0){
+      this.rewardBurst();
+    }
     if(this.combo > 0 && this.combo % 6 === 0){
       this.rushTimer = 5000;
       this.taskText.setText("完美连线：得分 x2");
@@ -491,6 +502,7 @@ var PlayScene = {
     this.carry = null;
     this.player.clearTint();
     this.updateHud();
+    this.checkPositiveGoals();
     sfx("ok");
     vibrate(22);
   },
@@ -580,6 +592,49 @@ var PlayScene = {
   updateHud:function(){
     this.scoreText.setText(String(Math.floor(this.score)));
     this.capacityText.setText(Array(Math.max(this.capacity,0)+1).join("● "));
+    this.bumpScore(this.scoreText,1.08);
+  },
+  rewardBurst:function(){
+    var bonus = 35 + Math.min(this.combo,20) * 3;
+    this.score += bonus;
+    if(this.capacity < this.maxCapacity && this.combo % 10 === 0){
+      this.capacity++;
+      this.floatText(GW/2,132,"补给 +1","#7de4ff");
+      this.bumpScore(this.capacityText,1.16);
+    }
+    this.rushTimer = Math.max(this.rushTimer,3200);
+    this.floatText(this.player.x,this.player.y-74,"连击宝箱 +" + bonus,"#ffdf75");
+    toast(this,this.combo + " 连送宝箱开启","#ffdf75");
+    this.spark(this.player.x,this.player.y-30,0xffdf75,16);
+    flash(this,0xffdf75,.10,180);
+    this.updateHud();
+    sfx("combo");
+    vibrate([12,24,12]);
+  },
+  checkPositiveGoals:function(){
+    if(this.bestScore > 0 && !this.bestHintShown && this.score >= this.bestScore * .82 && this.score < this.bestScore){
+      this.bestHintShown = true;
+      var left = Math.max(1,Math.ceil(this.bestScore - this.score));
+      this.goalText.setText("再拿 " + left + " 分破纪录");
+      toast(this,"快破纪录了","#8ff0bc");
+      this.bumpScore(this.goalText,1.18);
+    }
+    if(this.bestScore > 0 && !this.bestBeatenShown && this.score > this.bestScore){
+      this.bestBeatenShown = true;
+      this.goalText.setText("新纪录进行中");
+      this.score += 80;
+      this.floatText(GW/2,94,"新纪录 +80","#ffdf75");
+      this.spark(GW/2,82,0xffdf75,18);
+      flash(this,0xffdf75,.13,220);
+      sfx("combo");
+      this.updateHud();
+    }
+  },
+  bumpScore:function(target,scale){
+    if(!target){ return; }
+    this.tweens.killTweensOf(target);
+    target.setScale(scale || 1.1);
+    this.tweens.add({targets:target,scale:1,duration:160,ease:"Back.easeOut"});
   },
   togglePause:function(){
     var me = this;
