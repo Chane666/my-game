@@ -69,14 +69,21 @@ function sfx(type){
     if(audioCtx.state === "suspended"){ audioCtx.resume(); }
     var now = audioCtx.currentTime;
     var master = audioCtx.createGain();
-    master.gain.value = 1.8;
-    master.connect(audioCtx.destination);
+    var comp = audioCtx.createDynamicsCompressor();
+    comp.threshold.setValueAtTime(-18,now);
+    comp.knee.setValueAtTime(16,now);
+    comp.ratio.setValueAtTime(8,now);
+    comp.attack.setValueAtTime(.003,now);
+    comp.release.setValueAtTime(.12,now);
+    master.gain.value = 2.35;
+    master.connect(comp);
+    comp.connect(audioCtx.destination);
     var presets = {
-      tap:[[420,.00,.055,"triangle",.06],[620,.035,.06,"sine",.045]],
-      ok:[[620,.00,.075,"triangle",.078],[860,.055,.09,"sine",.072],[1180,.118,.11,"sine",.06]],
-      boost:[[540,.00,.08,"sine",.078],[900,.055,.10,"triangle",.082],[1420,.12,.16,"sine",.068]],
-      combo:[[760,.00,.08,"triangle",.09],[1080,.05,.10,"sine",.095],[1520,.11,.15,"sine",.078],[1880,.19,.12,"sine",.052]],
-      bad:[[180,.00,.12,"sawtooth",.09],[112,.055,.18,"square",.066]]
+      tap:[[520,.00,.05,"triangle",.08],[760,.032,.055,"sine",.06]],
+      ok:[[640,.00,.07,"triangle",.1],[960,.045,.08,"sine",.092],[1280,.105,.105,"sine",.078]],
+      boost:[[420,.00,.07,"sine",.092],[760,.045,.09,"triangle",.105],[1220,.105,.12,"sine",.092],[1680,.18,.13,"sine",.07]],
+      combo:[[620,.00,.075,"triangle",.105],[930,.045,.085,"sine",.11],[1320,.105,.12,"sine",.098],[1880,.18,.14,"sine",.075],[2380,.255,.10,"sine",.05]],
+      bad:[[190,.00,.13,"sawtooth",.115],[96,.06,.19,"square",.082]]
     };
     (presets[type] || presets.tap).forEach(function(n){
       var osc = audioCtx.createOscillator();
@@ -93,15 +100,16 @@ function sfx(type){
       osc.start(start);
       osc.stop(end + .02);
     });
-    if(type === "bad"){
-      var buffer = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * .12), audioCtx.sampleRate);
+    if(type === "bad" || type === "boost" || type === "combo"){
+      var noiseDur = type === "bad" ? .12 : .18;
+      var buffer = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * noiseDur), audioCtx.sampleRate);
       var data = buffer.getChannelData(0);
       for(var i=0;i<data.length;i++){ data[i] = (Math.random() * 2 - 1) * (1 - i / data.length); }
       var noise = audioCtx.createBufferSource();
       var ngain = audioCtx.createGain();
       noise.buffer = buffer;
-      ngain.gain.setValueAtTime(.04, now);
-      ngain.gain.exponentialRampToValueAtTime(.0001, now + .12);
+      ngain.gain.setValueAtTime(type === "bad" ? .055 : .032, now);
+      ngain.gain.exponentialRampToValueAtTime(.0001, now + noiseDur);
       noise.connect(ngain);
       ngain.connect(master);
       noise.start(now);
@@ -266,6 +274,18 @@ var MenuScene = {
     me.add.text(cx,statusY,target ? "好友挑战 " + target + " 分，超过就分享反击" : (best ? "最高分 " + best.score + "  |  最佳连送 x" + (best.combo || 0) : "还没有记录，先跑一局"),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
+    var tipPanel = me.add.graphics();
+    tipPanel.fillStyle(0x101a24,.72).fillRoundedRect(42,firstButtonY+158,396,104,10);
+    tipPanel.lineStyle(2,0xffffff,.09).strokeRoundedRect(42,firstButtonY+158,396,104,10);
+    [
+      {img:"boost",x:86,t:"加班",d:"得分 x2 + 补仓",c:"#7de4ff"},
+      {img:"auto",x:218,t:"自动",d:"自动追包送门",c:"#ffdf75"},
+      {img:"loop",x:350,t:"循环",d:"漏件回流",c:"#c8b8ff"}
+    ].forEach(function(item){
+      me.add.image(item.x,firstButtonY+188,item.img).setScale(1.05).setDepth(2);
+      me.add.text(item.x,firstButtonY+222,item.t,{fontSize:"15px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
+      me.add.text(item.x,firstButtonY+244,item.d,{fontSize:"12px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
+    });
     makeButton(me,cx,firstButtonY,190,"开始分拣",0x20c879,function(){me.scene.start("PlayScene");});
     makeButton(me,cx,firstButtonY + 54,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
     makeButton(me,cx,firstButtonY + 108,190,"分享",0x4a8fe7,function(){
@@ -359,6 +379,9 @@ var PlayScene = {
     me.carryBadge = me.add.circle(me.player.x,me.player.y-34,10,0xffffff,0).setDepth(24);
     me.carryText = me.add.text(me.player.x,me.player.y-34,"",{fontSize:"12px",color:"#101820",fontStyle:"bold"}).setOrigin(.5).setDepth(25);
 
+    var hudBg = me.add.graphics().setDepth(28);
+    hudBg.fillStyle(0x071018,.62).fillRoundedRect(10,10,GW-20,76,12);
+    hudBg.lineStyle(2,0xffffff,.08).strokeRoundedRect(10,10,GW-20,76,12);
     me.scoreText = me.add.text(18,18,"0",{fontSize:"30px",color:"#fff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setDepth(30);
     me.metaText = me.add.text(18,56,"等级 1",{fontSize:"14px",color:"#b7c6d6"}).setDepth(30);
     me.capacityText = me.add.text(GW-18,20,"● ● ● ● ●",{fontSize:"20px",color:"#7de4ff",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(1,0).setDepth(30);
@@ -366,7 +389,13 @@ var PlayScene = {
     me.goalText = me.add.text(GW/2,48,me.bestScore ? "距离纪录 " + me.bestScore + " 分" : "首局冲榜",{
       fontSize:"14px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(.5).setDepth(35);
-    me.powerText = me.add.text(GW/2,146,"",{
+    var powerBg = me.add.graphics().setDepth(29);
+    powerBg.fillStyle(0x071018,.42).fillRoundedRect(56,132,GW-112,34,10);
+    powerBg.lineStyle(1,0xffffff,.08).strokeRoundedRect(56,132,GW-112,34,10);
+    me.add.image(82,149,"boost").setScale(.62).setAlpha(.75).setDepth(30);
+    me.add.image(110,149,"auto").setScale(.62).setAlpha(.75).setDepth(30);
+    me.add.image(138,149,"loop").setScale(.62).setAlpha(.75).setDepth(30);
+    me.powerText = me.add.text(GW/2+18,149,"等待道具",{
       fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:4
     }).setOrigin(.5).setDepth(35);
     me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "接包裹 -> 送同色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
@@ -410,7 +439,8 @@ var PlayScene = {
       me.powerText.setColor(me.autoTimer > 0 ? "#ffdf75" : "#c8b8ff");
       me.powerText.setScale(1 + Math.sin(time / 95) * .045);
     }else{
-      me.powerText.setText("");
+      me.powerText.setText("等待道具");
+      me.powerText.setColor("#91a0ae");
       me.powerText.setScale(1);
     }
     if(me.trail){
