@@ -206,25 +206,31 @@ var MenuScene = {
   create:function(){
     var me = this, cx = GW/2;
     var target = challengeScore();
+    var centerY = GH / 2;
+    var iconY = centerY - 220;
+    var titleY = centerY - 128;
+    var subtitleY = centerY - 78;
+    var statusY = centerY - 26;
+    var firstButtonY = centerY + 46;
     gradientBackground(me);
     for(var i=0;i<26;i++){
       var dot = me.add.circle(Phaser.Math.Between(22,GW-22),Phaser.Math.Between(28,GH-28),Phaser.Math.Between(1,3),COLORS[i%4].hex,.45);
       me.tweens.add({targets:dot,alpha:.1,duration:Phaser.Math.Between(900,1900),yoyo:true,repeat:-1});
     }
-    me.add.image(cx,138,"shuttle").setScale(2.05);
-    me.add.text(cx,230,"霓虹分拣局",{
+    me.add.image(cx,iconY,"shuttle").setScale(2.05);
+    me.add.text(cx,titleY,"霓虹分拣局",{
       fontSize:"40px",color:"#eaf7ff",fontStyle:"bold",stroke:"#12202f",strokeThickness:6
     }).setOrigin(.5);
-    me.add.text(cx,280,"接住包裹，送进同色传送门",{
+    me.add.text(cx,subtitleY,"接住包裹，送进同色传送门",{
       fontSize:"17px",color:"#b9c9d8"
     }).setOrigin(.5);
     var best = readRecords()[0];
-    me.add.text(cx,332,target ? "好友挑战 " + target + " 分，超过就分享反击" : (best ? "最高分 " + best.score + "  |  最佳连送 x" + (best.combo || 0) : "还没有记录，先跑一局"),{
+    me.add.text(cx,statusY,target ? "好友挑战 " + target + " 分，超过就分享反击" : (best ? "最高分 " + best.score + "  |  最佳连送 x" + (best.combo || 0) : "还没有记录，先跑一局"),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
-    makeButton(me,cx,404,190,"开始分拣",0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,cx,458,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
-    makeButton(me,cx,512,190,"分享",0x4a8fe7,function(){
+    makeButton(me,cx,firstButtonY,190,"开始分拣",0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,cx,firstButtonY + 54,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,cx,firstButtonY + 108,190,"分享",0x4a8fe7,function(){
       var baseScore = best ? best.score : 100;
       var url = shareUrl(baseScore);
       if(navigator.share){
