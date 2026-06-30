@@ -199,6 +199,28 @@ function laneOfX(x){
   return best;
 }
 
+function drawShuttle(g,accent,key){
+  var isIdle = key === "idle";
+  g.fillStyle(0x000000,.34).fillRoundedRect(5,17,54,27,13);
+  g.fillStyle(0x101923,1).fillRoundedRect(7,12,50,27,13);
+  g.fillStyle(0x1d2c39,1).fillRoundedRect(10,10,44,24,12);
+  g.fillStyle(isIdle ? 0x77eadb : accent,.92).fillRoundedRect(13,11,38,7,5);
+  g.fillStyle(0xe9fff8,.86).fillRoundedRect(18,12,28,4,3);
+  g.fillStyle(0x071018,.92).fillRoundedRect(15,24,34,9,5);
+  g.fillStyle(0xffffff,.08).fillRoundedRect(18,25,28,3,2);
+  g.fillStyle(accent,1).fillCircle(17,23,4).fillCircle(47,23,4);
+  g.fillStyle(0xfff4a0,.92).fillCircle(17,23,1.7).fillCircle(47,23,1.7);
+  if(!isIdle){
+    g.fillStyle(accent,.95).fillRoundedRect(23,4,18,8,5);
+    g.lineStyle(2,0xffffff,.58).strokeRoundedRect(23,4,18,8,5);
+  }else{
+    g.lineStyle(1,0x7de4ff,.46).lineBetween(23,5,41,5);
+  }
+  g.fillStyle(accent,.55).fillRoundedRect(14,37,36,5,4);
+  g.lineStyle(2,isIdle ? 0x9af7ee : accent,1).strokeRoundedRect(10,10,44,24,12);
+  g.lineStyle(1,0xffffff,.34).lineBetween(17,40,47,40);
+}
+
 var BootScene = {
   key:"BootScene",
   preload:function(){
@@ -209,17 +231,15 @@ var BootScene = {
     this.load.audio("sfx_bad","audio/bad.ogg");
     var g = this.add.graphics();
 
-    g.fillStyle(0x0c1520,.48).fillRoundedRect(3,13,42,25,10);
-    g.fillStyle(0xf2f6fb,1).fillRoundedRect(6,12,36,24,8);
-    g.fillStyle(0xffffff,.88).fillRoundedRect(10,14,28,8,5);
-    g.fillStyle(0xffffff,.42).fillRoundedRect(13,16,22,4,3);
-    g.fillStyle(0x27313f,1).fillRoundedRect(13,25,22,7,4);
-    g.fillStyle(0xffcf45,1).fillCircle(14,24,3).fillCircle(34,24,3);
-    g.fillStyle(0xfff4a0,.9).fillCircle(14,24,1).fillCircle(34,24,1);
-    g.lineStyle(2,0xe7edf5,1).strokeRoundedRect(6,12,36,24,8);
-    g.lineStyle(1,0xffffff,.45).lineBetween(12,34,36,34);
-    g.generateTexture("shuttle",48,48);
+    drawShuttle(g,0xffcf45,"idle");
+    g.generateTexture("shuttle",64,52);
     g.clear();
+
+    COLORS.forEach(function(c){
+      drawShuttle(g,c.hex,c.key);
+      g.generateTexture("shuttle_"+c.key,64,52);
+      g.clear();
+    });
 
     COLORS.forEach(function(c){
       g.fillStyle(0x000000,.28).fillRoundedRect(8,9,28,25,7);
@@ -289,17 +309,19 @@ var MenuScene = {
     var me = this, cx = GW/2;
     var target = challengeScore();
     var centerY = GH / 2;
-    var iconY = centerY - 236;
+    var iconY = centerY - 218;
     var titleY = centerY - 150;
-    var subtitleY = centerY - 102;
-    var statusY = centerY - 56;
-    var firstButtonY = centerY + 12;
+    var subtitleY = centerY - 106;
+    var statusY = centerY - 68;
+    var firstButtonY = centerY - 8;
     gradientBackground(me);
     for(var i=0;i<26;i++){
       var dot = me.add.circle(Phaser.Math.Between(22,GW-22),Phaser.Math.Between(28,GH-28),Phaser.Math.Between(1,3),COLORS[i%4].hex,.45);
       me.tweens.add({targets:dot,alpha:.1,duration:Phaser.Math.Between(900,1900),yoyo:true,repeat:-1});
     }
-    me.add.image(cx,iconY,"shuttle").setScale(2.05);
+    var heroGlow = me.add.circle(cx,iconY+8,44,0x77eadb,.08).setDepth(0);
+    me.tweens.add({targets:heroGlow,scale:1.18,alpha:.14,duration:1200,yoyo:true,repeat:-1});
+    me.add.image(cx,iconY,"shuttle").setScale(1.54).setDepth(1);
     me.add.text(cx,titleY,"霓虹分拣局",{
       fontSize:"40px",color:"#eaf7ff",fontStyle:"bold",stroke:"#12202f",strokeThickness:6
     }).setOrigin(.5);
@@ -310,18 +332,18 @@ var MenuScene = {
     me.add.text(cx,statusY,target ? "好友挑战 " + target + " 分，超过就分享反击" : (best ? "最高分 " + best.score + "  |  最佳连送 x" + (best.combo || 0) : "还没有记录，先跑一局"),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
-    var panelY = Math.min(firstButtonY + 156, GH - 174);
+    var panelY = Math.min(firstButtonY + 156, GH - 136);
     var tipPanel = me.add.graphics();
-    tipPanel.fillStyle(0x101a24,.72).fillRoundedRect(42,panelY,396,92,10);
-    tipPanel.lineStyle(2,0xffffff,.09).strokeRoundedRect(42,panelY,396,92,10);
+    tipPanel.fillStyle(0x071018,.38).fillRoundedRect(54,panelY,372,64,14);
+    tipPanel.lineStyle(2,0xffffff,.08).strokeRoundedRect(54,panelY,372,64,14);
     [
-      {img:"boost",x:86,t:"加班",d:"x2 + 补仓",c:"#7de4ff"},
-      {img:"auto",x:218,t:"自动",d:"追包送门",c:"#ffdf75"},
-      {img:"loop",x:350,t:"循环",d:"漏件回流",c:"#c8b8ff"}
+      {img:"boost",x:116,t:"加班",d:"x2 + 补仓",c:"#7de4ff"},
+      {img:"auto",x:240,t:"自动",d:"追包送门",c:"#ffdf75"},
+      {img:"loop",x:364,t:"循环",d:"漏件回流",c:"#c8b8ff"}
     ].forEach(function(item){
-      me.add.image(item.x,panelY+30,item.img).setScale(.98).setDepth(2);
-      me.add.text(item.x,panelY+60,item.t,{fontSize:"14px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
-      me.add.text(item.x,panelY+78,item.d,{fontSize:"11px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
+      me.add.image(item.x,panelY+22,item.img).setScale(.82).setDepth(2);
+      me.add.text(item.x,panelY+44,item.t,{fontSize:"13px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
+      me.add.text(item.x,panelY+57,item.d,{fontSize:"10px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
     });
     makeButton(me,cx,firstButtonY,190,"开始分拣",0x20c879,function(){me.scene.start("PlayScene");});
     makeButton(me,cx,firstButtonY + 54,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
@@ -763,14 +785,14 @@ var PlayScene = {
     this.refreshPlayerStyle();
   },
   refreshPlayerStyle:function(){
-    var color = this.carry ? this.carry.hex : 0xf2f6fb;
-    var glow = this.carry ? this.carry.hex : 0xffffff;
+    var color = this.carry ? this.carry.hex : 0x77eadb;
+    var glow = this.carry ? this.carry.hex : 0xffcf45;
     if(this.player){
-      if(this.carry){ this.player.setTint(color); }
-      else{ this.player.clearTint(); }
+      this.player.clearTint();
+      this.player.setTexture(this.carry ? "shuttle_" + this.carry.key : "shuttle");
     }
-    if(this.trail){ this.trail.setFillStyle(color,this.carry ? .20 : .14); }
-    if(this.engineGlow){ this.engineGlow.setFillStyle(glow,this.carry ? .24 : .16); }
+    if(this.trail){ this.trail.setFillStyle(color,this.carry ? .20 : .12); }
+    if(this.engineGlow){ this.engineGlow.setFillStyle(glow,this.carry ? .24 : .18); }
   },
   pulsePortal:function(lane,color){
     var portal = this.portals && this.portals[lane];
