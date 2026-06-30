@@ -565,7 +565,8 @@ var PlayScene = {
     var fromX = this.player.x;
     var fromLane = this.lane;
     this.lane = next;
-    this.tweens.add({targets:this.player,x:LANE_X[next],duration:110,ease:"Quad.easeOut"});
+    if(this.laneTween){ this.laneTween.stop(); }
+    this.laneTween = this.tweens.add({targets:this.player,x:LANE_X[next],duration:110,ease:"Quad.easeOut",onComplete:function(){ this.laneTween = null; },callbackScope:this});
     this.drawLaneFx();
     var dash = this.add.circle(fromX,this.player.y+2,15,COLORS[fromLane].hex,.22).setDepth(17);
     this.tweens.add({targets:dash,x:LANE_X[next],alpha:0,scaleX:1.65,scaleY:.72,duration:170,ease:"Quad.easeOut",onComplete:function(){dash.destroy();}});
@@ -798,9 +799,9 @@ var PlayScene = {
   collectFx:function(color){
     if(!this.player){ return; }
     var me = this;
-    me.tweens.killTweensOf(me.player);
+    if(me.playerPulseTween){ me.playerPulseTween.stop(); }
     me.player.setScale(1.42);
-    me.tweens.add({targets:me.player,scale:1.2,duration:180,ease:"Back.easeOut"});
+    me.playerPulseTween = me.tweens.add({targets:me.player,scale:1.2,duration:180,ease:"Back.easeOut",onComplete:function(){ me.playerPulseTween = null; }});
     var ring = me.add.circle(me.player.x,me.player.y,24,color,.26).setDepth(19);
     var glow = me.add.circle(me.player.x,me.player.y+1,16,color,.22).setDepth(18);
     me.tweens.add({targets:ring,scale:2.1,alpha:0,duration:300,ease:"Quad.easeOut",onComplete:function(){ring.destroy();}});
@@ -937,6 +938,13 @@ var PlayScene = {
     me.isPaused = !me.isPaused;
     me.physics.world.isPaused = me.isPaused;
     if(me.isPaused){
+      me.tweens.pauseAll();
+      if(me.laneTween){ me.laneTween.stop(); me.laneTween = null; }
+      if(me.player){ me.player.x = LANE_X[me.lane]; }
+      if(me.trail){ me.trail.x = me.player.x; me.trail.y = me.player.y + 4; }
+      if(me.engineGlow){ me.engineGlow.x = me.player.x; me.engineGlow.y = me.player.y + 22; }
+      me.updateCarryBadge();
+      me.drawLaneFx();
       me.pauseLayer = me.add.container(0,0).setDepth(120);
       var g = me.add.graphics();
       g.fillStyle(0x000000,.64).fillRect(0,0,GW,GH);
@@ -945,7 +953,10 @@ var PlayScene = {
       me.pauseLayer.add([g,title,hint]);
       var resume = makeButton(me,GW/2,382,170,"继续",0x20c879,function(){me.togglePause();});
       me.pauseLayer.add([resume.bg,resume.text,resume.zone]);
-    }else if(me.pauseLayer){ me.pauseLayer.destroy(true); }
+    }else{
+      me.tweens.resumeAll();
+      if(me.pauseLayer){ me.pauseLayer.destroy(true); }
+    }
   },
   finishGame:function(){
     var total = this.delivered + this.missed;
