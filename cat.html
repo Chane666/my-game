@@ -485,7 +485,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnOpeningPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -534,7 +534,7 @@ var PlayScene = {
     me.powerText = me.add.text(GW/2+18,149,"等待道具",{
       fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:4
     }).setOrigin(.5).setDepth(35);
-    me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "包裹送到同颜色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
+    me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分 | 先送黄门" : "第一单：接黄包，送黄门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
     var pbg = me.add.graphics().setDepth(40);
     pbg.fillStyle(0x000000,.38).fillRoundedRect(GW-70,56,58,62,11);
@@ -545,8 +545,7 @@ var PlayScene = {
     me.physics.add.overlap(me.player,me.packages,me.collectPackage,null,me);
     me.physics.add.overlap(me.player,me.boosts,me.collectBoost,null,me);
     me.packageTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnPackage,callbackScope:me,loop:true});
-    me.packageTimer.paused = true;
-    me.time.delayedCall(3900,function(){ if(me.packageTimer){ me.packageTimer.paused = false; me.spawnPackage(); } },null,me);
+    me.time.delayedCall(150,function(){ me.spawnOpeningPackage(); },null,me);
     me.boostTimer = me.time.addEvent({delay:9000,callback:me.spawnBoost,callbackScope:me,loop:true});
     me.refreshPlayerStyle();
     me.drawLaneFx();
@@ -566,7 +565,7 @@ var PlayScene = {
     });
     me.drawLaneFx();
     me.showStartGuide();
-    toast(me,"开工！同色投递","#fff");
+    toast(me,"开工！先送黄门","#fff");
   },
   update:function(time,delta){
     var me = this;
@@ -662,6 +661,23 @@ var PlayScene = {
     pkg.setAngularVelocity(Phaser.Math.Between(-28,28));
     var glow = this.add.circle(pkg.x,pkg.y,15,c.hex,.12).setDepth(11);
     pkg.glow = glow;
+  },
+  spawnOpeningPackage:function(){
+    if(this.isPaused || !this.packages || !this.player){ return; }
+    var c = COLORS[2];
+    var lane = this.lane;
+    var y = Math.max(210,this.player.y - 235);
+    var pkg = this.packages.create(LANE_X[lane],y,"pkg_"+c.key).setDepth(12);
+    pkg.colorKey = c.key;
+    pkg.colorName = c.name;
+    pkg.colorHex = c.hex;
+    pkg.setVelocityY(this.speed + 80);
+    pkg.setAngularVelocity(24);
+    pkg.setScale(1.08);
+    var glow = this.add.circle(pkg.x,pkg.y,19,c.hex,.18).setDepth(11);
+    pkg.glow = glow;
+    this.tweens.add({targets:pkg,scale:1,duration:220,ease:"Back.easeOut"});
+    this.bumpScore(this.taskText,1.16);
   },
   spawnBoost:function(){
     if(this.isPaused || Math.random() > .62){ return; }
@@ -964,12 +980,12 @@ var PlayScene = {
     if(this.startGuide){ this.startGuide.destroy(true); }
     var layer = this.add.container(0,0).setDepth(86);
     this.startGuide = layer;
-    var y = Math.max(248,Math.min(GH * .30,310));
+    var y = Math.max(236,Math.min(GH * .28,292));
     var bg = this.add.graphics();
-    bg.fillStyle(0x050b12,.50).fillRoundedRect(42,y-92,GW-84,176,24);
-    bg.lineStyle(2,0x7de4ff,.22).strokeRoundedRect(42,y-92,GW-84,176,24);
-    bg.fillStyle(0x7de4ff,.065).fillRoundedRect(60,y-74,GW-120,138,18);
-    bg.fillStyle(0xffdf75,.09).fillRoundedRect(82,y+5,GW-164,42,21);
+    bg.fillStyle(0x050b12,.44).fillRoundedRect(52,y-78,GW-104,142,22);
+    bg.lineStyle(2,0xffdf75,.26).strokeRoundedRect(52,y-78,GW-104,142,22);
+    bg.fillStyle(0x7de4ff,.055).fillRoundedRect(70,y-60,GW-140,104,17);
+    bg.fillStyle(0xffdf75,.10).fillRoundedRect(86,y-4,GW-172,38,19);
     var glow = this.add.circle(GW/2,y-2,126,0x7de4ff,.045);
     var leftHalo = this.add.circle(GW/2-126,y+22,40,0xffdf75,.14);
     var midHalo = this.add.circle(GW/2,y+22,44,0x7de4ff,.10);
@@ -978,25 +994,25 @@ var PlayScene = {
     route.lineStyle(18,0xffdf75,.09).lineBetween(GW/2-94,y+22,GW/2+94,y+22);
     route.lineStyle(5,0xffdf75,.74).lineBetween(GW/2-86,y+22,GW/2+86,y+22);
     route.lineStyle(1,0xffffff,.38).lineBetween(GW/2-80,y+12,GW/2+80,y+12);
-    var badge = this.add.text(GW/2,y-58,"玩法示例",{
+    var badge = this.add.text(GW/2,y-48,"3 秒上手",{
       fontSize:"13px",color:"#101820",fontStyle:"bold",backgroundColor:"#ffdf75",padding:{left:12,right:12,top:4,bottom:4}
     }).setOrigin(.5);
-    var hint = this.add.text(GW/2,y-33,"黄色包裹  ->  黄色门",{
+    var hint = this.add.text(GW/2,y-22,"接黄包，送黄门",{
       fontSize:"17px",color:"#ffffff",fontStyle:"bold",stroke:"#031019",strokeThickness:4
     }).setOrigin(.5);
-    var left = this.add.image(GW/2-126,y+22,"pkg_yellow").setScale(1.18);
-    var mid = this.add.image(GW/2,y+22,"shuttle_yellow").setScale(.82);
-    var right = this.add.image(GW/2+126,y+22,"portal_yellow").setScale(.92);
-    var runner = this.add.image(GW/2-78,y+22,"pkg_yellow").setScale(.54).setAlpha(.72);
-    var stepA = this.add.text(GW/2-126,y+58,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepB = this.add.text(GW/2,y+58,"点轨道换轨",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepC = this.add.text(GW/2+126,y+58,"黄色门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var danger = this.add.text(GW/2,y+78,"漏接或堵车会扣仓容，清空结束",{
+    var left = this.add.image(GW/2-126,y+16,"pkg_yellow").setScale(1.12);
+    var mid = this.add.image(GW/2,y+16,"shuttle_yellow").setScale(.80);
+    var right = this.add.image(GW/2+126,y+16,"portal_yellow").setScale(.90);
+    var runner = this.add.image(GW/2-78,y+16,"pkg_yellow").setScale(.54).setAlpha(.72);
+    var stepA = this.add.text(GW/2-126,y+50,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepB = this.add.text(GW/2,y+50,"点轨道",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepC = this.add.text(GW/2+126,y+50,"进黄门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var danger = this.add.text(GW/2,y+68,"漏接或堵车会扣仓容",{
       fontSize:"12px",color:"#ff9aae",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(.5);
     var dots = [];
     for(var i=0;i<4;i++){
-      var dot = this.add.circle(GW/2-72 + i*48,y+22,4,0xffffff,.86);
+      var dot = this.add.circle(GW/2-72 + i*48,y+16,4,0xffffff,.86);
       dots.push(dot);
     }
     layer.add([bg,glow,leftHalo,midHalo,rightHalo,route,badge,hint,left,mid,right,runner,stepA,stepB,stepC,danger].concat(dots));
@@ -1012,7 +1028,7 @@ var PlayScene = {
       dot.setAlpha(.25 + index*.16);
       this.tweens.add({targets:dot,scale:1.65,alpha:.16,duration:520,delay:index*110,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     },this);
-    this.time.delayedCall(3600,this.hideStartGuide,null,this);
+    this.time.delayedCall(2200,this.hideStartGuide,null,this);
   },
   hideStartGuide:function(){
     if(!this.startGuide || !this.startGuide.scene){ return; }
