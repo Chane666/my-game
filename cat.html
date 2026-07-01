@@ -494,7 +494,7 @@ var PlayScene = {
     me.powerText = me.add.text(GW/2+18,149,"等待道具",{
       fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:4
     }).setOrigin(.5).setDepth(35);
-    me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "接包裹 -> 送同色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
+    me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "同色包裹送同色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
     var pbg = me.add.graphics().setDepth(40);
     pbg.fillStyle(0x000000,.35).fillRoundedRect(GW-62,64,44,44,9);
@@ -529,11 +529,11 @@ var PlayScene = {
     if(me.isPaused){ return; }
     if(me.rushTimer > 0){
       me.rushTimer -= delta;
-      if(me.rushTimer <= 0){ me.taskText.setText("接包裹 -> 送同色门"); }
+      if(me.rushTimer <= 0){ me.taskText.setText("同色包裹送同色门"); }
     }
     if(me.dispatchTimer > 0){
       me.dispatchTimer -= delta;
-      if(me.dispatchTimer <= 0){ me.taskText.setText(me.rushTimer > 0 ? "完美连线：得分 x2" : "接包裹 -> 送同色门"); }
+      if(me.dispatchTimer <= 0){ me.taskText.setText(me.rushTimer > 0 ? "完美连线：得分 x2" : "同色包裹送同色门"); }
     }
     if(me.autoTimer > 0){ me.autoTimer -= delta; }
     if(me.loopTimer > 0){ me.loopTimer -= delta; }
@@ -918,40 +918,47 @@ var PlayScene = {
     if(this.startGuide){ this.startGuide.destroy(true); }
     var layer = this.add.container(0,0).setDepth(86);
     this.startGuide = layer;
-    var y = Math.max(238,Math.min(GH * .29,300));
+    var y = Math.max(248,Math.min(GH * .30,310));
     var bg = this.add.graphics();
-    bg.fillStyle(0x050b12,.42).fillRoundedRect(52,y-70,GW-104,132,24);
-    bg.lineStyle(2,0x7de4ff,.18).strokeRoundedRect(52,y-70,GW-104,132,24);
-    bg.fillStyle(0xffdf75,.08).fillRoundedRect(82,y-6,GW-164,48,24);
-    var glow = this.add.circle(GW/2,y,118,0x7de4ff,.040);
-    var leftHalo = this.add.circle(GW/2-126,y+18,42,0xffdf75,.14);
-    var rightHalo = this.add.circle(GW/2+126,y+18,48,0xffdf75,.12);
+    bg.fillStyle(0x050b12,.50).fillRoundedRect(42,y-86,GW-84,164,24);
+    bg.lineStyle(2,0x7de4ff,.22).strokeRoundedRect(42,y-86,GW-84,164,24);
+    bg.fillStyle(0x7de4ff,.065).fillRoundedRect(60,y-68,GW-120,126,18);
+    bg.fillStyle(0xffdf75,.09).fillRoundedRect(82,y+5,GW-164,42,21);
+    var glow = this.add.circle(GW/2,y-2,126,0x7de4ff,.045);
+    var leftHalo = this.add.circle(GW/2-126,y+22,40,0xffdf75,.14);
+    var midHalo = this.add.circle(GW/2,y+22,44,0x7de4ff,.10);
+    var rightHalo = this.add.circle(GW/2+126,y+22,48,0xffdf75,.12);
     var route = this.add.graphics();
-    route.lineStyle(20,0xffdf75,.09).lineBetween(GW/2-88,y+18,GW/2+88,y+18);
-    route.lineStyle(5,0xffdf75,.72).lineBetween(GW/2-80,y+18,GW/2+80,y+18);
-    route.lineStyle(1,0xffffff,.42).lineBetween(GW/2-72,y+7,GW/2+72,y+7);
-    var badge = this.add.text(GW/2,y-46,"同色直送",{
-      fontSize:"14px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3
+    route.lineStyle(18,0xffdf75,.09).lineBetween(GW/2-94,y+22,GW/2+94,y+22);
+    route.lineStyle(5,0xffdf75,.74).lineBetween(GW/2-86,y+22,GW/2+86,y+22);
+    route.lineStyle(1,0xffffff,.38).lineBetween(GW/2-80,y+12,GW/2+80,y+12);
+    var badge = this.add.text(GW/2,y-58,"规则演示",{
+      fontSize:"13px",color:"#101820",fontStyle:"bold",backgroundColor:"#ffdf75",padding:{left:12,right:12,top:4,bottom:4}
     }).setOrigin(.5);
-    var left = this.add.image(GW/2-126,y+18,"pkg_yellow").setScale(1.26);
-    var right = this.add.image(GW/2+126,y+18,"portal_yellow").setScale(.92);
-    var runner = this.add.image(GW/2-74,y+18,"pkg_yellow").setScale(.58).setAlpha(.72);
-    var stepA = this.add.text(GW/2-126,y+58,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepB = this.add.text(GW/2,y+58,"换轨",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepC = this.add.text(GW/2+126,y+58,"入门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var hint = this.add.text(GW/2,y-33,"同色包裹  ->  同色门",{
+      fontSize:"17px",color:"#ffffff",fontStyle:"bold",stroke:"#031019",strokeThickness:4
+    }).setOrigin(.5);
+    var left = this.add.image(GW/2-126,y+22,"pkg_yellow").setScale(1.18);
+    var mid = this.add.image(GW/2,y+22,"shuttle_yellow").setScale(.82);
+    var right = this.add.image(GW/2+126,y+22,"portal_yellow").setScale(.92);
+    var runner = this.add.image(GW/2-78,y+22,"pkg_yellow").setScale(.54).setAlpha(.72);
+    var stepA = this.add.text(GW/2-126,y+62,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepB = this.add.text(GW/2,y+62,"换轨",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepC = this.add.text(GW/2+126,y+62,"同色门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
     var dots = [];
     for(var i=0;i<4;i++){
-      var dot = this.add.circle(GW/2-72 + i*48,y+18,4,0xffffff,.86);
+      var dot = this.add.circle(GW/2-72 + i*48,y+22,4,0xffffff,.86);
       dots.push(dot);
     }
-    layer.add([bg,glow,leftHalo,rightHalo,route,badge,left,right,runner,stepA,stepB,stepC].concat(dots));
+    layer.add([bg,glow,leftHalo,midHalo,rightHalo,route,badge,hint,left,mid,right,runner,stepA,stepB,stepC].concat(dots));
     layer.setScale(.88);
     layer.setAlpha(0);
     this.tweens.add({targets:layer,alpha:1,scale:1,duration:220,ease:"Back.easeOut"});
-    this.tweens.add({targets:[leftHalo,rightHalo],scale:1.22,alpha:.04,duration:720,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
-    this.tweens.add({targets:left,y:y+10,duration:520,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    this.tweens.add({targets:[leftHalo,midHalo,rightHalo],scale:1.22,alpha:.04,duration:720,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    this.tweens.add({targets:left,y:y+14,duration:520,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    this.tweens.add({targets:mid,scale:.90,duration:580,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     this.tweens.add({targets:right,scale:.98,duration:640,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
-    this.tweens.add({targets:runner,x:GW/2+76,alpha:.18,scale:.74,duration:1180,repeat:-1,ease:"Quad.easeInOut"});
+    this.tweens.add({targets:runner,x:GW/2+76,alpha:.18,scale:.72,duration:1180,repeat:-1,ease:"Quad.easeInOut"});
     dots.forEach(function(dot,index){
       dot.setAlpha(.25 + index*.16);
       this.tweens.add({targets:dot,scale:1.65,alpha:.16,duration:520,delay:index*110,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
@@ -972,7 +979,7 @@ var PlayScene = {
       onComplete:function(){ layer.destroy(true); }
     });
     if(!this.carry && this.rushTimer <= 0 && this.dispatchTimer <= 0 && this.autoTimer <= 0 && this.loopTimer <= 0){
-      this.taskText.setText("接包裹 -> 送同色门");
+      this.taskText.setText("同色包裹送同色门");
       this.bumpScore(this.taskText,1.12);
     }
   },
