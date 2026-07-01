@@ -286,6 +286,13 @@ function laneOfX(x){
   return best;
 }
 
+function colorLaneIndex(key){
+  for(var i=0;i<COLORS.length;i++){
+    if(COLORS[i].key === key){ return i; }
+  }
+  return -1;
+}
+
 function drawShuttle(g,accent,key){
   var isIdle = key === "idle";
   g.fillStyle(0x000000,.34).fillRoundedRect(5,17,54,27,13);
@@ -519,7 +526,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnOpeningPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnOpeningPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","hintTargetPortal","carryHint","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -543,8 +550,8 @@ var PlayScene = {
     me.player.body.setSize(38,30).setOffset(5,12);
     me.trail = me.add.circle(me.player.x,me.player.y+4,18,0xf2f6fb,.14).setDepth(18);
     me.engineGlow = me.add.circle(me.player.x,me.player.y+22,10,0xffffff,.16).setDepth(19);
-    me.carryBadge = me.add.circle(me.player.x,me.player.y-34,10,0xffffff,0).setDepth(24);
-    me.carryText = me.add.text(me.player.x,me.player.y-34,"",{fontSize:"12px",color:"#101820",fontStyle:"bold"}).setOrigin(.5).setDepth(25);
+    me.carryBadge = me.add.image(me.player.x,me.player.y-36,"pkg_yellow").setDepth(24).setScale(.44).setAlpha(0);
+    me.carryHalo = me.add.circle(me.player.x,me.player.y-36,15,0xffffff,0).setDepth(23);
 
     var hudBg = me.add.graphics().setDepth(28);
     hudBg.fillStyle(0x071018,.62).fillRoundedRect(10,10,GW-20,76,12);
@@ -734,8 +741,11 @@ var PlayScene = {
     me.carry = {key:pkg.colorKey,name:pkg.colorName,hex:pkg.colorHex,hot:COLORS[me.lane].key === pkg.colorKey};
     if(pkg.glow){ pkg.glow.destroy(); }
     pkg.destroy();
-    me.taskText.setText("点到" + me.carry.name + "色轨道，靠近门自动投递");
+    var targetLane = colorLaneIndex(me.carry.key);
+    me.taskText.setText("送到" + me.carry.name + "门");
     me.refreshPlayerStyle();
+    me.hintTargetPortal(targetLane,me.carry.hex);
+    me.carryHint(targetLane,me.carry);
     me.collectFx(me.carry.hex);
     sfx("tap");
     vibrate(12);
@@ -936,15 +946,20 @@ var PlayScene = {
   },
   updateCarryBadge:function(){
     this.carryBadge.x = this.player.x;
-    this.carryBadge.y = this.player.y - 34;
-    this.carryText.x = this.carryBadge.x;
-    this.carryText.y = this.carryBadge.y;
+    this.carryBadge.y = this.player.y - 38;
+    this.carryHalo.x = this.carryBadge.x;
+    this.carryHalo.y = this.carryBadge.y;
     if(this.carry){
-      this.carryBadge.setFillStyle(this.carry.hex,1);
-      this.carryText.setText(this.carry.name);
+      this.carryBadge.setTexture("pkg_" + this.carry.key);
+      this.carryBadge.setAlpha(1);
+      this.carryHalo.setFillStyle(this.carry.hex,.24);
+      this.carryBadge.setScale(.48 + Math.sin(this.time.now / 115) * .035);
+      this.carryHalo.setScale(1 + Math.sin(this.time.now / 130) * .08);
     }else{
-      this.carryBadge.setFillStyle(0xffffff,0);
-      this.carryText.setText("");
+      this.carryBadge.setAlpha(0);
+      this.carryHalo.setFillStyle(0xffffff,0);
+      this.carryBadge.setScale(.44);
+      this.carryHalo.setScale(1);
     }
   },
   drawLaneFx:function(){
@@ -1088,6 +1103,30 @@ var PlayScene = {
     var ring = this.add.circle(portal.x,portal.y,32,color,.18).setDepth(4);
     this.tweens.add({targets:portal,scaleX:1.18,scaleY:1.18,duration:90,yoyo:true,ease:"Quad.easeOut"});
     this.tweens.add({targets:ring,scale:1.65,alpha:0,duration:260,ease:"Quad.easeOut",onComplete:function(){ring.destroy();}});
+  },
+  hintTargetPortal:function(lane,color){
+    if(lane < 0 || !this.portals || !this.portals[lane]){ return; }
+    var portal = this.portals[lane];
+    var glow = this.add.circle(portal.x,portal.y,46,color,.18).setDepth(4);
+    var beam = this.add.rectangle(portal.x,GH/2,10,GH-180,color,.12).setDepth(3);
+    this.tweens.add({targets:portal,scaleX:1.28,scaleY:1.28,duration:170,yoyo:true,repeat:2,ease:"Sine.easeInOut"});
+    this.tweens.add({targets:glow,scale:1.9,alpha:0,duration:760,ease:"Quad.easeOut",onComplete:function(){glow.destroy();}});
+    this.tweens.add({targets:beam,scaleX:3.2,alpha:0,duration:520,ease:"Quad.easeOut",onComplete:function(){beam.destroy();}});
+  },
+  carryHint:function(lane,carry){
+    if(!carry){ return; }
+    var x = lane >= 0 ? LANE_X[lane] : GW/2;
+    var chip = this.add.container(x,104).setDepth(60);
+    var bg = this.add.graphics();
+    bg.fillStyle(0x061018,.76).fillRoundedRect(-44,-17,88,34,17);
+    bg.lineStyle(2,carry.hex,.50).strokeRoundedRect(-44,-17,88,34,17);
+    var icon = this.add.image(-22,0,"pkg_" + carry.key).setScale(.36);
+    var door = this.add.image(22,0,"portal_" + carry.key).setScale(.34);
+    chip.add([bg,icon,door]);
+    chip.setScale(.76);
+    chip.setAlpha(0);
+    this.tweens.add({targets:chip,scale:1,alpha:1,duration:130,ease:"Back.easeOut"});
+    this.tweens.add({targets:chip,y:86,alpha:0,duration:520,delay:560,ease:"Quad.easeIn",onComplete:function(){chip.destroy(true);}});
   },
   spark:function(x,y,color,count){
     for(var i=0;i<count;i++){
