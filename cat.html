@@ -60,7 +60,7 @@ function challengeScore(){
 function shareUrl(score){
   var url = new URL(location.href);
   url.searchParams.set("challenge", String(Math.max(0, Math.floor(score || 0))));
-  url.searchParams.set("v", "rush");
+  url.searchParams.set("v", "guide-yellow");
   return url.toString();
 }
 
@@ -494,7 +494,7 @@ var PlayScene = {
     me.powerText = me.add.text(GW/2+18,149,"等待道具",{
       fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:4
     }).setOrigin(.5).setDepth(35);
-    me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "同色包裹送同色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
+    me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "包裹送到同颜色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
     var pbg = me.add.graphics().setDepth(40);
     pbg.fillStyle(0x000000,.35).fillRoundedRect(GW-62,64,44,44,9);
@@ -529,11 +529,11 @@ var PlayScene = {
     if(me.isPaused){ return; }
     if(me.rushTimer > 0){
       me.rushTimer -= delta;
-      if(me.rushTimer <= 0){ me.taskText.setText("同色包裹送同色门"); }
+      if(me.rushTimer <= 0){ me.taskText.setText("包裹送到同颜色门"); }
     }
     if(me.dispatchTimer > 0){
       me.dispatchTimer -= delta;
-      if(me.dispatchTimer <= 0){ me.taskText.setText(me.rushTimer > 0 ? "完美连线：得分 x2" : "同色包裹送同色门"); }
+      if(me.dispatchTimer <= 0){ me.taskText.setText(me.rushTimer > 0 ? "完美连线：得分 x2" : "包裹送到同颜色门"); }
     }
     if(me.autoTimer > 0){ me.autoTimer -= delta; }
     if(me.loopTimer > 0){ me.loopTimer -= delta; }
@@ -932,10 +932,10 @@ var PlayScene = {
     route.lineStyle(18,0xffdf75,.09).lineBetween(GW/2-94,y+22,GW/2+94,y+22);
     route.lineStyle(5,0xffdf75,.74).lineBetween(GW/2-86,y+22,GW/2+86,y+22);
     route.lineStyle(1,0xffffff,.38).lineBetween(GW/2-80,y+12,GW/2+80,y+12);
-    var badge = this.add.text(GW/2,y-58,"规则演示",{
+    var badge = this.add.text(GW/2,y-58,"玩法示例",{
       fontSize:"13px",color:"#101820",fontStyle:"bold",backgroundColor:"#ffdf75",padding:{left:12,right:12,top:4,bottom:4}
     }).setOrigin(.5);
-    var hint = this.add.text(GW/2,y-33,"同色包裹  ->  同色门",{
+    var hint = this.add.text(GW/2,y-33,"黄色包裹  ->  黄色门",{
       fontSize:"17px",color:"#ffffff",fontStyle:"bold",stroke:"#031019",strokeThickness:4
     }).setOrigin(.5);
     var left = this.add.image(GW/2-126,y+22,"pkg_yellow").setScale(1.18);
@@ -944,7 +944,7 @@ var PlayScene = {
     var runner = this.add.image(GW/2-78,y+22,"pkg_yellow").setScale(.54).setAlpha(.72);
     var stepA = this.add.text(GW/2-126,y+62,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
     var stepB = this.add.text(GW/2,y+62,"换轨",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepC = this.add.text(GW/2+126,y+62,"同色门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepC = this.add.text(GW/2+126,y+62,"黄色门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
     var dots = [];
     for(var i=0;i<4;i++){
       var dot = this.add.circle(GW/2-72 + i*48,y+22,4,0xffffff,.86);
@@ -979,7 +979,7 @@ var PlayScene = {
       onComplete:function(){ layer.destroy(true); }
     });
     if(!this.carry && this.rushTimer <= 0 && this.dispatchTimer <= 0 && this.autoTimer <= 0 && this.loopTimer <= 0){
-      this.taskText.setText("同色包裹送同色门");
+      this.taskText.setText("包裹送到同颜色门");
       this.bumpScore(this.taskText,1.12);
     }
   },
