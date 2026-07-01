@@ -445,7 +445,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -521,6 +521,7 @@ var PlayScene = {
       me.moveLane(target - me.lane);
     });
     me.drawLaneFx();
+    me.showStartGuide();
     toast(me,"开工！同色投递","#fff");
   },
   update:function(time,delta){
@@ -913,6 +914,49 @@ var PlayScene = {
       this.drawLaneFx();
     }
   },
+  showStartGuide:function(){
+    if(this.startGuide){ this.startGuide.destroy(true); }
+    var layer = this.add.container(0,0).setDepth(86);
+    this.startGuide = layer;
+    var y = Math.max(214,GH * .31);
+    var bg = this.add.graphics();
+    bg.fillStyle(0x071018,.72).fillRoundedRect(42,y-54,GW-84,108,16);
+    bg.lineStyle(2,0x7de4ff,.38).strokeRoundedRect(42,y-54,GW-84,108,16);
+    bg.fillStyle(0x7de4ff,.10).fillRoundedRect(54,y-42,GW-108,84,12);
+    var title = this.add.text(GW/2,y-18,"接包裹  ->  同色门",{
+      fontSize:"28px",color:"#ffffff",fontStyle:"bold",stroke:"#000",strokeThickness:5
+    }).setOrigin(.5);
+    var desc = this.add.text(GW/2,y+22,"预判站位，打出热线路",{
+      fontSize:"16px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3
+    }).setOrigin(.5);
+    var left = this.add.image(GW/2-138,y+4,"pkg_yellow").setScale(1.12);
+    var right = this.add.image(GW/2+138,y+4,"portal_yellow").setScale(.78);
+    var arrow = this.add.text(GW/2,y+4,"➜",{fontSize:"34px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setOrigin(.5);
+    layer.add([bg,left,right,arrow,title,desc]);
+    layer.setScale(.92);
+    layer.setAlpha(0);
+    this.tweens.add({targets:layer,alpha:1,scale:1,duration:160,ease:"Back.easeOut"});
+    this.tweens.add({targets:arrow,x:GW/2+22,duration:520,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    this.time.delayedCall(3800,this.hideStartGuide,null,this);
+  },
+  hideStartGuide:function(){
+    if(!this.startGuide || !this.startGuide.scene){ return; }
+    var layer = this.startGuide;
+    this.startGuide = null;
+    this.tweens.add({
+      targets:layer,
+      y:-32,
+      scale:.58,
+      alpha:0,
+      duration:260,
+      ease:"Quad.easeIn",
+      onComplete:function(){ layer.destroy(true); }
+    });
+    if(!this.carry && this.rushTimer <= 0 && this.dispatchTimer <= 0 && this.autoTimer <= 0 && this.loopTimer <= 0){
+      this.taskText.setText("接包裹 -> 送同色门");
+      this.bumpScore(this.taskText,1.12);
+    }
+  },
   pulsePortal:function(lane,color){
     var portal = this.portals && this.portals[lane];
     if(!portal){ return; }
@@ -940,19 +984,20 @@ var PlayScene = {
     var layer = this.add.container(0,0).setDepth(115);
     this.powerLayer = layer;
     var g = this.add.graphics();
-    g.fillStyle(0x071018,.76).fillRoundedRect(34,178,GW-68,104,14);
-    g.lineStyle(3,color,.88).strokeRoundedRect(34,178,GW-68,104,14);
-    g.fillStyle(color,.18).fillRoundedRect(44,188,GW-88,84,11);
-    g.fillStyle(0xffffff,.08).fillRoundedRect(52,196,GW-104,10,6);
-    g.lineStyle(1,0xffffff,.10).lineBetween(52,232,GW-52,232).lineBetween(52,258,GW-52,258);
-    var icon = this.add.image(86,230,texture).setScale(1.55);
-    var iconHalo = this.add.circle(86,230,28,color,.14);
-    var titleText = this.add.text(126,210,title,{
-      fontSize:"26px",color:"#ffffff",fontStyle:"bold",stroke:"#000",strokeThickness:5
-    }).setOrigin(0,.5);
-    var descText = this.add.text(126,246,desc,{
-      fontSize:"15px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:3
-    }).setOrigin(0,.5);
+    g.fillStyle(0x071018,.78).fillRoundedRect(44,176,GW-88,112,14);
+    g.lineStyle(3,color,.88).strokeRoundedRect(44,176,GW-88,112,14);
+    g.fillStyle(color,.16).fillRoundedRect(56,188,GW-112,88,12);
+    g.fillStyle(0xffffff,.08).fillRoundedRect(70,196,GW-140,8,5);
+    g.lineStyle(1,0xffffff,.10).lineBetween(72,246,GW-72,246);
+    var icon = this.add.image(GW/2,214,texture).setScale(1.32);
+    var iconHalo = this.add.circle(GW/2,214,25,color,.14);
+    var titleText = this.add.text(GW/2,244,title,{
+      fontSize:"24px",color:"#ffffff",fontStyle:"bold",stroke:"#000",strokeThickness:5,align:"center"
+    }).setOrigin(.5);
+    var descText = this.add.text(GW/2,268,desc,{
+      fontSize:"13px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:3,align:"center",
+      wordWrap:{width:GW-120,useAdvancedWrap:true}
+    }).setOrigin(.5);
     layer.add([g,iconHalo,icon,titleText,descText]);
     layer.setScale(.92);
     layer.setAlpha(0);
