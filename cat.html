@@ -71,6 +71,45 @@ function ratingTitle(score,combo){
   return STYLE_TITLE[index];
 }
 
+function nextScoreGoal(score){
+  var goals = [
+    {score:300,title:STYLE_TITLE[1]},
+    {score:900,title:STYLE_TITLE[2]},
+    {score:1800,title:STYLE_TITLE[3]},
+    {score:3200,title:STYLE_TITLE[4]},
+    {score:5000,title:STYLE_TITLE[5]}
+  ];
+  for(var i=0;i<goals.length;i++){
+    if(score < goals[i].score){
+      return {score:goals[i].score,title:goals[i].title,left:goals[i].score - score};
+    }
+  }
+  return null;
+}
+
+function resultHint(data){
+  var score = Math.floor(data.score || 0);
+  if(data.challenge){
+    var diff = Math.abs(score - data.challenge);
+    return score > data.challenge ? "已领先好友 " + diff + " 分，继续拉开差距" : "距离好友挑战还差 " + diff + " 分";
+  }
+  if(data.prevBest && score < data.prevBest){
+    return "距离个人纪录还差 " + (data.prevBest - score) + " 分";
+  }
+  if(data.rank === 1){
+    return "本局刷新个人纪录";
+  }
+  var next = nextScoreGoal(score);
+  return next ? "距离「" + next.title + "」还差 " + next.left + " 分" : "继续连送，冲击传送门大师";
+}
+
+function retryLabel(data){
+  if(data.challenge && data.score <= data.challenge){ return "复仇好友"; }
+  if(data.prevBest && data.score < data.prevBest){ return "再冲纪录"; }
+  var next = nextScoreGoal(data.score || 0);
+  return next ? "再冲 " + next.score + " 分" : "再冲更高分";
+}
+
 function beatPercent(score){
   score = Math.floor(score || 0);
   return Math.max(12,Math.min(99,Math.round(18 + Math.sqrt(score) * 1.18)));
@@ -352,11 +391,12 @@ var MenuScene = {
     tipPanel.fillStyle(0x071018,.38).fillRoundedRect(48,panelY,384,76,14);
     tipPanel.lineStyle(2,0xffffff,.08).strokeRoundedRect(48,panelY,384,76,14);
     [
-      {img:"boost",x:116,t:"加班",d:"x2 + 补仓",c:"#7de4ff"},
-      {img:"auto",x:240,t:"自动",d:"追包送门",c:"#ffdf75"},
-      {img:"loop",x:364,t:"循环",d:"漏件回流",c:"#c8b8ff"}
+      {x:116,t:"点击轨道",d:"小艇换到对应列",c:"#7de4ff"},
+      {x:240,t:"颜色配对",d:"黄包裹送黄门",c:"#ffdf75"},
+      {x:364,t:"守住仓容",d:"漏接/堵车会扣仓",c:"#ff7a8e"}
     ].forEach(function(item){
-      me.add.image(item.x,panelY+25,item.img).setScale(.88).setDepth(2);
+      me.add.circle(item.x,panelY+24,14,parseInt(item.c.slice(1),16),.20).setDepth(2);
+      me.add.text(item.x,panelY+24,item.t.charAt(0),{fontSize:"16px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5).setDepth(2);
       me.add.text(item.x,panelY+52,item.t,{fontSize:"13px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
       me.add.text(item.x,panelY+66,item.d,{fontSize:"10px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
     });
@@ -368,12 +408,12 @@ var MenuScene = {
       var title = best ? ratingTitle(best.score,best.combo || 0) : "新手调度员";
       var pct = best ? beatPercent(best.score) : 12;
       if(navigator.share){
-        navigator.share({title:"霓虹分拣局",text:"我是" + title + "，最高 " + baseScore + " 分，超过 " + pct + "% 玩家。来超我。",url:url}).catch(function(){});
+        navigator.share({title:"霓虹分拣局",text:"挑战你：超过 " + baseScore + " 分就算赢。我是" + title + "，超过 " + pct + "% 玩家。",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    me.add.text(cx,GH-44,"←/→ 或 A/D 换轨，空格丢弃错误包裹",{
+    me.add.text(cx,GH-44,"点击对应轨道换轨；漏接/堵车会扣仓容",{
       fontSize:"14px",color:"#8b9bad"
     }).setOrigin(.5);
   }
@@ -445,7 +485,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -497,13 +537,16 @@ var PlayScene = {
     me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分" : "包裹送到同颜色门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
     var pbg = me.add.graphics().setDepth(40);
-    pbg.fillStyle(0x000000,.35).fillRoundedRect(GW-62,64,44,44,9);
-    me.add.image(GW-40,86,"pauseIcon").setDepth(41).setScale(.85);
-    me.add.zone(GW-40,86,52,52).setInteractive({useHandCursor:true}).setDepth(42).on("pointerdown",function(){me.togglePause();});
+    pbg.fillStyle(0x000000,.38).fillRoundedRect(GW-70,56,58,62,11);
+    me.add.image(GW-41,80,"pauseIcon").setDepth(41).setScale(.86);
+    me.add.text(GW-41,105,"暂停",{fontSize:"10px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5).setDepth(41);
+    me.add.zone(GW-41,86,68,72).setInteractive({useHandCursor:true}).setDepth(42).on("pointerdown",function(pointer,event){ if(event && event.stopPropagation){ event.stopPropagation(); } me.togglePause(); });
 
     me.physics.add.overlap(me.player,me.packages,me.collectPackage,null,me);
     me.physics.add.overlap(me.player,me.boosts,me.collectBoost,null,me);
     me.packageTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnPackage,callbackScope:me,loop:true});
+    me.packageTimer.paused = true;
+    me.time.delayedCall(3900,function(){ if(me.packageTimer){ me.packageTimer.paused = false; me.spawnPackage(); } },null,me);
     me.boostTimer = me.time.addEvent({delay:9000,callback:me.spawnBoost,callbackScope:me,loop:true});
     me.refreshPlayerStyle();
     me.drawLaneFx();
@@ -517,6 +560,7 @@ var PlayScene = {
     me.input.keyboard.on("keydown-P",function(){me.togglePause();});
     me.input.on("pointerdown",function(pointer){
       if(me.isPaused){ return; }
+      if(pointer.y < 174 || pointer.y > GH - 38){ return; }
       var target = laneOfX(pointer.x);
       me.moveLane(target - me.lane);
     });
@@ -640,7 +684,7 @@ var PlayScene = {
     me.carry = {key:pkg.colorKey,name:pkg.colorName,hex:pkg.colorHex,hot:COLORS[me.lane].key === pkg.colorKey};
     if(pkg.glow){ pkg.glow.destroy(); }
     pkg.destroy();
-    me.taskText.setText("送到" + me.carry.name + "色门");
+    me.taskText.setText("点到" + me.carry.name + "色轨道，靠近门自动投递");
     me.refreshPlayerStyle();
     me.collectFx(me.carry.hex);
     sfx("tap");
@@ -655,7 +699,7 @@ var PlayScene = {
       this.autoTimer = 6200;
       this.taskText.setText("自动分拣：系统接管");
       this.floatText(player.x,player.y-42,"自动分拣 6s","#ffdf75");
-      this.powerText.setText("自动分拣 6s  |  自动追包送门");
+      this.powerText.setText("自动 6s");
       this.powerBanner("自动分拣", "6 秒自动追包、自动送到同色门", 0xffdf75, "auto");
       this.powerBurst(player.x,player.y,0xffdf75);
       this.bumpScore(this.powerText,1.32);
@@ -667,7 +711,7 @@ var PlayScene = {
       this.loopTimer = 7600;
       this.taskText.setText("循环带：漏件回流");
       this.floatText(player.x,player.y-42,"循环带 8s","#c8b8ff");
-      this.powerText.setText("循环带 8s  |  漏件回到顶部");
+      this.powerText.setText("循环 8s");
       this.powerBanner("循环带", "8 秒内漏件会回流，不扣仓容", 0x9d7cff, "loop");
       this.powerBurst(player.x,player.y,0x9d7cff);
       this.bumpScore(this.powerText,1.32);
@@ -684,7 +728,7 @@ var PlayScene = {
     }
     this.taskText.setText("霓虹加班：得分 x2");
     this.floatText(player.x,player.y-42,healed ? "加班 x2  +1" : "加班 x2  满仓","#7de4ff");
-    this.powerText.setText(healed ? "加班 5s  |  得分 x2 + 补仓" : "加班 5s  |  得分 x2");
+    this.powerText.setText(healed ? "x2 5s +1" : "x2 5s");
     this.powerBanner("霓虹加班", healed ? "5 秒得分翻倍，并补回 1 点仓容" : "5 秒得分翻倍，满仓保持", 0x7de4ff, "boost");
     this.powerBurst(player.x,player.y,0x7de4ff);
     this.bumpScore(this.scoreText,1.12);
@@ -792,6 +836,7 @@ var PlayScene = {
     this.refreshPlayerStyle();
     this.drawLaneFx();
     this.updateHud();
+    this.capacityHit();
     flash(this,0xff4f6d,.16,180);
     sfx("bad");
     vibrate([36,20,36]);
@@ -816,6 +861,7 @@ var PlayScene = {
     this.comboText.setText("");
     this.floatText(pkg ? pkg.x : GW/2,GH-122,label || "漏件 -1","#ff7a8e");
     this.updateHud();
+    this.capacityHit();
     flash(this,0xff4f6d,.13,160);
     sfx("bad");
     vibrate(35);
@@ -920,9 +966,9 @@ var PlayScene = {
     this.startGuide = layer;
     var y = Math.max(248,Math.min(GH * .30,310));
     var bg = this.add.graphics();
-    bg.fillStyle(0x050b12,.50).fillRoundedRect(42,y-86,GW-84,164,24);
-    bg.lineStyle(2,0x7de4ff,.22).strokeRoundedRect(42,y-86,GW-84,164,24);
-    bg.fillStyle(0x7de4ff,.065).fillRoundedRect(60,y-68,GW-120,126,18);
+    bg.fillStyle(0x050b12,.50).fillRoundedRect(42,y-92,GW-84,176,24);
+    bg.lineStyle(2,0x7de4ff,.22).strokeRoundedRect(42,y-92,GW-84,176,24);
+    bg.fillStyle(0x7de4ff,.065).fillRoundedRect(60,y-74,GW-120,138,18);
     bg.fillStyle(0xffdf75,.09).fillRoundedRect(82,y+5,GW-164,42,21);
     var glow = this.add.circle(GW/2,y-2,126,0x7de4ff,.045);
     var leftHalo = this.add.circle(GW/2-126,y+22,40,0xffdf75,.14);
@@ -942,15 +988,18 @@ var PlayScene = {
     var mid = this.add.image(GW/2,y+22,"shuttle_yellow").setScale(.82);
     var right = this.add.image(GW/2+126,y+22,"portal_yellow").setScale(.92);
     var runner = this.add.image(GW/2-78,y+22,"pkg_yellow").setScale(.54).setAlpha(.72);
-    var stepA = this.add.text(GW/2-126,y+62,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepB = this.add.text(GW/2,y+62,"换轨",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepC = this.add.text(GW/2+126,y+62,"黄色门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepA = this.add.text(GW/2-126,y+58,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepB = this.add.text(GW/2,y+58,"点轨道换轨",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepC = this.add.text(GW/2+126,y+58,"黄色门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var danger = this.add.text(GW/2,y+78,"漏接或堵车会扣仓容，清空结束",{
+      fontSize:"12px",color:"#ff9aae",fontStyle:"bold",stroke:"#000",strokeThickness:3
+    }).setOrigin(.5);
     var dots = [];
     for(var i=0;i<4;i++){
       var dot = this.add.circle(GW/2-72 + i*48,y+22,4,0xffffff,.86);
       dots.push(dot);
     }
-    layer.add([bg,glow,leftHalo,midHalo,rightHalo,route,badge,hint,left,mid,right,runner,stepA,stepB,stepC].concat(dots));
+    layer.add([bg,glow,leftHalo,midHalo,rightHalo,route,badge,hint,left,mid,right,runner,stepA,stepB,stepC,danger].concat(dots));
     layer.setScale(.88);
     layer.setAlpha(0);
     this.tweens.add({targets:layer,alpha:1,scale:1,duration:220,ease:"Back.easeOut"});
@@ -1056,6 +1105,15 @@ var PlayScene = {
     this.capacityText.setText(Array(Math.max(this.capacity,0)+1).join("● "));
     this.bumpScore(this.scoreText,1.08);
   },
+  capacityHit:function(){
+    if(!this.capacityText){ return; }
+    this.capacityText.setColor("#ff7a8e");
+    this.floatText(GW-82,58,"仓容 -1","#ff7a8e");
+    this.bumpScore(this.capacityText,1.26);
+    this.time.delayedCall(360,function(){
+      if(this.capacityText){ this.capacityText.setColor("#7de4ff"); }
+    },null,this);
+  },
   rewardBurst:function(){
     var bonus = 35 + Math.min(this.combo,20) * 3;
     this.score += bonus;
@@ -1074,7 +1132,11 @@ var PlayScene = {
     vibrate([12,24,12]);
   },
   checkPositiveGoals:function(){
-    if(this.bestScore > 0 && this.score >= this.bestScore * .85 && this.score < this.bestScore){
+    if(this.challenge){
+      var delta = Math.ceil(this.challenge - this.score);
+      this.goalText.setText(delta > 0 ? "好友 " + this.challenge + "｜还差 " + delta : "已领先好友 " + Math.abs(delta));
+    }
+    if(!this.challenge && this.bestScore > 0 && this.score >= this.bestScore * .85 && this.score < this.bestScore){
       var left = Math.max(1,Math.ceil(this.bestScore - this.score));
       this.goalText.setText("冲榜模式：差 " + left + " 分");
       if(!this.bestHintShown){
@@ -1086,7 +1148,7 @@ var PlayScene = {
         this.bumpScore(this.goalText,1.22);
       }
     }
-    if(this.bestScore > 0 && !this.bestBeatenShown && this.score > this.bestScore){
+    if(!this.challenge && this.bestScore > 0 && !this.bestBeatenShown && this.score > this.bestScore){
       this.bestBeatenShown = true;
       this.goalText.setText("新纪录进行中");
       this.score += 80;
@@ -1133,8 +1195,14 @@ var PlayScene = {
     var total = this.delivered + this.missed;
     var rate = total ? Math.round(this.delivered / total * 100) : 0;
     var finalScore = Math.floor(this.score);
+    var prevBest = this.bestScore || 0;
     saveRecord({score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,time:Date.now()});
-    this.scene.start("GameOverScene",{score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge});
+    var records = readRecords();
+    var rank = 0;
+    for(var i=0;i<records.length;i++){
+      if(records[i].time && records[i].score === finalScore){ rank = i + 1; break; }
+    }
+    this.scene.start("GameOverScene",{score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,rank:rank});
   }
 };
 
@@ -1146,21 +1214,24 @@ var GameOverScene = {
     var won = data.challenge && data.score > data.challenge;
     var title = ratingTitle(data.score || 0,data.combo || 0);
     var pct = beatPercent(data.score || 0);
+    var hint = resultHint(data);
+    var retry = retryLabel(data);
     gradientBackground(me);
     me.add.text(GW/2,145,won ? "反超成功" : "仓库爆仓",{fontSize:"38px",color:won ? "#ffdf75" : "#ff7a8e",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
     me.add.image(GW/2,222,"shuttle").setScale(1.9).setAlpha(.86);
     me.add.text(GW/2,306,String(data.score || 0),{fontSize:"56px",color:"#ffdf75",fontStyle:"bold"}).setOrigin(.5);
     me.add.text(GW/2,354,title + "  |  超过 " + pct + "% 玩家",{fontSize:"19px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
     me.add.text(GW/2,392,"最高连送 x" + (data.combo || 0) + "  |  最高热线 x" + (data.hot || 0) + "  |  准时率 " + (data.rate || 0) + "%",{fontSize:"15px",color:"#cbd7e3"}).setOrigin(.5);
+    me.add.text(GW/2,424,hint,{fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
     makeButton(me,GW/2,460,210,"发起挑战",0xffcf45,function(){
       var url = shareUrl(data.score || 0);
       if(navigator.share){
-        navigator.share({title:"霓虹分拣局",text:"我是" + title + "，打了 " + (data.score || 0) + " 分，最高热线 x" + (data.hot || 0) + "，超过 " + pct + "% 玩家。来超我。",url:url}).catch(function(){});
+        navigator.share({title:"霓虹分拣局",text:"挑战你：超过 " + (data.score || 0) + " 分就算赢。我最高连送 x" + (data.combo || 0) + "，最高热线 x" + (data.hot || 0) + "。",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"挑战链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    makeButton(me,GW/2,514,190,"再来一局",0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,GW/2,514,190,retry,0x20c879,function(){me.scene.start("PlayScene");});
     makeButton(me,GW/2,568,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
     makeButton(me,GW/2,622,190,"返回菜单",0x4a8fe7,function(){me.scene.start("MenuScene");});
   }
