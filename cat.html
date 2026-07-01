@@ -324,19 +324,19 @@ var MenuScene = {
     var me = this, cx = GW/2;
     var target = challengeScore();
     var centerY = GH / 2;
-    var iconY = centerY - 230;
-    var titleY = centerY - 170;
-    var subtitleY = centerY - 126;
-    var statusY = centerY - 91;
-    var firstButtonY = centerY - 38;
+    var iconY = centerY - 240;
+    var titleY = centerY - 162;
+    var subtitleY = centerY - 116;
+    var statusY = centerY - 76;
+    var firstButtonY = centerY - 18;
     gradientBackground(me);
     for(var i=0;i<26;i++){
       var dot = me.add.circle(Phaser.Math.Between(22,GW-22),Phaser.Math.Between(28,GH-28),Phaser.Math.Between(1,3),COLORS[i%4].hex,.45);
       me.tweens.add({targets:dot,alpha:.1,duration:Phaser.Math.Between(900,1900),yoyo:true,repeat:-1});
     }
-    var heroGlow = me.add.circle(cx,iconY+8,38,0x77eadb,.08).setDepth(0);
+    var heroGlow = me.add.circle(cx,iconY+8,44,0x77eadb,.08).setDepth(0);
     me.tweens.add({targets:heroGlow,scale:1.16,alpha:.13,duration:1200,yoyo:true,repeat:-1});
-    me.add.image(cx,iconY,"shuttle").setScale(1.36).setDepth(1);
+    me.add.image(cx,iconY,"shuttle").setScale(1.52).setDepth(1);
     me.add.text(cx,titleY,"霓虹分拣局",{
       fontSize:"38px",color:"#eaf7ff",fontStyle:"bold",stroke:"#12202f",strokeThickness:6
     }).setOrigin(.5);
@@ -347,22 +347,22 @@ var MenuScene = {
     me.add.text(cx,statusY,target ? "好友挑战 " + target + " 分，超过就分享反击" : (best ? "最高分 " + best.score + "  |  最佳连送 x" + (best.combo || 0) : "还没有记录，先跑一局"),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
-    var panelY = Math.min(firstButtonY + 146, GH - 126);
+    var panelY = Math.min(firstButtonY + 188, GH - 142);
     var tipPanel = me.add.graphics();
-    tipPanel.fillStyle(0x071018,.34).fillRoundedRect(62,panelY,356,56,14);
-    tipPanel.lineStyle(2,0xffffff,.075).strokeRoundedRect(62,panelY,356,56,14);
+    tipPanel.fillStyle(0x071018,.38).fillRoundedRect(48,panelY,384,76,14);
+    tipPanel.lineStyle(2,0xffffff,.08).strokeRoundedRect(48,panelY,384,76,14);
     [
       {img:"boost",x:116,t:"加班",d:"x2 + 补仓",c:"#7de4ff"},
       {img:"auto",x:240,t:"自动",d:"追包送门",c:"#ffdf75"},
       {img:"loop",x:364,t:"循环",d:"漏件回流",c:"#c8b8ff"}
     ].forEach(function(item){
-      me.add.image(item.x,panelY+18,item.img).setScale(.74).setDepth(2);
-      me.add.text(item.x,panelY+38,item.t,{fontSize:"12px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
-      me.add.text(item.x,panelY+50,item.d,{fontSize:"9px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
+      me.add.image(item.x,panelY+25,item.img).setScale(.88).setDepth(2);
+      me.add.text(item.x,panelY+52,item.t,{fontSize:"13px",color:item.c,fontStyle:"bold"}).setOrigin(.5).setDepth(2);
+      me.add.text(item.x,panelY+66,item.d,{fontSize:"10px",color:"#d5e2ef"}).setOrigin(.5).setDepth(2);
     });
     makeButton(me,cx,firstButtonY,190,"开始分拣",0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,cx,firstButtonY + 54,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
-    makeButton(me,cx,firstButtonY + 108,190,"分享",0x4a8fe7,function(){
+    makeButton(me,cx,firstButtonY + 58,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,cx,firstButtonY + 116,190,"分享",0x4a8fe7,function(){
       var baseScore = best ? best.score : 100;
       var url = shareUrl(baseScore);
       var title = best ? ratingTitle(best.score,best.combo || 0) : "新手调度员";
@@ -373,7 +373,7 @@ var MenuScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    me.add.text(cx,GH-34,"←/→ 或 A/D 换轨，空格丢弃错误包裹",{
+    me.add.text(cx,GH-44,"←/→ 或 A/D 换轨，空格丢弃错误包裹",{
       fontSize:"14px",color:"#8b9bad"
     }).setOrigin(.5);
   }
