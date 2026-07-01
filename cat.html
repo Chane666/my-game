@@ -48,6 +48,40 @@ var COLORS = [
 ];
 var STYLE_TITLE = ["新手调度员","稳手分拣员","霓虹快递员","连线专家","王牌调度官","传送门大师"];
 
+function safeTextStyle(style){
+  var next = {};
+  if(style && typeof style === "object"){
+    Object.keys(style).forEach(function(key){ next[key] = style[key]; });
+  }
+  if(!next.fontFamily){
+    next.fontFamily = 'Arial, "Microsoft YaHei", "PingFang SC", sans-serif';
+  }
+  if(next.resolution === undefined){
+    next.resolution = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+  }
+  var pad = next.padding || {};
+  var px = typeof pad.x === "number" ? pad.x : 0;
+  var py = typeof pad.y === "number" ? pad.y : 0;
+  next.padding = {
+    left:Math.max(typeof pad.left === "number" ? pad.left : px, 4),
+    right:Math.max(typeof pad.right === "number" ? pad.right : px, 4),
+    top:Math.max(typeof pad.top === "number" ? pad.top : py, 6),
+    bottom:Math.max(typeof pad.bottom === "number" ? pad.bottom : py, 6)
+  };
+  return next;
+}
+
+function installTextGuard(){
+  var factory = Phaser.GameObjects.GameObjectFactory.prototype;
+  if(factory._neonTextGuard){ return; }
+  var rawText = factory.text;
+  factory.text = function(x,y,text,style){
+    return rawText.call(this,x,y,text,safeTextStyle(style));
+  };
+  factory._neonTextGuard = true;
+}
+installTextGuard();
+
 function vibrate(pattern){
   if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} }
 }
@@ -210,7 +244,7 @@ function toast(scene,text,color){
 
 function makeButton(scene,x,y,w,label,color,onClick){
   var bg = scene.add.graphics();
-  var text = scene.add.text(x,y,label,{fontSize:"17px",color:"#fff",fontStyle:"bold"}).setOrigin(.5);
+  var text = scene.add.text(x,y-1,label,{fontSize:"17px",color:"#fff",fontStyle:"bold"}).setOrigin(.5);
   function draw(fill,scale){
     bg.clear();
     bg.fillStyle(0x000000,.24).fillRoundedRect(x-w/2+3,y-18+4,w,38,9);
