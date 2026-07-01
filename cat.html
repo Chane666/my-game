@@ -918,49 +918,40 @@ var PlayScene = {
     if(this.startGuide){ this.startGuide.destroy(true); }
     var layer = this.add.container(0,0).setDepth(86);
     this.startGuide = layer;
-    var y = Math.max(248,Math.min(GH * .30,306));
+    var y = Math.max(238,Math.min(GH * .29,300));
     var bg = this.add.graphics();
-    bg.fillStyle(0x050b12,.54).fillRoundedRect(38,y-92,GW-76,178,24);
-    bg.lineStyle(2,0x7de4ff,.24).strokeRoundedRect(38,y-92,GW-76,178,24);
-    bg.fillStyle(0xffdf75,.08).fillRoundedRect(64,y-9,GW-128,54,27);
-    bg.lineStyle(1,0xffffff,.12).lineBetween(86,y-66,GW-86,y-66);
-    bg.lineStyle(1,0xffdf75,.18).lineBetween(86,y+54,GW-86,y+54);
-    var glow = this.add.circle(GW/2,y,128,0x7de4ff,.045);
-    var leftHalo = this.add.circle(GW/2-132,y+18,42,0xffdf75,.14);
-    var rightHalo = this.add.circle(GW/2+132,y+18,48,0xffdf75,.12);
+    bg.fillStyle(0x050b12,.42).fillRoundedRect(52,y-70,GW-104,132,24);
+    bg.lineStyle(2,0x7de4ff,.18).strokeRoundedRect(52,y-70,GW-104,132,24);
+    bg.fillStyle(0xffdf75,.08).fillRoundedRect(82,y-6,GW-164,48,24);
+    var glow = this.add.circle(GW/2,y,118,0x7de4ff,.040);
+    var leftHalo = this.add.circle(GW/2-126,y+18,42,0xffdf75,.14);
+    var rightHalo = this.add.circle(GW/2+126,y+18,48,0xffdf75,.12);
     var route = this.add.graphics();
-    route.lineStyle(18,0xffdf75,.10).lineBetween(GW/2-92,y+18,GW/2+92,y+18);
-    route.lineStyle(5,0xffdf75,.78).lineBetween(GW/2-86,y+18,GW/2+86,y+18);
-    route.lineStyle(1,0xffffff,.46).lineBetween(GW/2-78,y+8,GW/2+78,y+8);
-    var badge = this.add.text(GW/2,y-68,"同色直送",{
-      fontSize:"13px",color:"#101820",fontStyle:"bold",backgroundColor:"#ffdf75",padding:{left:14,right:14,top:5,bottom:5}
+    route.lineStyle(20,0xffdf75,.09).lineBetween(GW/2-88,y+18,GW/2+88,y+18);
+    route.lineStyle(5,0xffdf75,.72).lineBetween(GW/2-80,y+18,GW/2+80,y+18);
+    route.lineStyle(1,0xffffff,.42).lineBetween(GW/2-72,y+7,GW/2+72,y+7);
+    var badge = this.add.text(GW/2,y-46,"同色直送",{
+      fontSize:"14px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(.5);
-    var title = this.add.text(GW/2,y-39,"接住包裹，送进同色门",{
-      fontSize:"23px",color:"#ffffff",fontStyle:"bold",stroke:"#031019",strokeThickness:5
-    }).setOrigin(.5);
-    var left = this.add.image(GW/2-132,y+18,"pkg_yellow").setScale(1.22);
-    var right = this.add.image(GW/2+132,y+18,"portal_yellow").setScale(.88);
-    var runner = this.add.image(GW/2-80,y+18,"pkg_yellow").setScale(.58).setAlpha(.70);
-    var arrow = this.add.text(GW/2,y+18,"➜",{
-      fontSize:"38px",color:"#ffffff",fontStyle:"bold",stroke:"#ffbf3f",strokeThickness:5
-    }).setOrigin(.5);
-    var stepA = this.add.text(GW/2-132,y+69,"1 接住",{fontSize:"14px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepB = this.add.text(GW/2,y+69,"2 换轨",{fontSize:"14px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var stepC = this.add.text(GW/2+132,y+69,"3 入门",{fontSize:"14px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var left = this.add.image(GW/2-126,y+18,"pkg_yellow").setScale(1.26);
+    var right = this.add.image(GW/2+126,y+18,"portal_yellow").setScale(.92);
+    var runner = this.add.image(GW/2-74,y+18,"pkg_yellow").setScale(.58).setAlpha(.72);
+    var stepA = this.add.text(GW/2-126,y+58,"接住",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepB = this.add.text(GW/2,y+58,"换轨",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var stepC = this.add.text(GW/2+126,y+58,"入门",{fontSize:"13px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
     var dots = [];
     for(var i=0;i<4;i++){
       var dot = this.add.circle(GW/2-72 + i*48,y+18,4,0xffffff,.86);
       dots.push(dot);
     }
-    layer.add([bg,glow,leftHalo,rightHalo,route,badge,title,left,right,runner,arrow,stepA,stepB,stepC].concat(dots));
+    layer.add([bg,glow,leftHalo,rightHalo,route,badge,left,right,runner,stepA,stepB,stepC].concat(dots));
     layer.setScale(.88);
     layer.setAlpha(0);
     this.tweens.add({targets:layer,alpha:1,scale:1,duration:220,ease:"Back.easeOut"});
     this.tweens.add({targets:[leftHalo,rightHalo],scale:1.22,alpha:.04,duration:720,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     this.tweens.add({targets:left,y:y+10,duration:520,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     this.tweens.add({targets:right,scale:.98,duration:640,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
-    this.tweens.add({targets:arrow,x:GW/2+22,scale:1.12,duration:520,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
-    this.tweens.add({targets:runner,x:GW/2+82,alpha:.18,scale:.74,duration:1180,repeat:-1,ease:"Quad.easeInOut"});
+    this.tweens.add({targets:runner,x:GW/2+76,alpha:.18,scale:.74,duration:1180,repeat:-1,ease:"Quad.easeInOut"});
     dots.forEach(function(dot,index){
       dot.setAlpha(.25 + index*.16);
       this.tweens.add({targets:dot,scale:1.65,alpha:.16,duration:520,delay:index*110,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
@@ -1110,6 +1101,7 @@ var PlayScene = {
     me.isPaused = !me.isPaused;
     me.physics.world.isPaused = me.isPaused;
     if(me.isPaused){
+      if(me.startGuide){ me.hideStartGuide(); }
       me.tweens.pauseAll();
       if(me.laneTween){ me.laneTween.stop(); me.laneTween = null; }
       if(me.player){ me.player.x = LANE_X[me.lane]; }
