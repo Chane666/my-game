@@ -550,8 +550,6 @@ var PlayScene = {
     me.player.body.setSize(38,30).setOffset(5,12);
     me.trail = me.add.circle(me.player.x,me.player.y+4,18,0xf2f6fb,.14).setDepth(18);
     me.engineGlow = me.add.circle(me.player.x,me.player.y+22,10,0xffffff,.16).setDepth(19);
-    me.carryBadge = me.add.image(me.player.x,me.player.y-36,"pkg_yellow").setDepth(24).setScale(.44).setAlpha(0);
-    me.carryHalo = me.add.circle(me.player.x,me.player.y-36,15,0xffffff,0).setDepth(23);
 
     var hudBg = me.add.graphics().setDepth(28);
     hudBg.fillStyle(0x071018,.62).fillRoundedRect(10,10,GW-20,76,12);
@@ -945,21 +943,13 @@ var PlayScene = {
     this.tweens.add({targets:fx,y:y-42,alpha:0,duration:560,ease:"Quad.easeOut",onComplete:function(){fx.destroy();}});
   },
   updateCarryBadge:function(){
-    this.carryBadge.x = this.player.x;
-    this.carryBadge.y = this.player.y - 38;
-    this.carryHalo.x = this.carryBadge.x;
-    this.carryHalo.y = this.carryBadge.y;
-    if(this.carry){
-      this.carryBadge.setTexture("pkg_" + this.carry.key);
-      this.carryBadge.setAlpha(1);
-      this.carryHalo.setFillStyle(this.carry.hex,.24);
-      this.carryBadge.setScale(.48 + Math.sin(this.time.now / 115) * .035);
-      this.carryHalo.setScale(1 + Math.sin(this.time.now / 130) * .08);
-    }else{
-      this.carryBadge.setAlpha(0);
-      this.carryHalo.setFillStyle(0xffffff,0);
-      this.carryBadge.setScale(.44);
-      this.carryHalo.setScale(1);
+    if(this.trail && this.player){
+      this.trail.x = this.player.x;
+      this.trail.y = this.player.y + 4;
+    }
+    if(this.engineGlow && this.player){
+      this.engineGlow.x = this.player.x;
+      this.engineGlow.y = this.player.y + 22;
     }
   },
   drawLaneFx:function(){
