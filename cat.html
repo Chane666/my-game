@@ -46,6 +46,7 @@ var COLORS = [
   {key:"yellow", name:"黄", hex:0xffcf45, text:"#ffdf75"},
   {key:"green", name:"绿", hex:0x42df8a, text:"#77efaa"}
 ];
+var STYLE_TITLE = ["新手调度员","稳手分拣员","霓虹快递员","连线专家","王牌调度官","传送门大师"];
 
 function vibrate(pattern){
   if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} }
@@ -61,6 +62,18 @@ function shareUrl(score){
   url.searchParams.set("challenge", String(Math.max(0, Math.floor(score || 0))));
   url.searchParams.set("v", "rush");
   return url.toString();
+}
+
+function ratingTitle(score,combo){
+  score = Math.floor(score || 0);
+  combo = Math.floor(combo || 0);
+  var index = score >= 5000 || combo >= 36 ? 5 : score >= 3200 || combo >= 24 ? 4 : score >= 1800 || combo >= 16 ? 3 : score >= 900 || combo >= 9 ? 2 : score >= 300 || combo >= 4 ? 1 : 0;
+  return STYLE_TITLE[index];
+}
+
+function beatPercent(score){
+  score = Math.floor(score || 0);
+  return Math.max(12,Math.min(99,Math.round(18 + Math.sqrt(score) * 1.18)));
 }
 
 var audioCtx = null;
@@ -243,23 +256,24 @@ var BootScene = {
     });
 
     COLORS.forEach(function(c){
-      g.fillStyle(0x000000,.28).fillRoundedRect(8,9,28,25,7);
-      g.fillStyle(c.hex,1).fillRoundedRect(5,6,30,24,6);
-      g.fillStyle(0xffffff,.24).fillRoundedRect(9,9,22,7,4);
-      g.fillStyle(0x101820,.18).fillRect(9,21,22,3);
-      g.lineStyle(1,0xffffff,.26).lineBetween(12,9,31,28);
-      g.lineStyle(2,0xffffff,.58).strokeRoundedRect(5,6,30,24,6);
-      g.fillStyle(0x101820,.26).fillCircle(29,25,2);
+      g.fillStyle(0x000000,.30).fillRoundedRect(8,12,30,20,10);
+      g.fillStyle(c.hex,.95).fillRoundedRect(5,9,30,20,10);
+      g.fillStyle(0xffffff,.30).fillRoundedRect(9,11,22,5,4);
+      g.fillStyle(0x071018,.28).fillRoundedRect(11,20,18,4,3);
+      g.lineStyle(2,0xffffff,.62).strokeRoundedRect(5,9,30,20,10);
+      g.lineStyle(1,c.hex,.52).lineBetween(13,31,27,31);
+      g.fillStyle(0xffffff,.75).fillCircle(28,19,2);
       g.generateTexture("pkg_"+c.key,40,40);
       g.clear();
     });
 
     COLORS.forEach(function(c){
-      g.fillStyle(c.hex,.10).fillRoundedRect(1,5,70,34,15);
-      g.lineStyle(5,c.hex,1).strokeRoundedRect(4,8,64,28,12);
-      g.lineStyle(2,0xffffff,.7).strokeRoundedRect(9,13,54,18,9);
-      g.fillStyle(c.hex,.22).fillRoundedRect(9,13,54,18,9);
-      g.lineStyle(1,0xffffff,.28).lineBetween(18,22,54,22);
+      g.fillStyle(0x000000,.24).fillRoundedRect(1,8,70,30,15);
+      g.fillStyle(c.hex,.12).fillRoundedRect(4,6,64,34,15);
+      g.lineStyle(5,c.hex,1).strokeRoundedRect(4,10,64,26,12);
+      g.lineStyle(2,0xffffff,.72).strokeRoundedRect(11,15,50,16,8);
+      g.fillStyle(c.hex,.24).fillRoundedRect(11,15,50,16,8);
+      g.fillStyle(0xffffff,.18).fillRoundedRect(17,17,38,4,3);
       g.generateTexture("portal_"+c.key,72,44);
       g.clear();
     });
@@ -351,8 +365,10 @@ var MenuScene = {
     makeButton(me,cx,firstButtonY + 108,190,"分享",0x4a8fe7,function(){
       var baseScore = best ? best.score : 100;
       var url = shareUrl(baseScore);
+      var title = best ? ratingTitle(best.score,best.combo || 0) : "新手调度员";
+      var pct = best ? beatPercent(best.score) : 12;
       if(navigator.share){
-        navigator.share({title:"霓虹分拣局",text:"我发起了 " + baseScore + " 分挑战，来超我。",url:url}).catch(function(){});
+        navigator.share({title:"霓虹分拣局",text:"我是" + title + "，最高 " + baseScore + " 分，超过 " + pct + "% 玩家。来超我。",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
@@ -400,6 +416,7 @@ var PlayScene = {
     this.capacity = 5;
     this.combo = 0;
     this.maxCombo = 0;
+    this.hotStreak = 0;
     this.delivered = 0;
     this.missed = 0;
     this.level = 1;
@@ -421,7 +438,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","pulsePortal","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -556,6 +573,7 @@ var PlayScene = {
     me.cleanWorld();
     if(me.autoTimer > 0){ me.autoAssist(); }
     if(me.carry && COLORS[me.lane].key === me.carry.key){ me.deliver(); }
+    me.guardPlayerAlignment();
     me.updateCarryBadge();
   },
   moveLane:function(delta){
@@ -603,7 +621,7 @@ var PlayScene = {
       me.missPackage(pkg,"堵车 -1");
       return;
     }
-    me.carry = {key:pkg.colorKey,name:pkg.colorName,hex:pkg.colorHex};
+    me.carry = {key:pkg.colorKey,name:pkg.colorName,hex:pkg.colorHex,hot:COLORS[me.lane].key === pkg.colorKey};
     if(pkg.glow){ pkg.glow.destroy(); }
     pkg.destroy();
     me.taskText.setText("送到" + me.carry.name + "色门");
@@ -681,14 +699,17 @@ var PlayScene = {
     if(!this.carry){ return; }
     var comboBonus = Math.min(this.combo,10) * 2;
     var rushBonus = this.rushTimer > 0 ? 2 : 1;
-    var gain = (24 + comboBonus) * rushBonus;
+    var hot = !!this.carry.hot;
+    if(hot){ this.hotStreak++; }else{ this.hotStreak = 0; }
+    var gain = (24 + comboBonus + (hot ? 18 : 0) + Math.min(this.hotStreak,5) * 3) * rushBonus;
     this.score += gain;
     this.delivered++;
     this.combo++;
     this.maxCombo = Math.max(this.maxCombo,this.combo);
-    this.floatText(this.player.x,this.player.y-54,"+" + gain,this.carry.hex === 0xffcf45 ? "#ffdf75" : "#ffffff");
+    this.floatText(this.player.x,this.player.y-54,(hot ? "热线 +" : "+") + gain,this.carry.hex === 0xffcf45 ? "#ffdf75" : "#ffffff");
     this.pulsePortal(this.lane,this.carry.hex);
     this.spark(this.player.x,GH-74,this.carry.hex,6 + Math.min(this.combo,8));
+    if(hot){ this.hotLineFx(this.carry.hex); }
     this.comboText.setText(this.combo >= 2 ? "连送 x" + this.combo : "");
     this.comboText.setScale(1.24);
     this.tweens.add({targets:this.comboText,scale:1,duration:180,ease:"Back.easeOut"});
@@ -817,6 +838,27 @@ var PlayScene = {
         ease:"Quad.easeOut",
         onComplete:function(tween,targets){targets[0].destroy();}
       });
+    }
+  },
+  hotLineFx:function(color){
+    var x = LANE_X[this.lane];
+    var beam = this.add.rectangle(x,GH/2,8,GH-168,color,.22).setDepth(16);
+    var cap = this.add.circle(x,GH-62,30,color,.20).setDepth(17);
+    this.floatText(x,GH-104,"热线路","#ffdf75");
+    this.tweens.add({targets:beam,scaleX:4.2,alpha:0,duration:260,ease:"Quad.easeOut",onComplete:function(){beam.destroy();}});
+    this.tweens.add({targets:cap,scale:2.1,alpha:0,duration:280,ease:"Quad.easeOut",onComplete:function(){cap.destroy();}});
+    this.cameras.main.shake(80,.0035);
+    sfx(this.hotStreak >= 3 ? "combo" : "ok");
+  },
+  guardPlayerAlignment:function(){
+    if(!this.player || this.laneTween){ return; }
+    var targetX = LANE_X[this.lane];
+    if(Math.abs(this.player.x - targetX) > 2){
+      this.player.x = targetX;
+      if(this.trail){ this.trail.x = targetX; this.trail.y = this.player.y + 4; }
+      if(this.engineGlow){ this.engineGlow.x = targetX; this.engineGlow.y = this.player.y + 22; }
+      this.updateCarryBadge();
+      this.drawLaneFx();
     }
   },
   pulsePortal:function(lane,color){
@@ -973,16 +1015,18 @@ var GameOverScene = {
     activeScene = this;
     var me = this;
     var won = data.challenge && data.score > data.challenge;
+    var title = ratingTitle(data.score || 0,data.combo || 0);
+    var pct = beatPercent(data.score || 0);
     gradientBackground(me);
     me.add.text(GW/2,145,won ? "反超成功" : "仓库爆仓",{fontSize:"38px",color:won ? "#ffdf75" : "#ff7a8e",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
     me.add.image(GW/2,222,"shuttle").setScale(1.9).setAlpha(.86);
     me.add.text(GW/2,306,String(data.score || 0),{fontSize:"56px",color:"#ffdf75",fontStyle:"bold"}).setOrigin(.5);
-    me.add.text(GW/2,360,"最高连送 x" + (data.combo || 0) + "  |  准时率 " + (data.rate || 0) + "%",{fontSize:"18px",color:"#cbd7e3"}).setOrigin(.5);
-    me.add.text(GW/2,398,data.challenge ? (won ? "好友目标 " + data.challenge + "，已超越" : "差 " + Math.max(0, data.challenge - data.score) + " 分反超好友") : "完成 " + (data.delivered || 0) + " 单",{fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,354,title + "  |  超过 " + pct + "% 玩家",{fontSize:"19px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    me.add.text(GW/2,392,"最高连送 x" + (data.combo || 0) + "  |  准时率 " + (data.rate || 0) + "%  |  完成 " + (data.delivered || 0) + " 单",{fontSize:"15px",color:"#cbd7e3"}).setOrigin(.5);
     makeButton(me,GW/2,460,210,"发起挑战",0xffcf45,function(){
       var url = shareUrl(data.score || 0);
       if(navigator.share){
-        navigator.share({title:"霓虹分拣局",text:"我打了 " + (data.score || 0) + " 分，来超我。",url:url}).catch(function(){});
+        navigator.share({title:"霓虹分拣局",text:"我是" + title + "，打了 " + (data.score || 0) + " 分，超过 " + pct + "% 玩家。来超我。",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"挑战链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
