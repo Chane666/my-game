@@ -1331,24 +1331,26 @@ var GameOverScene = {
     var retry = retryLabel(data);
     gradientBackground(me);
     var panel = me.add.graphics();
-    panel.fillStyle(0x061018,.42).fillRoundedRect(50,116,GW-100,488,20);
-    panel.lineStyle(2,0xffffff,.075).strokeRoundedRect(50,116,GW-100,488,20);
-    panel.fillStyle(0xffffff,.035).fillRoundedRect(68,278,GW-136,116,16);
-    me.add.image(GW/2,145,"shuttle").setScale(1.42).setAlpha(.88);
-    me.add.text(GW/2,205,won ? "反超成功" : "仓库爆仓",{fontSize:"35px",color:won ? "#ffdf75" : "#ff7a8e",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
-    me.add.text(GW/2,282,String(data.score || 0),{fontSize:"58px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
-    me.add.text(GW/2,334,title,{fontSize:"21px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    me.add.text(GW/2,362,"超过 " + pct + "% 玩家",{fontSize:"16px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
+    panel.fillStyle(0x061018,.72).fillRoundedRect(56,92,GW-112,590,22);
+    panel.lineStyle(2,0xffffff,.11).strokeRoundedRect(56,92,GW-112,590,22);
+    panel.fillStyle(0xffffff,.04).fillRoundedRect(76,224,GW-152,136,18);
+    panel.fillStyle(0x071018,.50).fillRoundedRect(76,382,GW-152,78,16);
+    panel.lineStyle(1,0xffffff,.075).lineBetween(96,372,GW-96,372).lineBetween(96,474,GW-96,474).lineBetween(96,514,GW-96,514);
+    me.add.image(GW/2,126,"shuttle").setScale(1.18).setAlpha(.88);
+    me.add.text(GW/2,180,won ? "反超成功" : "仓库爆仓",{fontSize:"32px",color:won ? "#ffdf75" : "#ff7a8e",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
+    me.add.text(GW/2,260,String(data.score || 0),{fontSize:"54px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
+    me.add.text(GW/2,318,title,{fontSize:"20px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    me.add.text(GW/2,346,"超过 " + pct + "% 玩家",{fontSize:"15px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
     [
       {x:128,t:"连送",v:"x" + (data.combo || 0),c:"#8ff0bc"},
       {x:240,t:"热线",v:"x" + (data.hot || 0),c:"#ffdf75"},
       {x:352,t:"准时",v:(data.rate || 0) + "%",c:"#7de4ff"}
     ].forEach(function(item){
-      me.add.text(item.x,415,item.v,{fontSize:"20px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-      me.add.text(item.x,441,item.t,{fontSize:"12px",color:"#91a0ae",fontStyle:"bold"}).setOrigin(.5);
+      me.add.text(item.x,408,item.v,{fontSize:"20px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+      me.add.text(item.x,434,item.t,{fontSize:"12px",color:"#91a0ae",fontStyle:"bold"}).setOrigin(.5);
     });
-    me.add.text(GW/2,474,hint,{fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,wordWrap:{width:GW-120,useAdvancedWrap:true},align:"center"}).setOrigin(.5);
-    makeButton(me,GW/2,522,220,"发起挑战",0xffcf45,function(){
+    me.add.text(GW/2,494,hint,{fontSize:"15px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,wordWrap:{width:GW-126,useAdvancedWrap:true},align:"center"}).setOrigin(.5);
+    makeButton(me,GW/2,540,220,"发起挑战",0xffcf45,function(){
       var url = shareUrl(data.score || 0);
       if(navigator.share){
         navigator.share({title:"霓虹分拣局",text:"挑战你：超过 " + (data.score || 0) + " 分就算赢。我最高连送 x" + (data.combo || 0) + "，最高热线 x" + (data.hot || 0) + "。",url:url}).catch(function(){});
@@ -1356,9 +1358,9 @@ var GameOverScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"挑战链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    makeButton(me,GW/2,576,220,retry,0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,GW/2-86,632,154,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
-    makeButton(me,GW/2+86,632,154,"返回菜单",0x4a8fe7,function(){me.scene.start("MenuScene");});
+    makeButton(me,GW/2,592,220,retry,0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,GW/2-82,644,148,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,GW/2+82,644,148,"返回菜单",0x4a8fe7,function(){me.scene.start("MenuScene");});
   }
 };
 
