@@ -560,7 +560,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnOpeningPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","hintTargetPortal","carryHint","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnOpeningPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","hintTargetPortal","clearTargetHint","carryHint","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -676,7 +676,11 @@ var PlayScene = {
       me.engineGlow.setScale(1 + Math.sin(time/70)*.18);
     }
     if(me.portalGlow){
-      me.portalGlow.forEach(function(glow,i){ glow.setScale(1 + Math.sin(time/160 + i)*.07); });
+      var targetLane = me.carry ? colorLaneIndex(me.carry.key) : -1;
+      me.portalGlow.forEach(function(glow,i){
+        glow.setScale(i === targetLane ? 1.08 : 1);
+        glow.setAlpha(i === targetLane ? .12 : .08);
+      });
     }
     me.packages.getChildren().forEach(function(pkg){
       if(pkg.glow){ pkg.glow.x = pkg.x; pkg.glow.y = pkg.y; pkg.glow.setAlpha(.10 + Math.sin(time/120 + pkg.y*.02)*.04); }
@@ -849,6 +853,7 @@ var PlayScene = {
   },
   deliver:function(){
     if(!this.carry){ return; }
+    this.clearTargetHint();
     var comboBonus = Math.min(this.combo,10) * 2;
     var rushBonus = this.rushTimer > 0 ? 2 : 1;
     var dispatchBonus = this.dispatchTimer > 0 ? 2 : 1;
@@ -918,6 +923,7 @@ var PlayScene = {
     vibrate(22);
   },
   dropWrong:function(){
+    this.clearTargetHint();
     this.capacity--;
     this.combo = 0;
     this.hotStreak = 0;
@@ -1128,14 +1134,39 @@ var PlayScene = {
     this.tweens.add({targets:portal,scaleX:1.18,scaleY:1.18,duration:90,yoyo:true,ease:"Quad.easeOut"});
     this.tweens.add({targets:ring,scale:1.65,alpha:0,duration:260,ease:"Quad.easeOut",onComplete:function(){ring.destroy();}});
   },
+  clearTargetHint:function(){
+    var fx = this.targetHintFx;
+    if(!fx){ return; }
+    if(fx.tweens){
+      fx.tweens.forEach(function(tween){ if(tween && tween.stop){ tween.stop(); } });
+    }
+    if(fx.portal){
+      this.tweens.killTweensOf(fx.portal);
+      fx.portal.setScale(1);
+    }
+    [fx.glow,fx.beam,fx.line].forEach(function(item){
+      if(item && item.scene){ item.destroy(); }
+    });
+    this.targetHintFx = null;
+    if(this.portalGlow){
+      this.portalGlow.forEach(function(glow){
+        glow.setScale(1);
+        glow.setAlpha(.08);
+      });
+    }
+  },
   hintTargetPortal:function(lane,color){
+    this.clearTargetHint();
     if(lane < 0 || !this.portals || !this.portals[lane]){ return; }
     var portal = this.portals[lane];
-    var glow = this.add.circle(portal.x,portal.y,46,color,.18).setDepth(4);
-    var beam = this.add.rectangle(portal.x,GH/2,10,GH-180,color,.12).setDepth(3);
-    this.tweens.add({targets:portal,scaleX:1.28,scaleY:1.28,duration:170,yoyo:true,repeat:2,ease:"Sine.easeInOut"});
-    this.tweens.add({targets:glow,scale:1.9,alpha:0,duration:760,ease:"Quad.easeOut",onComplete:function(){glow.destroy();}});
-    this.tweens.add({targets:beam,scaleX:3.2,alpha:0,duration:520,ease:"Quad.easeOut",onComplete:function(){beam.destroy();}});
+    var glow = this.add.circle(portal.x,portal.y,43,color,.22).setDepth(4).setScale(.68).setAlpha(0);
+    var beam = this.add.rectangle(portal.x,GH/2,12,GH-180,color,.16).setDepth(3).setScale(.55,1);
+    var line = this.add.rectangle(portal.x,GH-105,46,3,color,.55).setDepth(6).setAlpha(0);
+    var fx = this.targetHintFx = {lane:lane,portal:portal,glow:glow,beam:beam,line:line,tweens:[]};
+    fx.tweens.push(this.tweens.add({targets:portal,scaleX:1.18,scaleY:1.18,duration:105,yoyo:true,ease:"Quad.easeOut"}));
+    fx.tweens.push(this.tweens.add({targets:glow,scale:1.18,alpha:.22,duration:180,ease:"Quad.easeOut"}));
+    fx.tweens.push(this.tweens.add({targets:beam,scaleX:2.6,alpha:0,duration:300,ease:"Quad.easeOut",onComplete:function(){ if(beam.scene){ beam.destroy(); } }}));
+    fx.tweens.push(this.tweens.add({targets:line,y:GH-101,alpha:.68,duration:150,ease:"Quad.easeOut"}));
   },
   carryHint:function(lane,carry){
     if(!carry){ return; }
@@ -1305,6 +1336,7 @@ var PlayScene = {
     }
   },
   finishGame:function(){
+    this.clearTargetHint();
     var total = this.delivered + this.missed;
     var rate = total ? Math.round(this.delivered / total * 100) : 0;
     var finalScore = Math.floor(this.score);
@@ -1331,11 +1363,11 @@ var GameOverScene = {
     var retry = retryLabel(data);
     gradientBackground(me);
     var panel = me.add.graphics();
-    panel.fillStyle(0x061018,.72).fillRoundedRect(56,92,GW-112,590,22);
-    panel.lineStyle(2,0xffffff,.11).strokeRoundedRect(56,92,GW-112,590,22);
+    panel.fillStyle(0x061018,.72).fillRoundedRect(56,84,GW-112,620,22);
+    panel.lineStyle(2,0xffffff,.11).strokeRoundedRect(56,84,GW-112,620,22);
     panel.fillStyle(0xffffff,.04).fillRoundedRect(76,224,GW-152,136,18);
     panel.fillStyle(0x071018,.50).fillRoundedRect(76,382,GW-152,78,16);
-    panel.lineStyle(1,0xffffff,.075).lineBetween(96,372,GW-96,372).lineBetween(96,474,GW-96,474).lineBetween(96,514,GW-96,514);
+    panel.lineStyle(1,0xffffff,.075).lineBetween(96,372,GW-96,372).lineBetween(96,474,GW-96,474).lineBetween(96,508,GW-96,508);
     me.add.image(GW/2,126,"shuttle").setScale(1.18).setAlpha(.88);
     me.add.text(GW/2,180,won ? "反超成功" : "仓库爆仓",{fontSize:"32px",color:won ? "#ffdf75" : "#ff7a8e",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
     me.add.text(GW/2,260,String(data.score || 0),{fontSize:"54px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
@@ -1349,8 +1381,8 @@ var GameOverScene = {
       me.add.text(item.x,408,item.v,{fontSize:"20px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
       me.add.text(item.x,434,item.t,{fontSize:"12px",color:"#91a0ae",fontStyle:"bold"}).setOrigin(.5);
     });
-    me.add.text(GW/2,494,hint,{fontSize:"15px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,wordWrap:{width:GW-126,useAdvancedWrap:true},align:"center"}).setOrigin(.5);
-    makeButton(me,GW/2,540,220,"发起挑战",0xffcf45,function(){
+    me.add.text(GW/2,488,hint,{fontSize:"15px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,wordWrap:{width:GW-126,useAdvancedWrap:true},align:"center"}).setOrigin(.5);
+    makeButton(me,GW/2,522,220,"发起挑战",0xffcf45,function(){
       var url = shareUrl(data.score || 0);
       if(navigator.share){
         navigator.share({title:"霓虹分拣局",text:"挑战你：超过 " + (data.score || 0) + " 分就算赢。我最高连送 x" + (data.combo || 0) + "，最高热线 x" + (data.hot || 0) + "。",url:url}).catch(function(){});
@@ -1358,9 +1390,9 @@ var GameOverScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"挑战链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    makeButton(me,GW/2,592,220,retry,0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,GW/2-82,644,148,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
-    makeButton(me,GW/2+82,644,148,"返回菜单",0x4a8fe7,function(){me.scene.start("MenuScene");});
+    makeButton(me,GW/2,572,220,retry,0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,GW/2,622,220,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,GW/2,672,220,"返回菜单",0x4a8fe7,function(){me.scene.start("MenuScene");});
   }
 };
 
