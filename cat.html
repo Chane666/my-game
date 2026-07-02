@@ -39,6 +39,8 @@
 var GW = 480;
 var GH = Math.max(720, Math.round(GW * (window.innerHeight || 720) / Math.max(window.innerWidth || 480, 1)));
 var STORE_KEY = "neonSortRushRecordsV1";
+var DAILY_KEY = "neonSortRushDailyV1";
+var RUN_TIME = 60000;
 var LANE_X = [78, 186, 294, 402];
 var COLORS = [
   {key:"red", name:"红", hex:0xff4f6d, text:"#ff6f86"},
@@ -86,15 +88,40 @@ function vibrate(pattern){
   if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} }
 }
 
-function challengeScore(){
-  var n = parseInt(new URLSearchParams(location.search).get("challenge") || "0",10);
+function todayKey(){
+  var d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function dailySeed(){
+  var s = todayKey(), hash = 2166136261;
+  for(var i=0;i<s.length;i++){
+    hash ^= s.charCodeAt(i);
+    hash = Math.imul(hash,16777619);
+  }
+  return hash >>> 0;
+}
+
+function seededRand(seed){
+  seed = (seed + 0x6d2b79f5) | 0;
+  var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+  t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
+  return {seed:seed, value:((t ^ t >>> 14) >>> 0) / 4294967296};
+}
+
+function challengeTarget(){
+  var q = new URLSearchParams(location.search);
+  var n = parseInt(q.get("target") || q.get("challenge") || "0",10);
   return isFinite(n) && n > 0 ? n : 0;
 }
 
-function shareUrl(score){
+function shareUrl(delivered,score){
   var url = new URL(location.href);
-  url.searchParams.set("challenge", String(Math.max(0, Math.floor(score || 0))));
-  url.searchParams.set("v", "guide-yellow");
+  url.searchParams.set("target", String(Math.max(0, Math.floor(delivered || 0))));
+  url.searchParams.set("score", String(Math.max(0, Math.floor(score || 0))));
+  url.searchParams.set("day", todayKey());
+  url.searchParams.set("v", "social-mvp");
+  url.searchParams.delete("challenge");
   return url.toString();
 }
 
@@ -122,31 +149,75 @@ function nextScoreGoal(score){
 }
 
 function resultHint(data){
-  var score = Math.floor(data.score || 0);
+  var delivered = Math.floor(data.delivered || 0);
   if(data.challenge){
-    var diff = Math.abs(score - data.challenge);
-    return score > data.challenge ? "已领先好友 " + diff + " 分，继续拉开差距" : "距离好友挑战还差 " + diff + " 分";
+    var diff = Math.abs(delivered - data.challenge);
+    return delivered > data.challenge ? "已领先好友 " + diff + " 单，继续拉开差距" : "距离好友挑战还差 " + diff + " 单";
   }
-  if(data.prevBest && score < data.prevBest){
-    return "距离个人纪录还差 " + (data.prevBest - score) + " 分";
+  if(data.prevDaily && delivered < data.prevDaily){
+    return "距离今日最佳还差 " + (data.prevDaily - delivered) + " 单";
   }
-  if(data.rank === 1){
-    return "本局刷新个人纪录";
+  if(data.rank === 1 && delivered > 0){
+    return "本局刷新今日个人纪录";
   }
-  var next = nextScoreGoal(score);
-  return next ? "距离「" + next.title + "」还差 " + next.left + " 分" : "继续连送，冲击传送门大师";
+  if(delivered <= 0){
+    return "先完成第一单，再发起好友挑战";
+  }
+  var next = nextDeliveryGoal(delivered);
+  return next ? "再送 " + next.left + " 单解锁「" + next.title + "」" : "今日班次已打穿，发起好友挑战";
 }
 
 function retryLabel(data){
-  if(data.challenge && data.score <= data.challenge){ return "复仇好友"; }
-  if(data.prevBest && data.score < data.prevBest){ return "再冲纪录"; }
-  var next = nextScoreGoal(data.score || 0);
-  return next ? "再冲 " + next.score + " 分" : "再冲更高分";
+  if(data.challenge && data.delivered <= data.challenge){ return "复仇好友"; }
+  if(data.prevDaily && data.delivered < data.prevDaily){ return "再冲今日榜"; }
+  var next = nextDeliveryGoal(data.delivered || 0);
+  return next ? "再冲 " + next.count + " 单" : "再冲更高";
 }
 
 function beatPercent(score){
   score = Math.floor(score || 0);
   return Math.max(12,Math.min(99,Math.round(18 + Math.sqrt(score) * 1.18)));
+}
+
+function nextDeliveryGoal(count){
+  count = Math.floor(count || 0);
+  var goals = [
+    {count:8,title:"上手分拣员"},
+    {count:18,title:"夜班快递员"},
+    {count:32,title:"连线调度官"},
+    {count:48,title:"压哨大师"},
+    {count:66,title:"传送门局长"}
+  ];
+  for(var i=0;i<goals.length;i++){
+    if(count < goals[i].count){
+      return {count:goals[i].count,title:goals[i].title,left:goals[i].count - count};
+    }
+  }
+  return null;
+}
+
+function readDaily(){
+  try{
+    var data = JSON.parse(localStorage.getItem(DAILY_KEY) || "{}");
+    return data && typeof data === "object" ? data : {};
+  }catch(e){ return {}; }
+}
+
+function dailyBest(){
+  var data = readDaily()[todayKey()];
+  return data && typeof data === "object" ? data : null;
+}
+
+function saveDaily(record){
+  var key = todayKey();
+  var data = readDaily();
+  var old = data[key];
+  if(!old || (record.delivered || 0) > (old.delivered || 0) || ((record.delivered || 0) === (old.delivered || 0) && (record.score || 0) > (old.score || 0))){
+    data[key] = record;
+    try{ localStorage.setItem(DAILY_KEY, JSON.stringify(data)); }catch(e){}
+    return true;
+  }
+  return false;
 }
 
 var audioCtx = null;
@@ -222,7 +293,10 @@ function readRecords(){
 function saveRecord(record){
   var records = readRecords();
   records.push(record);
-  records.sort(function(a,b){ return b.score - a.score; });
+  records.sort(function(a,b){
+    var ad = a.delivered || 0, bd = b.delivered || 0;
+    return bd !== ad ? bd - ad : (b.score || 0) - (a.score || 0);
+  });
   records = records.slice(0,8);
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(records)); }catch(e){}
   return records;
@@ -434,7 +508,8 @@ var MenuScene = {
   create:function(){
     activeScene = this;
     var me = this, cx = GW/2;
-    var target = challengeScore();
+    var target = challengeTarget();
+    var daily = dailyBest();
     var centerY = GH / 2;
     var iconY = centerY - 240;
     var titleY = centerY - 162;
@@ -452,11 +527,11 @@ var MenuScene = {
     me.add.text(cx,titleY,"霓虹分拣局",{
       fontSize:"38px",color:"#eaf7ff",fontStyle:"bold",stroke:"#12202f",strokeThickness:6
     }).setOrigin(.5);
-    me.add.text(cx,subtitleY,"接住包裹，送进同色传送门",{
+    me.add.text(cx,subtitleY,"60 秒今日班次，送到同色传送门",{
       fontSize:"16px",color:"#b9c9d8"
     }).setOrigin(.5);
     var best = readRecords()[0];
-    me.add.text(cx,statusY,target ? "好友挑战 " + target + " 分，超过就分享反击" : (best ? "最高分 " + best.score + "  |  最佳连送 x" + (best.combo || 0) : "还没有记录，先跑一局"),{
+    me.add.text(cx,statusY,target ? "好友挑战 " + target + " 单，超过就反击" : (daily ? "今日最佳 " + daily.delivered + " 单  |  连送 x" + (daily.combo || 0) : "今日还没开工，先跑一局"),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
     var panelY = Math.min(firstButtonY + 188, GH - 150);
@@ -465,9 +540,9 @@ var MenuScene = {
     tipPanel.lineStyle(2,0xffffff,.10).strokeRoundedRect(48,panelY,384,94,16);
     tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(62,panelY+12,360,70,13);
     [
-      {x:116,t:"点击轨道",d:"小艇换到对应列",c:"#7de4ff",icon:"rule_lane"},
-      {x:240,t:"颜色配对",d:"黄包裹送黄门",c:"#ffdf75",icon:"rule_match"},
-      {x:364,t:"守住仓容",d:"漏接/堵车会扣仓",c:"#ff7a8e",icon:"rule_capacity"}
+      {x:116,t:"60 秒",d:"今日同一班次",c:"#7de4ff",icon:"rule_lane"},
+      {x:240,t:"颜色配对",d:"包裹进同色门",c:"#ffdf75",icon:"rule_match"},
+      {x:364,t:"挑战好友",d:"差几单就反超",c:"#ff7a8e",icon:"rule_capacity"}
     ].forEach(function(item){
       var halo = me.add.circle(item.x,panelY+28,24,parseInt(item.c.slice(1),16),.08).setDepth(2);
       me.add.image(item.x,panelY+28,item.icon).setScale(.72).setDepth(3);
@@ -475,20 +550,20 @@ var MenuScene = {
       me.add.text(item.x,panelY+80,item.d,{fontSize:"10px",color:"#d5e2ef"}).setOrigin(.5).setDepth(3);
       me.tweens.add({targets:halo,scale:1.18,alpha:.035,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     });
-    makeButton(me,cx,firstButtonY,190,"开始分拣",0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,cx,firstButtonY + 58,190,"记录榜",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,cx,firstButtonY,190,"今日挑战",0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,cx,firstButtonY + 58,190,"今日榜",0xf3a326,function(){me.scene.start("RecordsScene");});
     makeButton(me,cx,firstButtonY + 116,190,"分享",0x4a8fe7,function(){
-      var baseScore = best ? best.score : 100;
-      var url = shareUrl(baseScore);
-      var title = best ? ratingTitle(best.score,best.combo || 0) : "新手调度员";
-      var pct = best ? beatPercent(best.score) : 12;
+      var baseCount = daily ? daily.delivered : 8;
+      var baseScore = daily ? daily.score : (best ? best.score : 100);
+      var url = shareUrl(baseCount,baseScore);
+      var title = daily ? (nextDeliveryGoal(daily.delivered) ? "今日挑战者" : "传送门局长") : "新手调度员";
       if(navigator.share){
-        navigator.share({title:"霓虹分拣局",text:"挑战你：超过 " + baseScore + " 分就算赢。我是" + title + "，超过 " + pct + "% 玩家。",url:url}).catch(function(){});
+        navigator.share({title:"霓虹分拣局",text:"60 秒今日班次，我送了 " + baseCount + " 单。你能超过我吗？",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    me.add.text(cx,GH-44,"点击对应轨道换轨；漏接/堵车会扣仓容",{
+    me.add.text(cx,GH-44,"点击轨道换列；60 秒内尽量多送同色门",{
       fontSize:"14px",color:"#8b9bad"
     }).setOrigin(.5);
   }
@@ -500,13 +575,14 @@ var RecordsScene = {
     activeScene = this;
     var me = this;
     gradientBackground(me);
-    me.add.text(GW/2,82,"记录榜",{fontSize:"34px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,82,"今日记录",{fontSize:"34px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
     var panel = me.add.graphics();
     panel.fillStyle(0x111b27,.94).fillRoundedRect(46,130,388,420,10);
     panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,130,388,420,10);
-    var records = readRecords();
+    var today = todayKey();
+    var records = readRecords().filter(function(item){ return item.day === today; });
     if(!records.length){
-      me.add.text(GW/2,330,"暂无记录\n完成一局后会自动保存",{
+      me.add.text(GW/2,330,"今日暂无记录\n完成一局后会自动保存",{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5);
     }else{
@@ -514,7 +590,7 @@ var RecordsScene = {
         var y = 166 + index * 46;
         var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
         me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5);
-        me.add.text(112,y,"得分 " + item.score,{fontSize:"18px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5);
+        me.add.text(112,y,(item.delivered || 0) + " 单",{fontSize:"18px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5);
         me.add.text(276,y,"连 x" + (item.combo || 0),{fontSize:"14px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
         me.add.text(342,y,"热 x" + (item.hot || 0),{fontSize:"14px",color:"#ffdf75",fontStyle:"bold"}).setOrigin(.5);
         me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5);
@@ -545,14 +621,20 @@ var PlayScene = {
     this.carry = null;
     this.speed = 106;
     this.spawnDelay = 1450;
+    this.remaining = RUN_TIME;
+    this.finished = false;
+    this.dailySeed = dailySeed();
+    this.rngSeed = this.dailySeed;
     this.rushTimer = 0;
     this.autoTimer = 0;
     this.loopTimer = 0;
     this.isPaused = false;
-    this.challenge = challengeScore();
+    this.challenge = challengeTarget();
     this.challengeShown = false;
     this.lastLane = 1;
-    this.bestScore = (readRecords()[0] || {}).score || 0;
+    this.dailyBestRecord = dailyBest();
+    this.bestScore = this.dailyBestRecord ? this.dailyBestRecord.score || 0 : ((readRecords()[0] || {}).score || 0);
+    this.bestDelivered = this.dailyBestRecord ? this.dailyBestRecord.delivered || 0 : 0;
     this.bestHintShown = false;
     this.bestBeatenShown = false;
     this.recordSprint = false;
@@ -560,7 +642,7 @@ var PlayScene = {
   create:function(){
     activeScene = this;
     var me = this;
-    ["moveLane","spawnPackage","spawnOpeningPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","hintTargetPortal","clearTargetHint","carryHint","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit"].forEach(function(name){me[name]=PlayScene[name];});
+    ["moveLane","spawnPackage","spawnOpeningPackage","spawnBoost","collectPackage","collectBoost","deliver","dropWrong","missPackage","cleanWorld","floatText","updateCarryBadge","updateHud","togglePause","finishGame","drawLaneFx","refreshPlayerStyle","collectFx","hotLineFx","guardPlayerAlignment","showStartGuide","hideStartGuide","pulsePortal","hintTargetPortal","clearTargetHint","carryHint","spark","rewardBurst","checkPositiveGoals","bumpScore","autoAssist","powerBanner","powerBurst","capacityHit","rand","randInt","pickColor"].forEach(function(name){me[name]=PlayScene[name];});
     gradientBackground(me);
 
     me.rails = me.add.graphics().setDepth(1);
@@ -591,13 +673,14 @@ var PlayScene = {
     hudBg.fillStyle(0x7de4ff,.18).fillRoundedRect(18,78,96,3,2);
     hudBg.fillStyle(0xffdf75,.18).fillRoundedRect(GW-114,78,96,3,2);
     hudBg.lineStyle(2,0xffffff,.08).strokeRoundedRect(10,10,GW-20,76,12);
-    me.scoreText = me.add.text(18,18,"0",{fontSize:"30px",color:"#fff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setDepth(30);
-    me.metaText = me.add.text(18,56,"等级 1",{fontSize:"14px",color:"#b7c6d6"}).setDepth(30);
+    me.scoreText = me.add.text(18,18,"0单",{fontSize:"30px",color:"#fff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setDepth(30);
+    me.metaText = me.add.text(18,60,"60秒挑战",{fontSize:"13px",color:"#b7c6d6"}).setDepth(30);
     me.capacityText = me.add.text(GW-18,20,"● ● ● ● ●",{fontSize:"20px",color:"#7de4ff",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(1,0).setDepth(30);
     me.comboText = me.add.text(GW/2,82,"",{fontSize:"22px",color:"#ffdf75",fontStyle:"bold",stroke:"#3a2609",strokeThickness:3}).setOrigin(.5).setDepth(35);
-    me.goalText = me.add.text(GW/2,48,me.bestScore ? "距离纪录 " + me.bestScore + " 分" : "首局冲榜",{
+    me.goalText = me.add.text(GW/2,48,me.challenge ? "好友 " + me.challenge + " 单" : (me.bestDelivered ? "今日最佳 " + me.bestDelivered + " 单" : "今日首班"),{
       fontSize:"14px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(.5).setDepth(35);
+    me.timerText = me.add.text(GW/2,20,"60",{fontSize:"28px",color:"#ffdf75",fontStyle:"bold",stroke:"#2d2106",strokeThickness:4}).setOrigin(.5).setDepth(35);
     var powerBg = me.add.graphics().setDepth(29);
     powerBg.fillStyle(0x071018,.42).fillRoundedRect(56,132,GW-112,34,10);
     powerBg.lineStyle(1,0xffffff,.08).strokeRoundedRect(56,132,GW-112,34,10);
@@ -607,7 +690,7 @@ var PlayScene = {
     me.powerText = me.add.text(GW/2+18,149,"等待道具",{
       fontSize:"16px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:4
     }).setOrigin(.5).setDepth(35);
-    me.taskText = me.add.text(GW/2,118,me.challenge ? "目标：超过好友 " + me.challenge + " 分 | 先送黄门" : "第一单：接黄包，送黄门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
+    me.taskText = me.add.text(GW/2,118,me.challenge ? "60 秒超过好友 " + me.challenge + " 单" : "第一单：接黄包，送黄门",{fontSize:"15px",color:"#9fb0c1"}).setOrigin(.5).setDepth(30);
 
     var pbg = me.add.graphics().setDepth(40);
     pbg.fillStyle(0x000000,.38).fillRoundedRect(GW-70,56,58,62,11);
@@ -642,7 +725,18 @@ var PlayScene = {
   },
   update:function(time,delta){
     var me = this;
-    if(me.isPaused){ return; }
+    if(me.isPaused || me.finished){ return; }
+    me.remaining = Math.max(0,me.remaining - delta);
+    if(me.timerText){
+      var secs = Math.ceil(me.remaining / 1000);
+      me.timerText.setText(String(secs));
+      me.timerText.setColor(secs <= 10 ? "#ff7a8e" : "#ffdf75");
+      me.timerText.setScale(secs <= 10 ? 1 + Math.sin(time/72) * .08 : 1);
+    }
+    if(me.remaining <= 0){
+      me.finishGame();
+      return;
+    }
     if(me.rushTimer > 0){
       me.rushTimer -= delta;
       if(me.rushTimer <= 0){ me.taskText.setText("包裹送到同颜色门"); }
@@ -689,7 +783,7 @@ var PlayScene = {
       if(boost.aura){ boost.aura.x = boost.x; boost.aura.y = boost.y; boost.aura.setScale(1 + Math.sin(time/100)*.12); }
       if(boost.label){ boost.label.x = boost.x; boost.label.y = boost.y + 25; }
     });
-    if(me.challenge && !me.challengeShown && me.score > me.challenge){
+    if(me.challenge && !me.challengeShown && me.delivered > me.challenge){
       me.challengeShown = true;
       me.score += 50;
       me.floatText(GW/2,150,"反超好友 +50","#ffdf75");
@@ -703,7 +797,7 @@ var PlayScene = {
       me.speed = Math.min(106 + (newLevel-1)*18, 330);
       me.spawnDelay = Math.max(560, 1450 - (newLevel-1)*80);
       me.packageTimer.delay = me.spawnDelay;
-      me.metaText.setText("等级 " + me.level);
+      me.metaText.setText("速度 " + me.level);
       toast(me,"速度升级","#ffdf75");
     }
     me.cleanWorld();
@@ -711,6 +805,17 @@ var PlayScene = {
     if(me.carry && COLORS[me.lane].key === me.carry.key){ me.deliver(); }
     me.guardPlayerAlignment();
     me.updateCarryBadge();
+  },
+  rand:function(){
+    var next = seededRand(this.rngSeed);
+    this.rngSeed = next.seed;
+    return next.value;
+  },
+  randInt:function(min,max){
+    return min + Math.floor(this.rand() * (max - min + 1));
+  },
+  pickColor:function(){
+    return COLORS[Math.floor(this.rand() * COLORS.length) % COLORS.length];
   },
   moveLane:function(delta){
     if(this.isPaused){ return; }
@@ -727,20 +832,20 @@ var PlayScene = {
     vibrate(8);
   },
   spawnPackage:function(){
-    if(this.isPaused){ return; }
-    var c = Phaser.Math.RND.pick(COLORS);
-    var lane = Phaser.Math.Between(0,LANE_X.length-1);
+    if(this.isPaused || this.finished){ return; }
+    var c = this.pickColor();
+    var lane = this.randInt(0,LANE_X.length-1);
     var pkg = this.packages.create(LANE_X[lane],-36,"pkg_"+c.key).setDepth(12);
     pkg.colorKey = c.key;
     pkg.colorName = c.name;
     pkg.colorHex = c.hex;
-    pkg.setVelocityY(this.speed + Phaser.Math.Between(0,26));
-    pkg.setAngularVelocity(Phaser.Math.Between(-28,28));
+    pkg.setVelocityY(this.speed + this.randInt(0,26));
+    pkg.setAngularVelocity(this.randInt(-28,28));
     var glow = this.add.circle(pkg.x,pkg.y,15,c.hex,.12).setDepth(11);
     pkg.glow = glow;
   },
   spawnOpeningPackage:function(){
-    if(this.isPaused || !this.packages || !this.player){ return; }
+    if(this.isPaused || this.finished || !this.packages || !this.player){ return; }
     var c = COLORS[2];
     var lane = this.lane;
     var y = Math.max(210,this.player.y - 235);
@@ -757,9 +862,9 @@ var PlayScene = {
     this.bumpScore(this.taskText,1.16);
   },
   spawnBoost:function(){
-    if(this.isPaused || Math.random() > .62){ return; }
-    var lane = Phaser.Math.Between(0,LANE_X.length-1);
-    var roll = Math.random();
+    if(this.isPaused || this.finished || this.rand() > .62){ return; }
+    var lane = this.randInt(0,LANE_X.length-1);
+    var roll = this.rand();
     var kind = roll < .46 ? "boost" : roll < .74 ? "auto" : "loop";
     var boost = this.boosts.create(LANE_X[lane],-34,kind).setDepth(13);
     boost.kind = kind;
@@ -925,11 +1030,12 @@ var PlayScene = {
   dropWrong:function(){
     this.clearTargetHint();
     this.capacity--;
+    this.remaining = Math.max(0,this.remaining - 2200);
     this.combo = 0;
     this.hotStreak = 0;
     this.clutchStreak = 0;
     this.comboText.setText("");
-    this.floatText(this.player.x,this.player.y-48,"丢弃 -1","#ff7a8e");
+    this.floatText(this.player.x,this.player.y-48,"丢弃 -2s","#ff7a8e");
     this.carry = null;
     this.refreshPlayerStyle();
     this.drawLaneFx();
@@ -938,7 +1044,11 @@ var PlayScene = {
     flash(this,0xff4f6d,.16,180);
     sfx("bad");
     vibrate([36,20,36]);
-    if(this.capacity <= 0){ this.finishGame(); }
+    if(this.capacity <= 0){
+      this.capacity = 1;
+      this.remaining = Math.max(0,this.remaining - 3600);
+      this.updateHud();
+    }
   },
   missPackage:function(pkg,label){
     if(pkg && this.loopTimer > 0 && label !== "堵车 -1"){
@@ -952,18 +1062,23 @@ var PlayScene = {
     if(pkg && pkg.glow){ pkg.glow.destroy(); }
     if(pkg && pkg.destroy){ pkg.destroy(); }
     this.capacity--;
+    this.remaining = Math.max(0,this.remaining - 1800);
     this.missed++;
     this.combo = 0;
     this.hotStreak = 0;
     this.clutchStreak = 0;
     this.comboText.setText("");
-    this.floatText(pkg ? pkg.x : GW/2,GH-122,label || "漏件 -1","#ff7a8e");
+    this.floatText(pkg ? pkg.x : GW/2,GH-122,label ? label.replace("-1","-2s") : "漏件 -2s","#ff7a8e");
     this.updateHud();
     this.capacityHit();
     flash(this,0xff4f6d,.13,160);
     sfx("bad");
     vibrate(35);
-    if(this.capacity <= 0){ this.finishGame(); }
+    if(this.capacity <= 0){
+      this.capacity = 1;
+      this.remaining = Math.max(0,this.remaining - 3600);
+      this.updateHud();
+    }
   },
   cleanWorld:function(){
     var me = this;
@@ -1245,7 +1360,7 @@ var PlayScene = {
     }
   },
   updateHud:function(){
-    this.scoreText.setText(String(Math.floor(this.score)));
+    this.scoreText.setText(String(Math.floor(this.delivered)) + "单");
     this.capacityText.setText(Array(Math.max(this.capacity,0)+1).join("● "));
     this.bumpScore(this.scoreText,1.08);
   },
@@ -1277,12 +1392,12 @@ var PlayScene = {
   },
   checkPositiveGoals:function(){
     if(this.challenge){
-      var delta = Math.ceil(this.challenge - this.score);
-      this.goalText.setText(delta > 0 ? "好友 " + this.challenge + "｜还差 " + delta : "已领先好友 " + Math.abs(delta));
+      var delta = Math.ceil(this.challenge - this.delivered);
+      this.goalText.setText(delta > 0 ? "好友 " + this.challenge + " 单｜还差 " + delta + " 单" : "已领先好友 " + Math.abs(delta) + " 单");
     }
-    if(!this.challenge && this.bestScore > 0 && this.score >= this.bestScore * .85 && this.score < this.bestScore){
-      var left = Math.max(1,Math.ceil(this.bestScore - this.score));
-      this.goalText.setText("冲榜模式：差 " + left + " 分");
+    if(!this.challenge && this.bestDelivered > 0 && this.delivered >= Math.max(1,this.bestDelivered - 3) && this.delivered < this.bestDelivered){
+      var left = Math.max(1,Math.ceil(this.bestDelivered - this.delivered));
+      this.goalText.setText("今日榜：差 " + left + " 单");
       if(!this.bestHintShown){
         this.bestHintShown = true;
         this.recordSprint = true;
@@ -1292,11 +1407,11 @@ var PlayScene = {
         this.bumpScore(this.goalText,1.22);
       }
     }
-    if(!this.challenge && this.bestScore > 0 && !this.bestBeatenShown && this.score > this.bestScore){
+    if(!this.challenge && this.bestDelivered > 0 && !this.bestBeatenShown && this.delivered > this.bestDelivered){
       this.bestBeatenShown = true;
-      this.goalText.setText("新纪录进行中");
+      this.goalText.setText("今日新纪录进行中");
       this.score += 80;
-      this.floatText(GW/2,94,"新纪录 +80","#ffdf75");
+      this.floatText(GW/2,94,"今日新纪录 +80","#ffdf75");
       this.spark(GW/2,82,0xffdf75,18);
       flash(this,0xffdf75,.13,220);
       sfx("combo");
@@ -1336,18 +1451,25 @@ var PlayScene = {
     }
   },
   finishGame:function(){
+    if(this.finished){ return; }
+    this.finished = true;
     this.clearTargetHint();
+    if(this.packageTimer){ this.packageTimer.remove(false); }
+    if(this.boostTimer){ this.boostTimer.remove(false); }
     var total = this.delivered + this.missed;
     var rate = total ? Math.round(this.delivered / total * 100) : 0;
     var finalScore = Math.floor(this.score);
     var prevBest = this.bestScore || 0;
-    saveRecord({score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,time:Date.now()});
+    var prevDaily = this.bestDelivered || 0;
+    var record = {score:finalScore,delivered:this.delivered,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,time:Date.now(),day:todayKey()};
+    saveRecord(record);
+    var dailyRank = saveDaily(record);
     var records = readRecords();
     var rank = 0;
     for(var i=0;i<records.length;i++){
       if(records[i].time && records[i].score === finalScore){ rank = i + 1; break; }
     }
-    this.scene.start("GameOverScene",{score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,rank:rank});
+    this.scene.start("GameOverScene",{score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,prevDaily:prevDaily,rank:dailyRank ? 1 : rank});
   }
 };
 
@@ -1356,8 +1478,9 @@ var GameOverScene = {
   create:function(data){
     activeScene = this;
     var me = this;
-    var won = data.challenge && data.score > data.challenge;
-    var title = ratingTitle(data.score || 0,data.combo || 0);
+    var won = data.challenge && data.delivered > data.challenge;
+    var goal = nextDeliveryGoal(data.delivered || 0);
+    var title = goal ? "今日挑战者" : "传送门局长";
     var pct = beatPercent(data.score || 0);
     var hint = resultHint(data);
     var retry = retryLabel(data);
@@ -1369,10 +1492,11 @@ var GameOverScene = {
     panel.fillStyle(0x071018,.50).fillRoundedRect(76,382,GW-152,78,16);
     panel.lineStyle(1,0xffffff,.075).lineBetween(96,372,GW-96,372).lineBetween(96,474,GW-96,474).lineBetween(96,508,GW-96,508);
     me.add.image(GW/2,126,"shuttle").setScale(1.18).setAlpha(.88);
-    me.add.text(GW/2,180,won ? "反超成功" : "仓库爆仓",{fontSize:"32px",color:won ? "#ffdf75" : "#ff7a8e",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
-    me.add.text(GW/2,260,String(data.score || 0),{fontSize:"54px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
+    me.add.text(GW/2,180,won ? "反超成功" : "今日收工",{fontSize:"32px",color:won ? "#ffdf75" : "#eaf7ff",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
+    me.add.text(GW/2,260,String(data.delivered || 0),{fontSize:"54px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
+    me.add.text(GW/2,298,"单",{fontSize:"18px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:3}).setOrigin(.5);
     me.add.text(GW/2,318,title,{fontSize:"20px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    me.add.text(GW/2,346,"超过 " + pct + "% 玩家",{fontSize:"15px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,346,"得分 " + (data.score || 0) + "｜超过 " + pct + "% 玩家",{fontSize:"15px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
     [
       {x:128,t:"连送",v:"x" + (data.combo || 0),c:"#8ff0bc"},
       {x:240,t:"热线",v:"x" + (data.hot || 0),c:"#ffdf75"},
@@ -1383,9 +1507,9 @@ var GameOverScene = {
     });
     me.add.text(GW/2,488,hint,{fontSize:"15px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,wordWrap:{width:GW-126,useAdvancedWrap:true},align:"center"}).setOrigin(.5);
     makeButton(me,GW/2,522,220,"发起挑战",0xffcf45,function(){
-      var url = shareUrl(data.score || 0);
+      var url = shareUrl(data.delivered || 0,data.score || 0);
       if(navigator.share){
-        navigator.share({title:"霓虹分拣局",text:"挑战你：超过 " + (data.score || 0) + " 分就算赢。我最高连送 x" + (data.combo || 0) + "，最高热线 x" + (data.hot || 0) + "。",url:url}).catch(function(){});
+        navigator.share({title:"霓虹分拣局",text:"60 秒今日班次，我送了 " + (data.delivered || 0) + " 单。你能超过我吗？",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"挑战链接已复制","#fff");});
       }else{ toast(me,url,"#fff"); }
