@@ -40,6 +40,12 @@ var GW = 480;
 var GH = Math.max(720, Math.round(GW * (window.innerHeight || 720) / Math.max(window.innerWidth || 480, 1)));
 var STORE_KEY = "neonSortRushRecordsENv1";
 var DAILY_KEY = "neonSortRushDailyENv1";
+var PLAYER_KEY = "neonSortRushPlayerENv1";
+var CLOUD_LEADERBOARD = {
+  enabled:false,
+  url:"",
+  anonKey:""
+};
 var LANE_X = [78, 186, 294, 402];
 var COLORS = [
   {key:"red", name:"Red", hex:0xff4f6d, text:"#ff6f86"},
@@ -312,8 +318,28 @@ function readRecords(){
   }catch(e){ return []; }
 }
 
+function cleanPlayerName(name){
+  name = String(name || "").replace(/[^\w .-]/g,"").trim();
+  if(!name){ return "Guest"; }
+  return name.slice(0,14);
+}
+
+function readPlayerName(){
+  try{ return cleanPlayerName(localStorage.getItem(PLAYER_KEY) || "Guest"); }catch(e){ return "Guest"; }
+}
+
+function savePlayerName(name){
+  name = cleanPlayerName(name);
+  try{ localStorage.setItem(PLAYER_KEY,name); }catch(e){}
+  return name;
+}
+
 function saveRecord(record){
   var records = readRecords();
+  record.name = cleanPlayerName(record.name || readPlayerName());
+  if(record.time){
+    records = records.filter(function(item){ return item.time !== record.time; });
+  }
   records.push(record);
   records.sort(function(a,b){
     var as = a.score || 0, bs = b.score || 0;
@@ -596,7 +622,8 @@ var RecordsScene = {
     activeScene = this;
     var me = this;
     gradientBackground(me);
-    me.add.text(GW/2,82,"Records",{fontSize:"34px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,76,"Leaderboard",{fontSize:"32px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,110,CLOUD_LEADERBOARD.enabled ? "Global beta" : "Local MVP - cloud ready",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var panel = me.add.graphics();
     panel.fillStyle(0x111b27,.94).fillRoundedRect(46,130,388,420,10);
     panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,130,388,420,10);
@@ -610,9 +637,9 @@ var RecordsScene = {
         var y = 166 + index * 46;
         var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
         me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5);
-        me.add.text(110,y,(item.score || 0) + " pts",{fontSize:"18px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5);
-        me.add.text(246,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5);
-        me.add.text(318,y,"Combo x" + (item.combo || 0),{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+        me.add.text(106,y-9,cleanPlayerName(item.name || "Guest"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5);
+        me.add.text(106,y+10,(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5);
+        me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5);
         me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5);
       });
     }
@@ -1463,7 +1490,9 @@ var PlayScene = {
     var rate = total ? Math.round(this.delivered / total * 100) : 0;
     var finalScore = Math.floor(this.score);
     var prevBest = this.bestScore || 0;
-    var record = {score:finalScore,delivered:this.delivered,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,time:Date.now(),day:todayKey()};
+    var playerName = readPlayerName();
+    var recordTime = Date.now();
+    var record = {name:playerName,score:finalScore,delivered:this.delivered,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,time:recordTime,day:todayKey()};
     saveRecord(record);
     saveDaily(record);
     var records = readRecords();
@@ -1471,7 +1500,7 @@ var PlayScene = {
     for(var i=0;i<records.length;i++){
       if(records[i].time && records[i].score === finalScore){ rank = i + 1; break; }
     }
-    this.scene.start("GameOverScene",{score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,rank:rank});
+    this.scene.start("GameOverScene",{name:playerName,score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,rank:rank,time:recordTime});
   }
 };
 
@@ -1486,6 +1515,7 @@ var GameOverScene = {
     var pct = beatPercent(data.score || 0);
     var hint = resultHint(data);
     var retry = retryLabel(data);
+    var playerName = cleanPlayerName(data.name || readPlayerName());
     gradientBackground(me);
     var panelH = 638;
     var panelTop = Math.max(28,Math.round((GH - panelH) / 2) - 12);
@@ -1502,7 +1532,7 @@ var GameOverScene = {
     me.add.text(GW/2,panelTop+154,String(data.score || 0),{fontSize:"53px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
     me.add.text(GW/2,panelTop+192,"score",{fontSize:"17px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:3}).setOrigin(.5);
     me.add.text(GW/2,panelTop+214,title,{fontSize:"19px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    me.add.text(GW/2,panelTop+240,"Delivered " + (data.delivered || 0) + " | beats " + pct + "% of players",{fontSize:"14px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,panelTop+240,playerName + "  |  Delivered " + (data.delivered || 0) + "  |  beats " + pct + "%",{fontSize:"14px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
     [
       {x:128,t:"Combo",v:"x" + (data.combo || 0),c:"#8ff0bc"},
       {x:240,t:"Packages",v:String(data.delivered || 0),c:"#ffdf75"},
@@ -1528,7 +1558,16 @@ var GameOverScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"Challenge link copied","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Save Score",0xf3a326,function(){
+      var nextName = playerName;
+      try{
+        var typed = window.prompt("Nickname", playerName);
+        if(typed !== null){ nextName = savePlayerName(typed); }
+      }catch(e){ nextName = savePlayerName(playerName); }
+      saveRecord({name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()});
+      toast(me,"Score saved","#ffdf75");
+      me.time.delayedCall(280,function(){me.scene.start("RecordsScene");});
+    });
     makeButton(me,GW/2,buttonY + buttonGap * 3,buttonW,"Menu",0x4a8fe7,function(){me.scene.start("MenuScene");});
   }
 };
