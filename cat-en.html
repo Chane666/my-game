@@ -1487,34 +1487,36 @@ var GameOverScene = {
     var hint = resultHint(data);
     var retry = retryLabel(data);
     gradientBackground(me);
+    var panelTop = Math.max(32,Math.round((GH - 676) / 2));
+    var panelH = 676;
     var panel = me.add.graphics();
-    panel.fillStyle(0x061018,.72).fillRoundedRect(58,52,GW-116,588,22);
-    panel.lineStyle(2,0xffffff,.11).strokeRoundedRect(58,52,GW-116,588,22);
-    panel.fillStyle(0xffffff,.04).fillRoundedRect(78,184,GW-156,140,18);
-    panel.fillStyle(0x071018,.50).fillRoundedRect(78,348,GW-156,74,16);
-    panel.fillStyle(0xffdf75,.085).fillRoundedRect(82,444,GW-164,62,14);
-    panel.lineStyle(1,0xffdf75,.22).strokeRoundedRect(82,444,GW-164,62,14);
-    panel.lineStyle(1,0xffffff,.075).lineBetween(100,336,GW-100,336).lineBetween(100,434,GW-100,434).lineBetween(100,516,GW-100,516);
-    me.add.image(GW/2,94,"shuttle").setScale(1.08).setAlpha(.88);
-    me.add.text(GW/2,144,won ? "Friend Beaten" : ((data.prevBest || 0) < (data.score || 0) ? "New Best" : "Run Over"),{fontSize:"31px",color:won ? "#ffdf75" : "#eaf7ff",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
-    me.add.text(GW/2,220,String(data.score || 0),{fontSize:"55px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
-    me.add.text(GW/2,260,"score",{fontSize:"18px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:3}).setOrigin(.5);
-    me.add.text(GW/2,282,title,{fontSize:"20px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    me.add.text(GW/2,312,"Delivered " + (data.delivered || 0) + " | beats " + pct + "% of players",{fontSize:"15px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
+    panel.fillStyle(0x061018,.72).fillRoundedRect(58,panelTop,GW-116,panelH,22);
+    panel.lineStyle(2,0xffffff,.11).strokeRoundedRect(58,panelTop,GW-116,panelH,22);
+    panel.fillStyle(0xffffff,.04).fillRoundedRect(78,panelTop+132,GW-156,140,18);
+    panel.fillStyle(0x071018,.50).fillRoundedRect(78,panelTop+296,GW-156,74,16);
+    panel.fillStyle(0xffdf75,.085).fillRoundedRect(82,panelTop+392,GW-164,62,14);
+    panel.lineStyle(1,0xffdf75,.22).strokeRoundedRect(82,panelTop+392,GW-164,62,14);
+    panel.lineStyle(1,0xffffff,.075).lineBetween(100,panelTop+284,GW-100,panelTop+284).lineBetween(100,panelTop+382,GW-100,panelTop+382).lineBetween(100,panelTop+464,GW-100,panelTop+464);
+    me.add.image(GW/2,panelTop+42,"shuttle").setScale(1.08).setAlpha(.88);
+    me.add.text(GW/2,panelTop+92,won ? "Friend Beaten" : ((data.prevBest || 0) < (data.score || 0) ? "New Best" : "Run Over"),{fontSize:"31px",color:won ? "#ffdf75" : "#eaf7ff",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
+    me.add.text(GW/2,panelTop+168,String(data.score || 0),{fontSize:"55px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
+    me.add.text(GW/2,panelTop+208,"score",{fontSize:"18px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:3}).setOrigin(.5);
+    me.add.text(GW/2,panelTop+230,title,{fontSize:"20px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    me.add.text(GW/2,panelTop+260,"Delivered " + (data.delivered || 0) + " | beats " + pct + "% of players",{fontSize:"15px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
     [
       {x:128,t:"Combo",v:"x" + (data.combo || 0),c:"#8ff0bc"},
       {x:240,t:"Packages",v:String(data.delivered || 0),c:"#ffdf75"},
       {x:352,t:"Accuracy",v:(data.rate || 0) + "%",c:"#7de4ff"}
     ].forEach(function(item){
-      me.add.text(item.x,374,item.v,{fontSize:"20px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-      me.add.text(item.x,400,item.t,{fontSize:"12px",color:"#91a0ae",fontStyle:"bold"}).setOrigin(.5);
+      me.add.text(item.x,panelTop+322,item.v,{fontSize:"20px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+      me.add.text(item.x,panelTop+348,item.t,{fontSize:"12px",color:"#91a0ae",fontStyle:"bold"}).setOrigin(.5);
     });
-    var hintText = me.add.text(GW/2,475,hint,{
+    var hintText = me.add.text(GW/2,panelTop+423,hint,{
       fontSize:"15px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,
       wordWrap:{width:GW-176,useAdvancedWrap:true},align:"center",lineSpacing:4
     }).setOrigin(.5);
     fitTextBox(hintText,GW-184,44,.70);
-    var buttonY = 530;
+    var buttonY = panelTop + 478;
     var buttonGap = 44;
     var buttonW = 232;
     makeButton(me,GW/2,buttonY,buttonW,retry,0x20c879,function(){me.scene.start("PlayScene");});
