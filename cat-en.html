@@ -40,7 +40,6 @@ var GW = 480;
 var GH = Math.max(720, Math.round(GW * (window.innerHeight || 720) / Math.max(window.innerWidth || 480, 1)));
 var STORE_KEY = "neonSortRushRecordsENv1";
 var DAILY_KEY = "neonSortRushDailyENv1";
-var RUN_TIME = 60000;
 var LANE_X = [78, 186, 294, 402];
 var COLORS = [
   {key:"red", name:"Red", hex:0xff4f6d, text:"#ff6f86"},
@@ -119,8 +118,8 @@ function shareUrl(delivered,score){
   var url = new URL(location.href);
   url.searchParams.set("target", String(Math.max(0, Math.floor(delivered || 0))));
   url.searchParams.set("score", String(Math.max(0, Math.floor(score || 0))));
-  url.searchParams.set("day", todayKey());
-  url.searchParams.set("v", "social-mvp");
+  url.searchParams.set("v", "endless-en");
+  url.searchParams.delete("day");
   url.searchParams.delete("challenge");
   return url.toString();
 }
@@ -152,24 +151,27 @@ function resultHint(data){
   var delivered = Math.floor(data.delivered || 0);
   if(data.challenge){
     var diff = Math.abs(delivered - data.challenge);
-    return delivered > data.challenge ? "Ahead by " + diff + " packages. Keep pushing." : "Need " + diff + " packages to beat your friend.";
+    return delivered > data.challenge ? "Friend target beaten by " + diff + ". Share the new mark." : "Need " + diff + " more packages to beat your friend.";
   }
-  if(data.prevDaily && delivered < data.prevDaily){
-    return "Need " + (data.prevDaily - delivered) + " packages to beat today\'s best.";
+  if(data.prevBestDelivered && delivered > data.prevBestDelivered){
+    return "New personal best. One more run can stretch the lead.";
   }
-  if(data.rank === 1 && delivered > 0){
-    return "New daily personal best";
+  if(data.prevBestDelivered && delivered < data.prevBestDelivered){
+    return "Need " + (data.prevBestDelivered - delivered) + " more packages to beat your best.";
+  }
+  if(data.prevBestDelivered && delivered === data.prevBestDelivered){
+    return "Matched your best. A cleaner combo breaks it.";
   }
   if(delivered <= 0){
     return "Deliver the first package, then challenge friends";
   }
   var next = nextDeliveryGoal(delivered);
-  return next ? "Deliver " + next.left + " more to unlock " + next.title : "Daily shift cleared. Challenge a friend.";
+  return next ? "Deliver " + next.left + " more to unlock " + next.title : "Endless streak unlocked. Challenge a friend.";
 }
 
 function retryLabel(data){
   if(data.challenge && data.delivered <= data.challenge){ return "Beat Friend"; }
-  if(data.prevDaily && data.delivered < data.prevDaily){ return "Retry Daily"; }
+  if(data.prevBestDelivered && data.delivered <= data.prevBestDelivered){ return "Beat Best"; }
   var next = nextDeliveryGoal(data.delivered || 0);
   return next ? "Reach " + next.count : "Push Higher";
 }
@@ -509,7 +511,7 @@ var MenuScene = {
     activeScene = this;
     var me = this, cx = GW/2;
     var target = challengeTarget();
-    var daily = dailyBest();
+    var best = readRecords()[0];
     var centerY = GH / 2;
     var iconY = centerY - 240;
     var titleY = centerY - 162;
@@ -527,11 +529,10 @@ var MenuScene = {
     me.add.text(cx,titleY,"Neon Sort Rush",{
       fontSize:"38px",color:"#eaf7ff",fontStyle:"bold",stroke:"#12202f",strokeThickness:6
     }).setOrigin(.5);
-    me.add.text(cx,subtitleY,"60-second daily shift. Match packages to portals.",{
+    me.add.text(cx,subtitleY,"Endless neon sorting. Match packages to portals.",{
       fontSize:"16px",color:"#b9c9d8"
     }).setOrigin(.5);
-    var best = readRecords()[0];
-    me.add.text(cx,statusY,target ? "Friend target: " + target + " packages" : (daily ? "Daily best: " + daily.delivered + " packages  |  Combo x" + (daily.combo || 0) : "No run today. Start the first shift."),{
+    me.add.text(cx,statusY,target ? "Friend target: " + target + " packages" : (best ? "Best: " + best.delivered + " packages  |  Combo x" + (best.combo || 0) : "No record yet. Start your first run."),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
     var panelY = Math.min(firstButtonY + 188, GH - 150);
@@ -540,9 +541,9 @@ var MenuScene = {
     tipPanel.lineStyle(2,0xffffff,.10).strokeRoundedRect(48,panelY,384,94,16);
     tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(62,panelY+12,360,70,13);
     [
-      {x:116,t:"60 Sec",d:"Same daily route",c:"#7de4ff",icon:"rule_lane"},
+      {x:116,t:"Endless",d:"Speed ramps up",c:"#7de4ff",icon:"rule_lane"},
       {x:240,t:"Color Match",d:"Same-color portal",c:"#ffdf75",icon:"rule_match"},
-      {x:364,t:"Challenge",d:"Beat by a few",c:"#ff7a8e",icon:"rule_capacity"}
+      {x:364,t:"Survive",d:"Misses cost capacity",c:"#ff7a8e",icon:"rule_capacity"}
     ].forEach(function(item){
       var halo = me.add.circle(item.x,panelY+28,24,parseInt(item.c.slice(1),16),.08).setDepth(2);
       me.add.image(item.x,panelY+28,item.icon).setScale(.72).setDepth(3);
@@ -550,20 +551,20 @@ var MenuScene = {
       me.add.text(item.x,panelY+80,item.d,{fontSize:"10px",color:"#d5e2ef"}).setOrigin(.5).setDepth(3);
       me.tweens.add({targets:halo,scale:1.18,alpha:.035,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     });
-    makeButton(me,cx,firstButtonY,190,"Daily Run",0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,cx,firstButtonY + 58,190,"Daily Board",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,cx,firstButtonY,190,"Start Run",0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,cx,firstButtonY + 58,190,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
     makeButton(me,cx,firstButtonY + 116,190,"Share",0x4a8fe7,function(){
-      var baseCount = daily ? daily.delivered : 8;
-      var baseScore = daily ? daily.score : (best ? best.score : 100);
+      var baseCount = best ? best.delivered : 8;
+      var baseScore = best ? best.score : 100;
       var url = shareUrl(baseCount,baseScore);
-      var title = daily ? (nextDeliveryGoal(daily.delivered) ? "Daily Challenger" : "Portal Chief") : "Rookie Sorter";
+      var title = best ? (nextDeliveryGoal(best.delivered) ? "Record Chaser" : "Portal Chief") : "Rookie Sorter";
       if(navigator.share){
-        navigator.share({title:"Neon Sort Rush",text:"60-second daily shift: I delivered " + baseCount + " packages. Can you beat me?",url:url}).catch(function(){});
+        navigator.share({title:"Neon Sort Rush",text:"I delivered " + baseCount + " packages in endless mode. Can you beat me?",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"Link copied","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    me.add.text(cx,GH-44,"Tap lanes to switch. Deliver as many as you can in 60s.",{
+    me.add.text(cx,GH-44,"Tap lanes to switch. Survive the rush and keep your combo.",{
       fontSize:"14px",color:"#8b9bad"
     }).setOrigin(.5);
   }
@@ -575,14 +576,13 @@ var RecordsScene = {
     activeScene = this;
     var me = this;
     gradientBackground(me);
-    me.add.text(GW/2,82,"Daily Records",{fontSize:"34px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,82,"Records",{fontSize:"34px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
     var panel = me.add.graphics();
     panel.fillStyle(0x111b27,.94).fillRoundedRect(46,130,388,420,10);
     panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,130,388,420,10);
-    var today = todayKey();
-    var records = readRecords().filter(function(item){ return item.day === today; });
+    var records = readRecords();
     if(!records.length){
-      me.add.text(GW/2,330,"No daily record yet\nFinish one run to save it",{
+      me.add.text(GW/2,330,"No record yet\nFinish one run to save it",{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5);
     }else{
@@ -621,10 +621,8 @@ var PlayScene = {
     this.carry = null;
     this.speed = 106;
     this.spawnDelay = 1450;
-    this.remaining = RUN_TIME;
     this.finished = false;
-    this.dailySeed = dailySeed();
-    this.rngSeed = this.dailySeed;
+    this.rngSeed = (Date.now() ^ Math.floor(Math.random() * 4294967295)) >>> 0;
     this.rushTimer = 0;
     this.autoTimer = 0;
     this.loopTimer = 0;
@@ -632,9 +630,9 @@ var PlayScene = {
     this.challenge = challengeTarget();
     this.challengeShown = false;
     this.lastLane = 1;
-    this.dailyBestRecord = dailyBest();
-    this.bestScore = this.dailyBestRecord ? this.dailyBestRecord.score || 0 : ((readRecords()[0] || {}).score || 0);
-    this.bestDelivered = this.dailyBestRecord ? this.dailyBestRecord.delivered || 0 : 0;
+    this.bestRecord = readRecords()[0] || null;
+    this.bestScore = this.bestRecord ? this.bestRecord.score || 0 : 0;
+    this.bestDelivered = this.bestRecord ? this.bestRecord.delivered || 0 : 0;
     this.bestHintShown = false;
     this.bestBeatenShown = false;
     this.recordSprint = false;
@@ -674,13 +672,13 @@ var PlayScene = {
     hudBg.fillStyle(0xffdf75,.18).fillRoundedRect(GW-114,78,96,3,2);
     hudBg.lineStyle(2,0xffffff,.08).strokeRoundedRect(10,10,GW-20,76,12);
     me.scoreText = me.add.text(18,18,"0",{fontSize:"30px",color:"#fff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setDepth(30);
-    me.metaText = me.add.text(18,60,"60s Run",{fontSize:"13px",color:"#b7c6d6"}).setDepth(30);
+    me.metaText = me.add.text(18,60,"Endless Run",{fontSize:"13px",color:"#b7c6d6"}).setDepth(30);
     me.capacityText = me.add.text(GW-18,20,"● ● ● ● ●",{fontSize:"20px",color:"#7de4ff",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(1,0).setDepth(30);
     me.comboText = me.add.text(GW/2,82,"",{fontSize:"22px",color:"#ffdf75",fontStyle:"bold",stroke:"#3a2609",strokeThickness:3}).setOrigin(.5).setDepth(35);
-    me.goalText = me.add.text(GW/2,48,me.challenge ? "Friend " + me.challenge : (me.bestDelivered ? "Daily best " + me.bestDelivered : "First shift today"),{
+    me.goalText = me.add.text(GW/2,48,me.challenge ? "Friend " + me.challenge : (me.bestDelivered ? "Best " + me.bestDelivered : "Set your first best"),{
       fontSize:"14px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3
     }).setOrigin(.5).setDepth(35);
-    me.timerText = me.add.text(GW/2,20,"60",{fontSize:"28px",color:"#ffdf75",fontStyle:"bold",stroke:"#2d2106",strokeThickness:4}).setOrigin(.5).setDepth(35);
+    me.modeText = me.add.text(GW/2,20,"ENDLESS",{fontSize:"24px",color:"#ffdf75",fontStyle:"bold",stroke:"#2d2106",strokeThickness:4}).setOrigin(.5).setDepth(35);
     var powerBg = me.add.graphics().setDepth(29);
     powerBg.fillStyle(0x071018,.42).fillRoundedRect(56,132,GW-112,34,10);
     powerBg.lineStyle(1,0xffffff,.08).strokeRoundedRect(56,132,GW-112,34,10);
@@ -721,21 +719,13 @@ var PlayScene = {
     });
     me.drawLaneFx();
     me.showStartGuide();
-    toast(me,"Shift started. Yellow first.","#fff");
+    toast(me,"Endless run started. Yellow first.","#fff");
   },
   update:function(time,delta){
     var me = this;
     if(me.isPaused || me.finished){ return; }
-    me.remaining = Math.max(0,me.remaining - delta);
-    if(me.timerText){
-      var secs = Math.ceil(me.remaining / 1000);
-      me.timerText.setText(String(secs));
-      me.timerText.setColor(secs <= 10 ? "#ff7a8e" : "#ffdf75");
-      me.timerText.setScale(secs <= 10 ? 1 + Math.sin(time/72) * .08 : 1);
-    }
-    if(me.remaining <= 0){
-      me.finishGame();
-      return;
+    if(me.modeText){
+      me.modeText.setScale(1 + Math.sin(time/420) * .025);
     }
     if(me.rushTimer > 0){
       me.rushTimer -= delta;
@@ -1030,12 +1020,11 @@ var PlayScene = {
   dropWrong:function(){
     this.clearTargetHint();
     this.capacity--;
-    this.remaining = Math.max(0,this.remaining - 2200);
     this.combo = 0;
     this.hotStreak = 0;
     this.clutchStreak = 0;
     this.comboText.setText("");
-    this.floatText(this.player.x,this.player.y-48,"Drop -2s","#ff7a8e");
+    this.floatText(this.player.x,this.player.y-48,"Capacity -1","#ff7a8e");
     this.carry = null;
     this.refreshPlayerStyle();
     this.drawLaneFx();
@@ -1045,9 +1034,7 @@ var PlayScene = {
     sfx("bad");
     vibrate([36,20,36]);
     if(this.capacity <= 0){
-      this.capacity = 1;
-      this.remaining = Math.max(0,this.remaining - 3600);
-      this.updateHud();
+      this.finishGame();
     }
   },
   missPackage:function(pkg,label){
@@ -1062,22 +1049,19 @@ var PlayScene = {
     if(pkg && pkg.glow){ pkg.glow.destroy(); }
     if(pkg && pkg.destroy){ pkg.destroy(); }
     this.capacity--;
-    this.remaining = Math.max(0,this.remaining - 1800);
     this.missed++;
     this.combo = 0;
     this.hotStreak = 0;
     this.clutchStreak = 0;
     this.comboText.setText("");
-    this.floatText(pkg ? pkg.x : GW/2,GH-122,label ? label.replace("-1","-2s") : "Miss -2s","#ff7a8e");
+    this.floatText(pkg ? pkg.x : GW/2,GH-122,label || "Miss -1","#ff7a8e");
     this.updateHud();
     this.capacityHit();
     flash(this,0xff4f6d,.13,160);
     sfx("bad");
     vibrate(35);
     if(this.capacity <= 0){
-      this.capacity = 1;
-      this.remaining = Math.max(0,this.remaining - 3600);
-      this.updateHud();
+      this.finishGame();
     }
   },
   cleanWorld:function(){
@@ -1397,21 +1381,21 @@ var PlayScene = {
     }
     if(!this.challenge && this.bestDelivered > 0 && this.delivered >= Math.max(1,this.bestDelivered - 3) && this.delivered < this.bestDelivered){
       var left = Math.max(1,Math.ceil(this.bestDelivered - this.delivered));
-      this.goalText.setText("Daily board: " + left + " behind");
+      this.goalText.setText("Best: " + left + " behind");
       if(!this.bestHintShown){
         this.bestHintShown = true;
         this.recordSprint = true;
-        this.taskText.setText("Rank push: every package counts");
-        toast(this,"Rank push active","#8ff0bc");
+        this.taskText.setText("Best push: every package counts");
+        toast(this,"Best push active","#8ff0bc");
         flash(this,0x8ff0bc,.10,180);
         this.bumpScore(this.goalText,1.22);
       }
     }
     if(!this.challenge && this.bestDelivered > 0 && !this.bestBeatenShown && this.delivered > this.bestDelivered){
       this.bestBeatenShown = true;
-      this.goalText.setText("New daily best in progress");
+      this.goalText.setText("New best in progress");
       this.score += 80;
-      this.floatText(GW/2,94,"New Daily Best +80","#ffdf75");
+      this.floatText(GW/2,94,"New Best +80","#ffdf75");
       this.spark(GW/2,82,0xffdf75,18);
       flash(this,0xffdf75,.13,220);
       sfx("combo");
@@ -1460,16 +1444,16 @@ var PlayScene = {
     var rate = total ? Math.round(this.delivered / total * 100) : 0;
     var finalScore = Math.floor(this.score);
     var prevBest = this.bestScore || 0;
-    var prevDaily = this.bestDelivered || 0;
+    var prevBestDelivered = this.bestDelivered || 0;
     var record = {score:finalScore,delivered:this.delivered,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,time:Date.now(),day:todayKey()};
     saveRecord(record);
-    var dailyRank = saveDaily(record);
+    saveDaily(record);
     var records = readRecords();
     var rank = 0;
     for(var i=0;i<records.length;i++){
       if(records[i].time && records[i].score === finalScore){ rank = i + 1; break; }
     }
-    this.scene.start("GameOverScene",{score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,prevDaily:prevDaily,rank:dailyRank ? 1 : rank});
+    this.scene.start("GameOverScene",{score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,prevBestDelivered:prevBestDelivered,rank:rank});
   }
 };
 
@@ -1480,7 +1464,7 @@ var GameOverScene = {
     var me = this;
     var won = data.challenge && data.delivered > data.challenge;
     var goal = nextDeliveryGoal(data.delivered || 0);
-    var title = goal ? "Daily Challenger" : "Portal Chief";
+    var title = goal ? "Record Chaser" : "Portal Chief";
     var pct = beatPercent(data.score || 0);
     var hint = resultHint(data);
     var retry = retryLabel(data);
@@ -1492,7 +1476,7 @@ var GameOverScene = {
     panel.fillStyle(0x071018,.50).fillRoundedRect(76,382,GW-152,78,16);
     panel.lineStyle(1,0xffffff,.075).lineBetween(96,372,GW-96,372).lineBetween(96,474,GW-96,474).lineBetween(96,508,GW-96,508);
     me.add.image(GW/2,126,"shuttle").setScale(1.18).setAlpha(.88);
-    me.add.text(GW/2,180,won ? "Friend Beaten" : "Shift Complete",{fontSize:"32px",color:won ? "#ffdf75" : "#eaf7ff",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
+    me.add.text(GW/2,180,won ? "Friend Beaten" : ((data.prevBestDelivered || 0) < (data.delivered || 0) ? "New Best" : "Run Over"),{fontSize:"32px",color:won ? "#ffdf75" : "#eaf7ff",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
     me.add.text(GW/2,260,String(data.delivered || 0),{fontSize:"54px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
     me.add.text(GW/2,298,"packages",{fontSize:"18px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:3}).setOrigin(.5);
     me.add.text(GW/2,318,title,{fontSize:"20px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
@@ -1506,15 +1490,15 @@ var GameOverScene = {
       me.add.text(item.x,434,item.t,{fontSize:"12px",color:"#91a0ae",fontStyle:"bold"}).setOrigin(.5);
     });
     me.add.text(GW/2,488,hint,{fontSize:"15px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,wordWrap:{width:GW-126,useAdvancedWrap:true},align:"center"}).setOrigin(.5);
-    makeButton(me,GW/2,522,220,"Challenge Friend",0xffcf45,function(){
+    makeButton(me,GW/2,522,220,retry,0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,GW/2,572,220,"Challenge Friend",0xffcf45,function(){
       var url = shareUrl(data.delivered || 0,data.score || 0);
       if(navigator.share){
-        navigator.share({title:"Neon Sort Rush",text:"60-second daily shift: I delivered " + (data.delivered || 0) + " packages. Can you beat me?",url:url}).catch(function(){});
+        navigator.share({title:"Neon Sort Rush",text:"I delivered " + (data.delivered || 0) + " packages in Neon Sort Rush. Can you beat me?",url:url}).catch(function(){});
       }else if(navigator.clipboard){
         navigator.clipboard.writeText(url).then(function(){toast(me,"Challenge link copied","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    makeButton(me,GW/2,572,220,retry,0x20c879,function(){me.scene.start("PlayScene");});
     makeButton(me,GW/2,622,220,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
     makeButton(me,GW/2,672,220,"Menu",0x4a8fe7,function(){me.scene.start("MenuScene");});
   }
