@@ -1488,8 +1488,8 @@ var GameOverScene = {
     var retry = retryLabel(data);
     gradientBackground(me);
     var panel = me.add.graphics();
-    panel.fillStyle(0x061018,.72).fillRoundedRect(58,52,GW-116,612,22);
-    panel.lineStyle(2,0xffffff,.11).strokeRoundedRect(58,52,GW-116,612,22);
+    panel.fillStyle(0x061018,.72).fillRoundedRect(58,52,GW-116,588,22);
+    panel.lineStyle(2,0xffffff,.11).strokeRoundedRect(58,52,GW-116,588,22);
     panel.fillStyle(0xffffff,.04).fillRoundedRect(78,184,GW-156,140,18);
     panel.fillStyle(0x071018,.50).fillRoundedRect(78,348,GW-156,74,16);
     panel.fillStyle(0xffdf75,.085).fillRoundedRect(82,444,GW-164,62,14);
@@ -1514,8 +1514,11 @@ var GameOverScene = {
       wordWrap:{width:GW-176,useAdvancedWrap:true},align:"center",lineSpacing:4
     }).setOrigin(.5);
     fitTextBox(hintText,GW-184,44,.70);
-    makeButton(me,GW/2,540,220,retry,0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,GW/2,588,220,"Challenge Friend",0xffcf45,function(){
+    var buttonY = 530;
+    var buttonGap = 44;
+    var buttonW = 232;
+    makeButton(me,GW/2,buttonY,buttonW,retry,0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,GW/2,buttonY + buttonGap,buttonW,"Challenge Friend",0xffcf45,function(){
       var url = shareUrl(data.delivered || 0,data.score || 0);
       if(navigator.share){
         navigator.share({title:"Neon Sort Rush",text:"I scored " + (data.score || 0) + " in Neon Sort Rush. Can you beat me?",url:url}).catch(function(){});
@@ -1523,8 +1526,8 @@ var GameOverScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"Challenge link copied","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    makeButton(me,GW/2,636,220,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
-    makeButton(me,GW/2,684,220,"Menu",0x4a8fe7,function(){me.scene.start("MenuScene");});
+    makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,GW/2,buttonY + buttonGap * 3,buttonW,"Menu",0x4a8fe7,function(){me.scene.start("MenuScene");});
   }
 };
 
