@@ -20,6 +20,24 @@
   }
   #gw{display:flex;align-items:center;justify-content:center;background:#080d13}
   canvas{display:block}
+  .native-name-input{
+    position:fixed;
+    z-index:50;
+    border:0;
+    outline:0;
+    border-radius:13px;
+    background:#0d1722;
+    color:#eaf7ff;
+    font:700 20px Arial,"Microsoft YaHei","PingFang SC",sans-serif;
+    text-align:center;
+    box-shadow:inset 0 0 0 2px rgba(143,240,188,.32);
+    padding:0 14px;
+    touch-action:auto;
+    -webkit-user-select:text;
+    user-select:text;
+  }
+  .native-name-input::placeholder{color:#6f8295}
+  .native-name-input.input-warn{box-shadow:inset 0 0 0 2px rgba(255,223,117,.82),0 0 18px rgba(255,223,117,.25)}
   @media (max-aspect-ratio: 2/3){
     #gw{width:100vw;height:100vh;height:100dvh}
     canvas{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
@@ -218,6 +236,18 @@ function countryFlag(code){
   return String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
 }
 
+function countryBadge(code){
+  code = cleanCountryCode(code);
+  return code || "GL";
+}
+
+function guessedCountryCode(){
+  var lang = "";
+  try{ lang = (navigator.languages && navigator.languages[0]) || navigator.language || ""; }catch(e){}
+  var match = String(lang).match(/[-_]([A-Za-z]{2})\b/);
+  return match ? cleanCountryCode(match[1]) : "";
+}
+
 function beatPercent(score){
   score = Math.floor(score || 0);
   return Math.max(12,Math.min(99,Math.round(18 + Math.sqrt(score) * 1.18)));
@@ -335,13 +365,14 @@ function readRecords(){
 }
 
 function cleanPlayerName(name){
-  name = String(name || "").replace(/[^\w .-]/g,"").trim();
+  name = String(name || "").replace(/[\u0000-\u001f\u007f<>]/g,"").replace(/\s+/g," ").trim();
   if(!name || name.toLowerCase() === "guest"){ return "Runner"; }
-  return name.slice(0,14);
+  return Array.from(name).slice(0,14).join("");
 }
 
 function cleanEditableName(name){
-  return String(name || "").replace(/[^\w .-]/g,"").trim().slice(0,14);
+  name = String(name || "").replace(/[\u0000-\u001f\u007f<>]/g,"").replace(/\s+/g," ").trim();
+  return Array.from(name).slice(0,14).join("");
 }
 
 function readPlayerName(){
@@ -427,7 +458,8 @@ function submitCloudScore(record){
       score:Math.floor(record.score || 0),
       packages:Math.floor(record.delivered || 0),
       combo:Math.floor(record.combo || 0),
-      accuracy:Math.floor(record.rate || 0)
+      accuracy:Math.floor(record.rate || 0),
+      country_code:guessedCountryCode()
     })
   }).then(function(res){
     if(!res.ok){ throw new Error("Submit " + res.status); }
@@ -784,9 +816,14 @@ var RecordsScene = {
       var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
       me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
       if(isGlobal){
-        me.recordItems.push(me.add.text(112,y,item.flag || countryFlag(item.countryCode),{fontSize:"22px",color:"#fff"}).setOrigin(.5));
-        var nameText = me.add.text(144,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
-        fitTextWidth(nameText,142,.72);
+        var badgeCode = countryBadge(item.countryCode);
+        var badge = me.add.graphics();
+        badge.fillStyle(0x0b1520,.96).fillRoundedRect(94,y-17,48,34,9);
+        badge.lineStyle(2,item.countryCode ? 0x7de4ff : 0x627487,item.countryCode ? .42 : .28).strokeRoundedRect(94,y-17,48,34,9);
+        var badgeText = me.add.text(118,y,badgeCode,{fontSize:"14px",color:item.countryCode ? "#7de4ff" : "#9fb0c1",fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5);
+        me.recordItems.push(badge,badgeText);
+        var nameText = me.add.text(154,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
+        fitTextWidth(nameText,132,.72);
         me.recordItems.push(nameText);
         me.recordItems.push(me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5));
       }else{
@@ -818,8 +855,9 @@ var PlayScene = {
     this.level = 1;
     this.lane = 1;
     this.carry = null;
-    this.speed = 118;
-    this.spawnDelay = 1220;
+    this.speed = 112;
+    this.spawnDelay = 1320;
+    this.openingDone = false;
     this.finished = false;
     this.rngSeed = (Date.now() ^ Math.floor(Math.random() * 4294967295)) >>> 0;
     this.rushTimer = 0;
@@ -897,9 +935,13 @@ var PlayScene = {
 
     me.physics.add.overlap(me.player,me.packages,me.collectPackage,null,me);
     me.physics.add.overlap(me.player,me.boosts,me.collectBoost,null,me);
-    me.packageTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnPackage,callbackScope:me,loop:true});
-    me.time.delayedCall(150,function(){ me.spawnOpeningPackage(); },null,me);
-    me.time.delayedCall(1500,function(){ me.spawnOpeningPackage(true); },null,me);
+    me.packageTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnPackage,callbackScope:me,loop:true,paused:true});
+    me.time.delayedCall(280,function(){ me.spawnOpeningPackage(); },null,me);
+    me.time.delayedCall(2200,function(){
+      if(me.packageTimer && !me.finished){
+        me.packageTimer.paused = false;
+      }
+    },null,me);
     me.boostTimer = me.time.addEvent({delay:9000,callback:me.spawnBoost,callbackScope:me,loop:true});
     me.refreshPlayerStyle();
     me.drawLaneFx();
@@ -934,7 +976,7 @@ var PlayScene = {
     if(me.openingSprintTimer > 0){
       me.openingSprintTimer -= delta;
       if(me.openingSprintTimer <= 0){
-        me.spawnDelay = Math.max(980,me.spawnDelay - 120);
+        me.spawnDelay = Math.max(1080,me.spawnDelay - 90);
         if(me.packageTimer){ me.packageTimer.delay = me.spawnDelay; }
       }
     }
@@ -991,9 +1033,9 @@ var PlayScene = {
     var newLevel = 1 + Math.floor((me.delivered + me.missed) / 12);
     if(newLevel !== me.level){
       me.level = newLevel;
-      me.speed = Math.min(118 + (newLevel-1)*18, 330);
-      me.spawnDelay = Math.max(560, 1220 - (newLevel-1)*78);
-      me.packageTimer.delay = me.spawnDelay;
+      me.speed = Math.min(112 + (newLevel-1)*15, 304);
+      me.spawnDelay = Math.max(660, 1320 - (newLevel-1)*66);
+      if(me.packageTimer){ me.packageTimer.delay = me.spawnDelay; }
       me.modeText.setText("SPEED " + me.level);
       toast(me,"Speed up","#ffdf75");
     }
@@ -1041,16 +1083,18 @@ var PlayScene = {
     var glow = this.add.circle(pkg.x,pkg.y,15,c.hex,.12).setDepth(11);
     pkg.glow = glow;
   },
-  spawnOpeningPackage:function(second){
+  spawnOpeningPackage:function(){
     if(this.isPaused || this.finished || !this.packages || !this.player){ return; }
-    var c = second ? COLORS[3] : COLORS[2];
-    var lane = second ? 3 : this.lane;
-    var y = Math.max(190,this.player.y - (second ? 300 : 250));
+    if(this.openingDone){ return; }
+    this.openingDone = true;
+    var c = COLORS[2];
+    var lane = this.lane;
+    var y = Math.max(190,this.player.y - 265);
     var pkg = this.packages.create(LANE_X[lane],y,"pkg_"+c.key).setDepth(12);
     pkg.colorKey = c.key;
     pkg.colorName = c.name;
     pkg.colorHex = c.hex;
-    pkg.setVelocityY(this.speed + (second ? 72 : 64));
+    pkg.setVelocityY(this.speed + 48);
     pkg.setAngularVelocity(24);
     pkg.setScale(1.08);
     var glow = this.add.circle(pkg.x,pkg.y,19,c.hex,.18).setDepth(11);
@@ -1723,8 +1767,6 @@ var GameOverScene = {
     me.resultData = data;
     me.showSaveScoreDialog = GameOverScene.showSaveScoreDialog;
     me.closeSaveDialog = GameOverScene.closeSaveDialog;
-    me.editSaveName = GameOverScene.editSaveName;
-    me.refreshSaveName = GameOverScene.refreshSaveName;
     me.submitScoreFromDialog = GameOverScene.submitScoreFromDialog;
     makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Save Score",0xf3a326,function(){
       me.showSaveScoreDialog(playerName,data);
@@ -1737,8 +1779,8 @@ var GameOverScene = {
     var layer = me.add.container(0,0).setDepth(150);
     var shade = me.add.graphics();
     shade.fillStyle(0x000000,.70).fillRect(0,0,GW,GH);
-    var cardH = 430;
-    var top = Math.max(34,Math.round(GH/2 - cardH/2));
+    var cardH = 310;
+    var top = Math.max(34,Math.round(GH/2 - cardH/2) - 48);
     var card = me.add.graphics();
     card.fillStyle(0x071018,.98).fillRoundedRect(50,top,380,cardH,20);
     card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(50,top,380,cardH,20);
@@ -1748,60 +1790,37 @@ var GameOverScene = {
     var score = me.add.text(GW/2,top+74,formatScore(data.score || 0) + " pts",{fontSize:"20px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
     var label = me.add.text(GW/2,top+112,"Leaderboard name",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var inputBack = me.add.graphics();
-    inputBack.fillStyle(0x0d1722,1).fillRoundedRect(92,top+128,296,50,13);
-    inputBack.lineStyle(2,0x8ff0bc,.28).strokeRoundedRect(92,top+128,296,50,13);
-    me.saveName = "";
-    me.saveNameText = me.add.text(GW/2,top+153,me.saveName,{fontSize:"23px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
-    me.saveCursor = me.add.text(GW/2 + 52,top+153,"|",{fontSize:"24px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
-    me.tweens.add({targets:me.saveCursor,alpha:.18,duration:420,yoyo:true,repeat:-1});
-    me.refreshSaveName();
-    var hint = me.add.text(GW/2,top+197,"Pick 1-14 letters. This name appears on the global board.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
-    var keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    var keyItems = [];
-    keys.forEach(function(ch,index){
-      var col = index % 9;
-      var row = Math.floor(index / 9);
-      var x = 78 + col * 40;
-      var y = top + 232 + row * 38;
-      var keyBg = me.add.graphics();
-      keyBg.fillStyle(0x132232,1).fillRoundedRect(x-16,y-15,32,30,8);
-      keyBg.lineStyle(1,0xffffff,.10).strokeRoundedRect(x-16,y-15,32,30,8);
-      var keyText = me.add.text(x,y,ch,{fontSize:"15px",color:"#dce9f5",fontStyle:"bold"}).setOrigin(.5);
-      var zone = me.add.zone(x,y,34,32).setInteractive({useHandCursor:true});
-      zone.on("pointerdown",function(){ me.editSaveName(ch); });
-      keyItems.push(keyBg,keyText,zone);
-    });
-    var delBtn = makeButton(me,176,top+354,122,"Delete",0x4a8fe7,function(){ me.editSaveName("BACK"); });
-    var saveBtn = makeButton(me,306,top+354,154,"Save",0x20c879,function(){ me.submitScoreFromDialog(data); });
-    var cancelBtn = makeButton(me,GW/2,top+402,150,"Cancel",0xe65353,function(){ me.closeSaveDialog(); });
-    layer.add([shade,card,title,score,label,inputBack,me.saveNameText,me.saveCursor,hint].concat(keyItems,[delBtn.bg,delBtn.text,delBtn.zone,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]));
+    inputBack.fillStyle(0x0d1722,1).fillRoundedRect(92,top+130,296,54,13);
+    inputBack.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(92,top+130,296,54,13);
+    var hint = me.add.text(GW/2,top+210,"Use your keyboard. Any language is supported.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
+    var saveBtn = makeButton(me,306,top+258,154,"Save",0x20c879,function(){ me.submitScoreFromDialog(data); });
+    var cancelBtn = makeButton(me,176,top+258,122,"Cancel",0xe65353,function(){ me.closeSaveDialog(); });
+    layer.add([shade,card,title,score,label,inputBack,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
     me.saveLayer = layer;
-  },
-  editSaveName:function(value){
-    var next = this.saveName || "";
-    if(value === "BACK"){
-      next = next.slice(0,-1);
-    }else if(next.length < 14){
-      next += value;
-    }
-    this.saveName = cleanEditableName(next);
-    this.refreshSaveName();
-  },
-  refreshSaveName:function(){
-    var name = this.saveName || "TYPE NAME";
-    if(this.saveNameText){
-      this.saveNameText.setText(name);
-      this.saveNameText.setColor(this.saveName ? "#eaf7ff" : "#6f8295");
-      fitTextWidth(this.saveNameText,244,.72);
-    }
-    if(this.saveCursor && this.saveNameText){
-      this.saveCursor.x = Math.min(GW/2 + 132,this.saveNameText.x + this.saveNameText.displayWidth / 2 + 13);
-    }
+    var rect = me.game.canvas.getBoundingClientRect();
+    var scaleX = rect.width / GW;
+    var scaleY = rect.height / GH;
+    var input = document.createElement("input");
+    input.className = "native-name-input";
+    input.type = "text";
+    input.inputMode = "text";
+    input.autocomplete = "nickname";
+    input.autocapitalize = "words";
+    input.spellcheck = false;
+    input.maxLength = 28;
+    input.placeholder = "Type your name";
+    input.value = cleanEditableName(playerName || "");
+    input.style.left = (rect.left + 92 * scaleX) + "px";
+    input.style.top = (rect.top + (top + 130) * scaleY) + "px";
+    input.style.width = (296 * scaleX) + "px";
+    input.style.height = (54 * scaleY) + "px";
+    document.body.appendChild(input);
+    me.saveInput = input;
+    setTimeout(function(){ if(me.saveInput){ me.saveInput.focus(); me.saveInput.select(); } },80);
   },
   closeSaveDialog:function(){
-    this.saveNameText = null;
-    this.saveCursor = null;
-    this.saveName = null;
+    if(this.saveInput && this.saveInput.parentNode){ this.saveInput.parentNode.removeChild(this.saveInput); }
+    this.saveInput = null;
     if(this.saveLayer){ this.saveLayer.destroy(true); }
     this.saveLayer = null;
     this.savingScore = false;
@@ -1809,10 +1828,14 @@ var GameOverScene = {
   submitScoreFromDialog:function(data){
     var me = this;
     if(me.savingScore){ return; }
-    var typed = cleanEditableName(me.saveName);
+    var typed = cleanEditableName(me.saveInput ? me.saveInput.value : "");
     if(!typed){
       toast(me,"Choose a name first","#ffdf75");
-      me.bumpScore(me.saveNameText,1.12);
+      if(me.saveInput){
+        me.saveInput.classList.add("input-warn");
+        me.saveInput.focus();
+        setTimeout(function(){ if(me.saveInput){ me.saveInput.classList.remove("input-warn"); } },360);
+      }
       return;
     }
     me.savingScore = true;
