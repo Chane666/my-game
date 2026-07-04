@@ -61,7 +61,7 @@ function safeTextStyle(style){
     Object.keys(style).forEach(function(key){ next[key] = style[key]; });
   }
   if(!next.fontFamily){
-    next.fontFamily = 'Arial, "Microsoft YaHei", "PingFang SC", sans-serif';
+    next.fontFamily = 'Arial, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Microsoft YaHei", "PingFang SC", sans-serif';
   }
   if(next.resolution === undefined){
     next.resolution = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
@@ -200,6 +200,22 @@ function fitTextBox(textObj,maxWidth,maxHeight,minScale){
   var scale = Math.min(1, maxWidth / width, maxHeight / height);
   if(scale < 1){ textObj.setScale(Math.max(minScale, scale)); }
   return textObj;
+}
+
+function formatScore(value){
+  value = Math.floor(value || 0);
+  try{ return value.toLocaleString("en-US"); }catch(e){ return String(value); }
+}
+
+function cleanCountryCode(code){
+  code = String(code || "").trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : "";
+}
+
+function countryFlag(code){
+  code = cleanCountryCode(code);
+  if(!code){ return String.fromCodePoint(0x1F310); }
+  return String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
 }
 
 function beatPercent(score){
@@ -359,12 +375,16 @@ function cloudHeaders(){
 }
 
 function normalizeCloudRecord(item){
+  var countryCode = cleanCountryCode(item.country_code || item.countryCode || item.country || "");
   return {
     name:cleanPlayerName(item.name || "Guest"),
     score:Math.floor(item.score || 0),
     delivered:Math.floor(item.packages || item.delivered || 0),
     combo:Math.floor(item.combo || 0),
     rate:Math.floor(item.accuracy || item.rate || 0),
+    countryCode:countryCode,
+    countryName:String(item.country_name || item.countryName || item.country || "").slice(0,32),
+    flag:countryFlag(countryCode),
     time:item.created_at ? Date.parse(item.created_at) || 0 : 0
   };
 }
@@ -373,10 +393,18 @@ function fetchCloudLeaderboard(){
   if(!CLOUD_LEADERBOARD.enabled || !CLOUD_LEADERBOARD.url || !CLOUD_LEADERBOARD.anonKey || !window.fetch){
     return Promise.reject(new Error("Cloud leaderboard disabled"));
   }
-  var url = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/rest/v1/leaderboard_scores?select=name,score,packages,combo,accuracy,created_at&order=score.desc&limit=50";
-  return fetch(url,{headers:cloudHeaders()}).then(function(res){
-    if(!res.ok){ throw new Error("Leaderboard " + res.status); }
-    return res.json();
+  var base = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/rest/v1/leaderboard_scores";
+  var order = "&order=score.desc&limit=50";
+  var richUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,created_at" + order;
+  var legacyUrl = base + "?select=name,score,packages,combo,accuracy,created_at" + order;
+  function read(url){
+    return fetch(url,{headers:cloudHeaders()}).then(function(res){
+      if(!res.ok){ throw new Error("Leaderboard " + res.status); }
+      return res.json();
+    });
+  }
+  return read(richUrl).catch(function(){
+    return read(legacyUrl);
   }).then(function(rows){
     return Array.isArray(rows) ? rows.map(normalizeCloudRecord) : [];
   });
@@ -751,10 +779,18 @@ var RecordsScene = {
       var y = 184 + index * 43;
       var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
       me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
-      me.recordItems.push(me.add.text(106,y-9,cleanPlayerName(item.name || "Guest"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5));
-      me.recordItems.push(me.add.text(106,y+10,(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5));
-      me.recordItems.push(me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5));
-      me.recordItems.push(me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5));
+      if(isGlobal){
+        me.recordItems.push(me.add.text(112,y,item.flag || countryFlag(item.countryCode),{fontSize:"22px",color:"#fff"}).setOrigin(.5));
+        var nameText = me.add.text(144,y,cleanPlayerName(item.name || "Guest"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
+        fitTextWidth(nameText,142,.72);
+        me.recordItems.push(nameText);
+        me.recordItems.push(me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5));
+      }else{
+        me.recordItems.push(me.add.text(106,y-9,cleanPlayerName(item.name || "Guest"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5));
+        me.recordItems.push(me.add.text(106,y+10,formatScore(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5));
+        me.recordItems.push(me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5));
+        me.recordItems.push(me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5));
+      }
     });
   }
 };
