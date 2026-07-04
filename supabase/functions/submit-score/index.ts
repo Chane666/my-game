@@ -22,7 +22,7 @@ function cleanName(value: unknown) {
     .trim()
     .slice(0, 28);
 
-  const clean = Array.from(name).slice(0, 14).join("");
+  const clean = Array.from(name).slice(0, 10).join("");
   return clean && clean.toLowerCase() !== "guest" ? clean : null;
 }
 
