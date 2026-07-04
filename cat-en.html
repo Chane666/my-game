@@ -241,6 +241,57 @@ function countryBadge(code){
   return code || "--";
 }
 
+var FLAG_CDN_BASE = "https://flagcdn.com/w40/";
+
+function flagTextureKey(code){
+  code = cleanCountryCode(code);
+  return code ? "flagcdn_" + code.toLowerCase() : "";
+}
+
+function queueFlagTexture(scene,code,onReady){
+  code = cleanCountryCode(code);
+  if(!code || !scene || !scene.load || !scene.textures){ return false; }
+  var key = flagTextureKey(code);
+  if(scene.textures.exists(key)){ return true; }
+  scene.flagLoading = scene.flagLoading || {};
+  scene.flagFailed = scene.flagFailed || {};
+  if(scene.flagLoading[key] || scene.flagFailed[key]){ return false; }
+  scene.flagLoading[key] = true;
+  scene.load.image(key, FLAG_CDN_BASE + code.toLowerCase() + ".png");
+  scene.load.once("filecomplete-image-" + key,function(){
+    delete scene.flagLoading[key];
+    if(onReady){ onReady(); }
+  });
+  scene.load.on("loaderror",function(file){
+    if(file && file.key === key){
+      delete scene.flagLoading[key];
+      scene.flagFailed[key] = true;
+    }
+  });
+  if(!scene.load.isLoading()){ scene.load.start(); }
+  return false;
+}
+
+function drawRemoteFlag(scene,x,y,code,onReady){
+  code = cleanCountryCode(code);
+  var items = [];
+  var g = scene.add.graphics();
+  g.fillStyle(0x000000,.24).fillRoundedRect(x-21+2,y-14+3,42,28,7);
+  g.fillStyle(code ? 0x0b1520 : 0x101923,.96).fillRoundedRect(x-21,y-14,42,28,7);
+  g.lineStyle(1,code ? 0x7de4ff : 0x627487,code ? .30 : .22).strokeRoundedRect(x-21,y-14,42,28,7);
+  items.push(g);
+  var key = flagTextureKey(code);
+  if(code && scene.textures.exists(key)){
+    var img = scene.add.image(x,y,key).setDisplaySize(40,28);
+    items.push(img);
+  }else{
+    queueFlagTexture(scene,code,onReady);
+    var label = scene.add.text(x,y,code || "--",{fontSize:"11px",color:code ? "#7de4ff" : "#8293a6",fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5);
+    items.push(label);
+  }
+  return items;
+}
+
 function drawFlag(scene,x,y,code){
   code = cleanCountryCode(code);
   var g = scene.add.graphics();
@@ -874,11 +925,13 @@ var RecordsScene = {
     activeScene = this;
     var me = this;
     gradientBackground(me);
-    me.add.text(GW/2,76,"Leaderboard",{fontSize:"32px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
-    me.boardStatus = me.add.text(GW/2,110,CLOUD_LEADERBOARD.enabled ? "Global Top 50" : "My records",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,66,"Leaderboard",{fontSize:"32px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
+    me.boardStatus = me.add.text(GW/2,108,CLOUD_LEADERBOARD.enabled ? "Global Top 50" : "My records",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var panel = me.add.graphics();
-    panel.fillStyle(0x111b27,.94).fillRoundedRect(46,150,388,492,12);
-    panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,150,388,492,12);
+    panel.fillStyle(0x071018,.36).fillRoundedRect(34,126,412,526,18);
+    panel.lineStyle(2,0xffffff,.055).strokeRoundedRect(34,126,412,526,18);
+    panel.fillStyle(0x111b27,.94).fillRoundedRect(58,194,364,372,12);
+    panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(58,194,364,372,12);
     me.recordItems = [];
     me.tabItems = [];
     me.renderRecords = RecordsScene.renderRecords;
@@ -887,7 +940,7 @@ var RecordsScene = {
     me.drawTabs = RecordsScene.drawTabs;
     if(me.initialTab === "mine"){ me.showLocalRecords(); }
     else{ me.showGlobalRecords(); }
-    makeButton(me,GW/2,606,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
+    makeButton(me,GW/2,616,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
   },
   drawTabs:function(active){
     var me = this;
@@ -896,15 +949,15 @@ var RecordsScene = {
     function tab(x,label,key){
       var selected = active === key;
       var bg = me.add.graphics().setDepth(10);
-      bg.fillStyle(selected ? 0x20c879 : 0x0b1520, selected ? 1 : .92).fillRoundedRect(x-78,122,156,32,8);
-      bg.lineStyle(1, selected ? 0x8ff0bc : 0xffffff, selected ? .38 : .12).strokeRoundedRect(x-78,122,156,32,8);
-      var tx = me.add.text(x,138,label,{fontSize:"14px",color:selected ? "#ffffff" : "#9fb0c1",fontStyle:"bold"}).setOrigin(.5).setDepth(11);
-      var zone = me.add.zone(x,138,156,36).setInteractive({useHandCursor:true}).setDepth(12);
+      bg.fillStyle(selected ? 0x20c879 : 0x0b1520, selected ? 1 : .92).fillRoundedRect(x-82,136,164,36,9);
+      bg.lineStyle(1, selected ? 0x8ff0bc : 0xffffff, selected ? .38 : .12).strokeRoundedRect(x-82,136,164,36,9);
+      var tx = me.add.text(x,154,label,{fontSize:"14px",color:selected ? "#ffffff" : "#9fb0c1",fontStyle:"bold"}).setOrigin(.5).setDepth(11);
+      var zone = me.add.zone(x,154,164,40).setInteractive({useHandCursor:true}).setDepth(12);
       zone.on("pointerdown",function(){ if(key === "global"){ me.showGlobalRecords(); }else{ me.showLocalRecords(); } });
       me.tabItems.push(bg,tx,zone);
     }
-    tab(156,"Global","global");
-    tab(324,"Mine","mine");
+    tab(152,"Global","global");
+    tab(328,"Mine","mine");
   },
   showLocalRecords:function(){
     this.drawTabs("mine");
@@ -942,20 +995,22 @@ var RecordsScene = {
     if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor((isGlobal || isLoading) ? "#8ff0bc" : "#ffdf75"); }
     if(!records.length){
       var emptyText = isLoading ? "Loading global scores..." : isMine ? "No personal score yet\nFinish one run to save it" : "Global board is syncing\nSave a score to join";
-      me.recordItems.push(me.add.text(GW/2,348,emptyText,{
+      me.recordItems.push(me.add.text(GW/2,370,emptyText,{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5));
       return;
     }
     records.slice(0,8).forEach(function(item,index){
-      var y = 184 + index * 43;
+      var y = 226 + index * 39;
       var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
       me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
       if(isGlobal){
-        var flag = drawFlag(me,118,y,item.countryCode);
-        me.recordItems = me.recordItems.concat(flag.items);
+        var flagItems = drawRemoteFlag(me,118,y,item.countryCode,function(){
+          if(me.scene && me.scene.isActive("RecordsScene")){ me.renderRecords(records,label); }
+        });
+        me.recordItems = me.recordItems.concat(flagItems);
         var nameText = me.add.text(152,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
-        fitTextWidth(nameText,134,.72);
+        fitTextWidth(nameText,132,.72);
         me.recordItems.push(nameText);
         me.recordItems.push(me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5));
       }else{
@@ -1864,7 +1919,7 @@ var GameOverScene = {
     panel.fillStyle(0x071018,.50).fillRoundedRect(78,panelTop+274,GW-156,72,16);
     panel.fillStyle(0xffdf75,.085).fillRoundedRect(82,panelTop+370,GW-164,58,14);
     panel.lineStyle(1,0xffdf75,.22).strokeRoundedRect(82,panelTop+370,GW-164,58,14);
-    panel.lineStyle(1,0xffffff,.075).lineBetween(100,panelTop+262,GW-100,panelTop+262).lineBetween(100,panelTop+360,GW-100,panelTop+360).lineBetween(100,panelTop+440,GW-100,panelTop+440);
+    panel.lineStyle(1,0xffffff,.075).lineBetween(100,panelTop+262,GW-100,panelTop+262).lineBetween(100,panelTop+360,GW-100,panelTop+360);
     me.add.image(GW/2,panelTop+38,"shuttle").setScale(1.02).setAlpha(.88);
     me.add.text(GW/2,panelTop+84,won ? "Friend Beaten" : ((data.prevBest || 0) < (data.score || 0) ? "New Best" : "Run Over"),{fontSize:"30px",color:won ? "#ffdf75" : "#eaf7ff",fontStyle:"bold",stroke:"#2a0b12",strokeThickness:5}).setOrigin(.5);
     me.add.text(GW/2,panelTop+154,String(data.score || 0),{fontSize:"53px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
