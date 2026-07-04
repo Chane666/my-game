@@ -340,6 +340,10 @@ function cleanPlayerName(name){
   return name.slice(0,14);
 }
 
+function cleanEditableName(name){
+  return String(name || "").replace(/[^\w .-]/g,"").trim().slice(0,14);
+}
+
 function readPlayerName(){
   try{ return cleanPlayerName(localStorage.getItem(PLAYER_KEY) || "Guest"); }catch(e){ return "Guest"; }
 }
@@ -1745,10 +1749,11 @@ var GameOverScene = {
     var inputBack = me.add.graphics();
     inputBack.fillStyle(0x0d1722,1).fillRoundedRect(92,top+128,296,50,13);
     inputBack.lineStyle(2,0x8ff0bc,.28).strokeRoundedRect(92,top+128,296,50,13);
-    me.saveName = cleanPlayerName(playerName || readPlayerName());
+    me.saveName = cleanEditableName(playerName || readPlayerName());
     me.saveNameText = me.add.text(GW/2,top+153,me.saveName,{fontSize:"23px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
     me.saveCursor = me.add.text(GW/2 + 52,top+153,"|",{fontSize:"24px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     me.tweens.add({targets:me.saveCursor,alpha:.18,duration:420,yoyo:true,repeat:-1});
+    me.refreshSaveName();
     var hint = me.add.text(GW/2,top+197,"Tap letters below. Score shows as flag + name + score.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
     var keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
     var keyItems = [];
@@ -1778,13 +1783,14 @@ var GameOverScene = {
     }else if(next.length < 14){
       next += value;
     }
-    this.saveName = cleanPlayerName(next);
+    this.saveName = cleanEditableName(next);
     this.refreshSaveName();
   },
   refreshSaveName:function(){
-    var name = this.saveName || "Guest";
+    var name = this.saveName || "Name";
     if(this.saveNameText){
       this.saveNameText.setText(name);
+      this.saveNameText.setColor(this.saveName ? "#eaf7ff" : "#6f8295");
       fitTextWidth(this.saveNameText,244,.72);
     }
     if(this.saveCursor && this.saveNameText){
@@ -1803,7 +1809,7 @@ var GameOverScene = {
     var me = this;
     if(me.savingScore){ return; }
     me.savingScore = true;
-    var typed = me.saveName || readPlayerName();
+    var typed = cleanEditableName(me.saveName) || "Guest";
     var nextName = savePlayerName(typed);
     var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()};
     saveRecord(record);
