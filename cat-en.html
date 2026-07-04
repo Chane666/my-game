@@ -38,6 +38,11 @@
     box-shadow:0 18px 48px rgba(0,0,0,.55),0 0 24px rgba(32,200,121,.18);
     letter-spacing:0;
   }
+  .name-input.compact{
+    width:min(64vw,270px);
+    height:42px;
+    font-size:18px;
+  }
   .name-input::placeholder{color:#6f8295}
   @media (max-aspect-ratio: 2/3){
     #gw{width:100vw;height:100vh;height:100dvh}
@@ -249,6 +254,10 @@ function gameRectToCss(left,top,width,height){
     width:width * sx,
     height:height * sy
   };
+}
+
+function isMobileViewport(){
+  return window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
 }
 
 function beatPercent(score){
@@ -847,11 +856,12 @@ var PlayScene = {
     this.level = 1;
     this.lane = 1;
     this.carry = null;
-    this.speed = 106;
-    this.spawnDelay = 1450;
+    this.speed = 140;
+    this.spawnDelay = 980;
     this.finished = false;
     this.rngSeed = (Date.now() ^ Math.floor(Math.random() * 4294967295)) >>> 0;
     this.rushTimer = 0;
+    this.openingSprintTimer = 12000;
     this.autoTimer = 0;
     this.loopTimer = 0;
     this.isPaused = false;
@@ -927,6 +937,7 @@ var PlayScene = {
     me.physics.add.overlap(me.player,me.boosts,me.collectBoost,null,me);
     me.packageTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnPackage,callbackScope:me,loop:true});
     me.time.delayedCall(150,function(){ me.spawnOpeningPackage(); },null,me);
+    me.time.delayedCall(900,function(){ me.spawnOpeningPackage(true); },null,me);
     me.boostTimer = me.time.addEvent({delay:9000,callback:me.spawnBoost,callbackScope:me,loop:true});
     me.refreshPlayerStyle();
     me.drawLaneFx();
@@ -957,6 +968,13 @@ var PlayScene = {
     if(me.rushTimer > 0){
       me.rushTimer -= delta;
       if(me.rushTimer <= 0){ me.taskText.setText("Deliver to the matching portal"); }
+    }
+    if(me.openingSprintTimer > 0){
+      me.openingSprintTimer -= delta;
+      if(me.openingSprintTimer <= 0){
+        me.spawnDelay = Math.max(720,me.spawnDelay + 180);
+        if(me.packageTimer){ me.packageTimer.delay = me.spawnDelay; }
+      }
     }
     if(me.dispatchTimer > 0){
       me.dispatchTimer -= delta;
@@ -1011,8 +1029,8 @@ var PlayScene = {
     var newLevel = 1 + Math.floor((me.delivered + me.missed) / 12);
     if(newLevel !== me.level){
       me.level = newLevel;
-      me.speed = Math.min(106 + (newLevel-1)*18, 330);
-      me.spawnDelay = Math.max(560, 1450 - (newLevel-1)*80);
+      me.speed = Math.min(140 + (newLevel-1)*20, 340);
+      me.spawnDelay = Math.max(520, 1120 - (newLevel-1)*86);
       me.packageTimer.delay = me.spawnDelay;
       me.modeText.setText("SPEED " + me.level);
       toast(me,"Speed up","#ffdf75");
@@ -1061,16 +1079,16 @@ var PlayScene = {
     var glow = this.add.circle(pkg.x,pkg.y,15,c.hex,.12).setDepth(11);
     pkg.glow = glow;
   },
-  spawnOpeningPackage:function(){
+  spawnOpeningPackage:function(second){
     if(this.isPaused || this.finished || !this.packages || !this.player){ return; }
-    var c = COLORS[2];
-    var lane = this.lane;
-    var y = Math.max(210,this.player.y - 235);
+    var c = second ? COLORS[3] : COLORS[2];
+    var lane = second ? 3 : this.lane;
+    var y = Math.max(190,this.player.y - (second ? 280 : 235));
     var pkg = this.packages.create(LANE_X[lane],y,"pkg_"+c.key).setDepth(12);
     pkg.colorKey = c.key;
     pkg.colorName = c.name;
     pkg.colorHex = c.hex;
-    pkg.setVelocityY(this.speed + 80);
+    pkg.setVelocityY(this.speed + (second ? 108 : 92));
     pkg.setAngularVelocity(24);
     pkg.setScale(1.08);
     var glow = this.add.circle(pkg.x,pkg.y,19,c.hex,.18).setDepth(11);
@@ -1742,6 +1760,7 @@ var GameOverScene = {
     me.resultData = data;
     me.showSaveScoreDialog = GameOverScene.showSaveScoreDialog;
     me.closeSaveDialog = GameOverScene.closeSaveDialog;
+    me.positionSaveInput = GameOverScene.positionSaveInput;
     me.submitScoreFromDialog = GameOverScene.submitScoreFromDialog;
     makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Save Score",0xf3a326,function(){
       me.showSaveScoreDialog(playerName,data);
@@ -1754,7 +1773,8 @@ var GameOverScene = {
     var layer = me.add.container(0,0).setDepth(150);
     var shade = me.add.graphics();
     shade.fillStyle(0x000000,.70).fillRect(0,0,GW,GH);
-    var top = Math.round(GH/2 - 158);
+    var mobileInput = isMobileViewport();
+    var top = mobileInput ? Math.max(58,Math.round(GH * .18)) : Math.round(GH/2 - 158);
     var card = me.add.graphics();
     card.fillStyle(0x071018,.98).fillRoundedRect(54,top,372,316,20);
     card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(54,top,372,316,20);
@@ -1771,27 +1791,47 @@ var GameOverScene = {
     var cancelBtn = makeButton(me,GW/2,top+302,158,"Cancel",0x4a8fe7,function(){ me.closeSaveDialog(); });
     layer.add([shade,card,title,score,label,inputBack,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
     var input = document.createElement("input");
-    input.className = "name-input";
+    input.className = mobileInput ? "name-input compact" : "name-input";
     input.type = "text";
     input.inputMode = "text";
     input.autocomplete = "nickname";
     input.maxLength = 14;
     input.placeholder = "Guest";
     input.value = cleanPlayerName(playerName || readPlayerName());
-    var cssBox = gameRectToCss(102,top+142,276,40);
-    input.style.left = (cssBox.left + cssBox.width / 2) + "px";
-    input.style.top = (cssBox.top + cssBox.height / 2) + "px";
-    input.style.width = cssBox.width + "px";
-    input.style.height = cssBox.height + "px";
-    input.style.fontSize = Math.max(16,Math.min(20,cssBox.height * .46)) + "px";
+    input.dataset.gameLeft = "102";
+    input.dataset.gameTop = String(top + 142);
+    input.dataset.gameWidth = "276";
+    input.dataset.gameHeight = "40";
     document.body.appendChild(input);
-    setTimeout(function(){ try{ input.focus(); input.select(); }catch(e){} },60);
+    me.saveInput = input;
+    me.positionSaveInput();
+    if(!mobileInput){ setTimeout(function(){ try{ input.focus(); input.select(); }catch(e){} },60); }
+    input.addEventListener("focus",function(){ me.time.delayedCall(90,function(){ if(me.saveInput){ me.positionSaveInput(true); } }); });
+    input.addEventListener("blur",function(){ me.time.delayedCall(90,function(){ if(me.saveInput){ me.positionSaveInput(false); } }); });
     input.addEventListener("keydown",function(event){
       if(event.key === "Enter"){ event.preventDefault(); me.submitScoreFromDialog(data); }
       if(event.key === "Escape"){ event.preventDefault(); me.closeSaveDialog(); }
     });
     me.saveLayer = layer;
-    me.saveInput = input;
+  },
+  positionSaveInput:function(forceCompact){
+    var input = this.saveInput;
+    if(!input){ return; }
+    var left = Number(input.dataset.gameLeft || 102);
+    var top = Number(input.dataset.gameTop || 0);
+    var width = Number(input.dataset.gameWidth || 276);
+    var height = Number(input.dataset.gameHeight || 40);
+    var cssBox = gameRectToCss(left,top,width,height);
+    var compact = forceCompact || (isMobileViewport() && document.activeElement === input);
+    if(compact && window.visualViewport){
+      cssBox.top = Math.min(cssBox.top, window.visualViewport.offsetTop + Math.max(84, window.visualViewport.height * .24));
+    }
+    input.classList.toggle("compact", !!compact);
+    input.style.left = (cssBox.left + cssBox.width / 2) + "px";
+    input.style.top = (cssBox.top + cssBox.height / 2) + "px";
+    input.style.width = cssBox.width + "px";
+    input.style.height = cssBox.height + "px";
+    input.style.fontSize = Math.max(16,Math.min(20,cssBox.height * .46)) + "px";
   },
   closeSaveDialog:function(){
     if(this.saveInput && this.saveInput.parentNode){ this.saveInput.parentNode.removeChild(this.saveInput); }
