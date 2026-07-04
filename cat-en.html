@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=overlays-content">
 <title>Neon Sort Rush</title>
 <link rel="icon" href="data:,">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{width:100%;height:100%;min-height:100%;overflow:hidden}
+  html,body{width:100%;height:100%;min-height:100%;overflow:hidden;overscroll-behavior:none}
   body{
+    position:fixed;
+    inset:0;
     background:#080d13;
     display:flex;
     align-items:center;
@@ -16,35 +18,37 @@
     font-family:Arial,"Microsoft YaHei",sans-serif;
     touch-action:none;
     color:#fff;
-    min-height:100dvh;
+    min-height:100vh;
+    min-height:100svh;
   }
-  #gw{display:flex;align-items:center;justify-content:center;background:#080d13}
+  #gw{display:flex;align-items:center;justify-content:center;background:#080d13;overflow:hidden}
   canvas{display:block}
   .native-name-input{
     position:fixed;
-    z-index:-1;
+    z-index:1000;
     border:0;
     outline:0;
     opacity:.01;
-    width:1px;
-    height:1px;
-    left:0;
-    top:0;
-    transform:translate3d(-12px,-12px,0);
+    width:160px;
+    height:44px;
+    left:50%;
+    top:18px;
+    transform:none;
     background:transparent;
     color:transparent;
     font-size:16px;
+    caret-color:transparent;
     touch-action:auto;
     -webkit-user-select:text;
     user-select:text;
   }
   @media (max-aspect-ratio: 2/3){
-    #gw{width:100vw;height:100vh;height:100dvh}
-    canvas{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
+    #gw{position:fixed;inset:0;width:100%;height:100%;height:100svh}
+    canvas{width:100% !important;height:100% !important;max-width:none !important;max-height:none !important;border-radius:0;box-shadow:none}
   }
   @media (min-aspect-ratio: 2/3){
-    #gw{width:min(100vw,480px);height:min(100vh,720px);height:min(100dvh,720px)}
-    canvas{max-width:100vw;max-height:100vh;max-height:100dvh;border-radius:10px;box-shadow:0 20px 70px rgba(0,0,0,.45)}
+    #gw{width:min(100vw,480px);height:min(100vh,720px);height:min(100svh,720px)}
+    canvas{max-width:100vw;max-height:100vh;max-height:100svh;border-radius:10px;box-shadow:0 20px 70px rgba(0,0,0,.45)}
   }
 </style>
 </head>
@@ -62,6 +66,7 @@ var PLAYER_KEY = "neonSortRushPlayerENv1";
 var PROFILE_KEY = "neonSortRushProfileENv1";
 var DEVICE_KEY = "neonSortRushDeviceENv1";
 var NAME_CHANGE_COOLDOWN = 30 * 24 * 60 * 60 * 1000;
+var MAX_PLAYER_NAME_CHARS = 10;
 var CLOUD_LEADERBOARD = {
   enabled:true,
   url:"https://ztscfxpepqfiqttxasdb.supabase.co",
@@ -563,12 +568,12 @@ function readRecords(){
 function cleanPlayerName(name){
   name = String(name || "").replace(/[\u0000-\u001f\u007f<>]/g,"").replace(/\s+/g," ").trim();
   if(!name || name.toLowerCase() === "guest"){ return "Runner"; }
-  return Array.from(name).slice(0,14).join("");
+  return Array.from(name).slice(0,MAX_PLAYER_NAME_CHARS).join("");
 }
 
 function cleanEditableName(name){
   name = String(name || "").replace(/[\u0000-\u001f\u007f<>]/g,"").replace(/\s+/g," ").trim();
-  return Array.from(name).slice(0,14).join("");
+  return Array.from(name).slice(0,MAX_PLAYER_NAME_CHARS).join("");
 }
 
 function makeDeviceId(){
@@ -679,19 +684,22 @@ function normalizeCloudRecord(item){
     rate:Math.floor(item.accuracy || item.rate || 0),
     countryCode:countryCode,
     countryName:String(item.country_name || item.countryName || item.country || "").slice(0,32),
+    avatar:String(item.avatar || "bolt").slice(0,18),
     flag:countryFlag(countryCode),
     time:item.created_at ? Date.parse(item.created_at) || 0 : 0
   };
 }
 
-function fetchCloudLeaderboard(){
+function fetchCloudLeaderboard(scope){
   if(!CLOUD_LEADERBOARD.enabled || !CLOUD_LEADERBOARD.url || !CLOUD_LEADERBOARD.anonKey || !window.fetch){
     return Promise.reject(new Error("Cloud leaderboard disabled"));
   }
   var base = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/rest/v1/leaderboard_scores";
+  var isChina = scope === "china";
   var order = "&order=score.desc&limit=50";
-  var richUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,created_at" + order;
-  var legacyUrl = base + "?select=name,score,packages,combo,accuracy,created_at" + order;
+  var countryFilter = isChina ? "&country_code=eq.CN" : "";
+  var richUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,avatar,created_at" + countryFilter + order;
+  var legacyUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,created_at" + countryFilter + order;
   function read(url){
     return fetch(url,{headers:cloudHeaders()}).then(function(res){
       if(!res.ok){ throw new Error("Leaderboard " + res.status); }
@@ -778,37 +786,66 @@ function avatarColor(key){
   return map[key] || 0xffdf75;
 }
 
-function drawAvatar(scene,x,y,key,selected){
+function drawAvatar(scene,x,y,key,selected,scale){
+  scale = scale || 1;
   var color = avatarColor(key);
   var g = scene.add.graphics();
-  g.fillStyle(0x000000,.24).fillCircle(x+2,y+3,19);
-  g.fillStyle(0x101923,1).fillCircle(x,y,19);
-  g.lineStyle(selected ? 3 : 2,selected ? 0xffdf75 : color,selected ? .95 : .72).strokeCircle(x,y,18);
+  g.fillStyle(0x000000,.24).fillCircle(x+2*scale,y+3*scale,19*scale);
+  g.fillStyle(0x101923,1).fillCircle(x,y,19*scale);
+  g.lineStyle((selected ? 3 : 2)*scale,selected ? 0xffdf75 : color,selected ? .95 : .72).strokeCircle(x,y,18*scale);
   g.fillStyle(color,1);
   if(key === "star"){
     var pts = [];
     for(var i=0;i<10;i++){
       var a = -Math.PI/2 + i*Math.PI/5;
-      var r = i%2===0 ? 10 : 4.4;
+      var r = (i%2===0 ? 10 : 4.4) * scale;
       pts.push(new Phaser.Geom.Point(x+Math.cos(a)*r,y+Math.sin(a)*r));
     }
     g.fillPoints(pts,true);
   }else if(key === "moon"){
-    g.fillCircle(x-2,y,10); g.fillStyle(0x101923,1).fillCircle(x+3,y-2,10);
+    g.fillCircle(x-2*scale,y,10*scale); g.fillStyle(0x101923,1).fillCircle(x+3*scale,y-2*scale,10*scale);
   }else if(key === "fire"){
-    g.fillTriangle(x,y-12,x-10,y+10,x+10,y+10); g.fillStyle(0xffdf75,1).fillTriangle(x,y-4,x-5,y+10,x+5,y+10);
+    g.fillTriangle(x,y-12*scale,x-10*scale,y+10*scale,x+10*scale,y+10*scale); g.fillStyle(0xffdf75,1).fillTriangle(x,y-4*scale,x-5*scale,y+10*scale,x+5*scale,y+10*scale);
   }else if(key === "gem"){
-    g.fillPoints([new Phaser.Geom.Point(x,y-12),new Phaser.Geom.Point(x+12,y-2),new Phaser.Geom.Point(x+6,y+12),new Phaser.Geom.Point(x-6,y+12),new Phaser.Geom.Point(x-12,y-2)],true);
+    g.fillPoints([new Phaser.Geom.Point(x,y-12*scale),new Phaser.Geom.Point(x+12*scale,y-2*scale),new Phaser.Geom.Point(x+6*scale,y+12*scale),new Phaser.Geom.Point(x-6*scale,y+12*scale),new Phaser.Geom.Point(x-12*scale,y-2*scale)],true);
   }else if(key === "leaf"){
-    g.fillEllipse(x,y,18,24); g.lineStyle(2,0xffffff,.55).lineBetween(x-4,y+7,x+6,y-8);
+    g.fillEllipse(x,y,18*scale,24*scale); g.lineStyle(2*scale,0xffffff,.55).lineBetween(x-4*scale,y+7*scale,x+6*scale,y-8*scale);
   }else{
-    g.fillTriangle(x-2,y-13,x-11,y+3,x-2,y+1).fillTriangle(x+2,y+13,x+11,y-3,x+2,y-1);
+    g.fillTriangle(x-2*scale,y-13*scale,x-11*scale,y+3*scale,x-2*scale,y+1*scale).fillTriangle(x+2*scale,y+13*scale,x+11*scale,y-3*scale,x+2*scale,y-1*scale);
   }
   return g;
 }
 
 function sceneKey(scene){
   return scene && scene.sys && scene.sys.settings ? scene.sys.settings.key : "";
+}
+
+function lockPageViewport(){
+  try{
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0,0);
+  }catch(e){}
+}
+
+function placeNativeInput(input,scene,x,y,w,h){
+  if(!input || !scene || !scene.game || !scene.game.canvas){ return; }
+  try{
+    var rect = scene.game.canvas.getBoundingClientRect();
+    input.style.left = (rect.left + x / GW * rect.width - w / 2 / GW * rect.width) + "px";
+    input.style.top = (rect.top + y / GH * rect.height - h / 2 / GH * rect.height) + "px";
+    input.style.width = (w / GW * rect.width) + "px";
+    input.style.height = (h / GH * rect.height) + "px";
+  }catch(e){}
+}
+
+function focusNativeInput(input){
+  if(!input){ return; }
+  lockPageViewport();
+  try{ input.focus({preventScroll:true}); }catch(e){ try{ input.focus(); }catch(err){} }
+  try{ input.select(); }catch(e){}
+  setTimeout(lockPageViewport,60);
+  setTimeout(lockPageViewport,260);
 }
 
 function gradientBackground(scene){
@@ -989,11 +1026,12 @@ var MenuScene = {
     var best = readRecords()[0];
     var profile = readProfile();
     var centerY = GH / 2;
-    var iconY = centerY - 240;
-    var titleY = centerY - 162;
-    var subtitleY = centerY - 116;
-    var statusY = centerY - 76;
-    var firstButtonY = centerY - 34;
+    var menuCompact = GH < 760;
+    var iconY = centerY - (menuCompact ? 230 : 240);
+    var titleY = centerY - (menuCompact ? 152 : 162);
+    var subtitleY = centerY - (menuCompact ? 108 : 116);
+    var statusY = centerY - (menuCompact ? 70 : 76);
+    var firstButtonY = centerY - (menuCompact ? 31 : 34);
     gradientBackground(me);
     for(var i=0;i<26;i++){
       var dot = me.add.circle(Phaser.Math.Between(22,GW-22),Phaser.Math.Between(28,GH-28),Phaser.Math.Between(1,3),COLORS[i%4].hex,.45);
@@ -1011,11 +1049,13 @@ var MenuScene = {
     me.add.text(cx,statusY,target ? "Friend target: " + target + " pts" : (best ? "Best: " + (best.score || 0) + " pts  |  " + (profile.name || "Set profile") : (profile.name ? "Profile: " + profile.name : "Set profile to join the leaderboard.")),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
-    var panelY = Math.min(firstButtonY + 188, GH - 150);
+    var buttonGap = menuCompact ? 52 : 58;
+    var buttonW = menuCompact ? 176 : 190;
+    var panelY = Math.max(firstButtonY + buttonGap * 4 + 30, Math.min(firstButtonY + 218, GH - 168));
     var tipPanel = me.add.graphics();
-    tipPanel.fillStyle(0x071018,.45).fillRoundedRect(48,panelY,384,94,16);
-    tipPanel.lineStyle(2,0xffffff,.10).strokeRoundedRect(48,panelY,384,94,16);
-    tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(62,panelY+12,360,70,13);
+    tipPanel.fillStyle(0x071018,.48).fillRoundedRect(54,panelY,372,94,16);
+    tipPanel.lineStyle(2,0xffffff,.10).strokeRoundedRect(54,panelY,372,94,16);
+    tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(68,panelY+12,344,70,13);
     [
       {x:116,t:"Endless",d:"Speed ramps up",c:"#7de4ff",icon:"rule_lane"},
       {x:240,t:"Color Match",d:"Same-color portal",c:"#ffdf75",icon:"rule_match"},
@@ -1027,10 +1067,10 @@ var MenuScene = {
       me.add.text(item.x,panelY+80,item.d,{fontSize:"10px",color:"#d5e2ef"}).setOrigin(.5).setDepth(3);
       me.tweens.add({targets:halo,scale:1.18,alpha:.035,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     });
-    makeButton(me,cx,firstButtonY,190,"Start Run",0x20c879,function(){me.scene.start("PlayScene");});
-    makeButton(me,cx,firstButtonY + 58,190,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
-    makeButton(me,cx,firstButtonY + 116,190,"Profile",0x7a67ff,function(){me.showProfileDialog();});
-    makeButton(me,cx,firstButtonY + 174,190,"Share",0x4a8fe7,function(){
+    makeButton(me,cx,firstButtonY,buttonW,"Start Run",0x20c879,function(){me.scene.start("PlayScene");});
+    makeButton(me,cx,firstButtonY + buttonGap,buttonW,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
+    makeButton(me,cx,firstButtonY + buttonGap * 2,buttonW,"Profile",0x7a67ff,function(){me.showProfileDialog();});
+    makeButton(me,cx,firstButtonY + buttonGap * 3,buttonW,"Share",0x4a8fe7,function(){
       var baseCount = best ? best.delivered : 8;
       var baseScore = best ? best.score : 100;
       var url = shareUrl(baseCount,baseScore);
@@ -1098,7 +1138,12 @@ var MenuScene = {
       if(me.profileLayer){ me.profileLayer.add(me.profileAvatarItems); }
     }
     var inputZone = me.add.zone(GW/2,top+148,310,56).setInteractive({useHandCursor:true});
-    inputZone.on("pointerdown",function(){ if(canEdit && me.profileInput){ me.profileInput.focus(); me.profileInput.select(); } });
+    inputZone.on("pointerdown",function(){
+      if(canEdit && me.profileInput){
+        placeNativeInput(me.profileInput,me,GW/2,top+148,310,56);
+        focusNativeInput(me.profileInput);
+      }
+    });
     var saveBtn = makeButton(me,314,top+374,140,canEdit ? (profile.name ? "Update" : "Save") : "Avatar",0x20c879,function(){ me.saveProfileFromDialog(); });
     var cancelBtn = makeButton(me,170,top+374,120,"Close",0xe65353,function(){ me.closeProfileDialog(true); });
     layer.add([shade,card,title,subtitle,inputBack,me.profileNameText,me.profileCursor,hint,inputZone].concat(avatarItems,[saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]));
@@ -1112,17 +1157,25 @@ var MenuScene = {
       input.autocomplete = "nickname";
       input.autocapitalize = "words";
       input.spellcheck = false;
-      input.maxLength = 28;
+      input.maxLength = MAX_PLAYER_NAME_CHARS;
       input.value = me.profileNameValue;
       input.addEventListener("input",function(){
         me.profileNameValue = cleanEditableName(input.value);
         if(input.value !== me.profileNameValue){ input.value = me.profileNameValue; }
         me.refreshProfileNameDisplay();
       });
+      input.addEventListener("focus",function(){
+        placeNativeInput(input,me,GW/2,top+148,310,56);
+        setTimeout(function(){ placeNativeInput(input,me,GW/2,top+148,310,56); lockPageViewport(); },120);
+      });
+      input.addEventListener("blur",lockPageViewport);
       document.body.appendChild(input);
       me.profileInput = input;
+      me.profileInputPlace = function(){ placeNativeInput(input,me,GW/2,top+148,310,56); };
+      window.addEventListener("resize",me.profileInputPlace);
+      if(window.visualViewport){ window.visualViewport.addEventListener("resize",me.profileInputPlace); window.visualViewport.addEventListener("scroll",lockPageViewport); }
+      placeNativeInput(input,me,GW/2,top+148,310,56);
       me.refreshProfileNameDisplay();
-      setTimeout(function(){ if(me.profileInput){ me.profileInput.focus(); me.profileInput.select(); } },80);
     }
   },
   refreshProfileNameDisplay:function(){
@@ -1138,6 +1191,11 @@ var MenuScene = {
     }
   },
   closeProfileDialog:function(reload){
+    if(this.profileInputPlace){
+      try{ window.removeEventListener("resize",this.profileInputPlace); }catch(e){}
+      try{ if(window.visualViewport){ window.visualViewport.removeEventListener("resize",this.profileInputPlace); window.visualViewport.removeEventListener("scroll",lockPageViewport); } }catch(e){}
+    }
+    this.profileInputPlace = null;
     if(this.profileInput && this.profileInput.parentNode){ this.profileInput.parentNode.removeChild(this.profileInput); }
     this.profileInput = null;
     this.profileLayer && this.profileLayer.destroy(true);
@@ -1165,7 +1223,10 @@ var MenuScene = {
         me.profileNameText.setScale(1.12);
         me.tweens.add({targets:me.profileNameText,scale:1,duration:160,ease:"Back.easeOut"});
       }
-      if(me.profileInput){ me.profileInput.focus(); }
+      if(me.profileInput){
+        if(me.profileInputPlace){ me.profileInputPlace(); }
+        focusNativeInput(me.profileInput);
+      }
       return;
     }
     if(canEdit && name && name !== profile.name){
@@ -1199,7 +1260,7 @@ var MenuScene = {
 var RecordsScene = {
   key:"RecordsScene",
   init:function(data){
-    this.initialTab = data && data.tab === "mine" ? "mine" : "global";
+    this.initialTab = data && data.tab === "mine" ? "mine" : data && data.tab === "china" ? "china" : "global";
   },
   create:function(){
     activeScene = this;
@@ -1217,8 +1278,10 @@ var RecordsScene = {
     me.renderRecords = RecordsScene.renderRecords;
     me.showLocalRecords = RecordsScene.showLocalRecords;
     me.showGlobalRecords = RecordsScene.showGlobalRecords;
+    me.showChinaRecords = RecordsScene.showChinaRecords;
     me.drawTabs = RecordsScene.drawTabs;
     if(me.initialTab === "mine"){ me.showLocalRecords(); }
+    else if(me.initialTab === "china"){ me.showChinaRecords(); }
     else{ me.showGlobalRecords(); }
     makeButton(me,GW/2,616,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
   },
@@ -1226,18 +1289,23 @@ var RecordsScene = {
     var me = this;
     if(me.tabItems){ me.tabItems.forEach(function(item){ if(item && item.destroy){ item.destroy(); } }); }
     me.tabItems = [];
-    function tab(x,label,key){
+    function tab(x,w,label,key){
       var selected = active === key;
       var bg = me.add.graphics().setDepth(10);
-      bg.fillStyle(selected ? 0x20c879 : 0x0b1520, selected ? 1 : .92).fillRoundedRect(x-82,136,164,36,9);
-      bg.lineStyle(1, selected ? 0x8ff0bc : 0xffffff, selected ? .38 : .12).strokeRoundedRect(x-82,136,164,36,9);
+      bg.fillStyle(selected ? 0x20c879 : 0x0b1520, selected ? 1 : .92).fillRoundedRect(x-w/2,136,w,36,9);
+      bg.lineStyle(1, selected ? 0x8ff0bc : 0xffffff, selected ? .38 : .12).strokeRoundedRect(x-w/2,136,w,36,9);
       var tx = me.add.text(x,154,label,{fontSize:"14px",color:selected ? "#ffffff" : "#9fb0c1",fontStyle:"bold"}).setOrigin(.5).setDepth(11);
-      var zone = me.add.zone(x,154,164,40).setInteractive({useHandCursor:true}).setDepth(12);
-      zone.on("pointerdown",function(){ if(key === "global"){ me.showGlobalRecords(); }else{ me.showLocalRecords(); } });
+      var zone = me.add.zone(x,154,w,40).setInteractive({useHandCursor:true}).setDepth(12);
+      zone.on("pointerdown",function(){
+        if(key === "global"){ me.showGlobalRecords(); }
+        else if(key === "china"){ me.showChinaRecords(); }
+        else{ me.showLocalRecords(); }
+      });
       me.tabItems.push(bg,tx,zone);
     }
-    tab(152,"Global","global");
-    tab(328,"Mine","mine");
+    tab(112,116,"Global","global");
+    tab(240,116,"China","china");
+    tab(368,116,"Mine","mine");
   },
   showLocalRecords:function(){
     this.drawTabs("mine");
@@ -1253,13 +1321,31 @@ var RecordsScene = {
     }
     if(me.boardStatus){ me.boardStatus.setText("Loading Global Top..."); me.boardStatus.setColor("#8ff0bc"); }
     me.renderRecords([],"Loading Global Top...");
-    fetchCloudLeaderboard().then(function(records){
+    fetchCloudLeaderboard("global").then(function(records){
       if(!me.scene || !me.scene.isActive("RecordsScene")){ return; }
       me.renderRecords(records,"Global Top 50");
     }).catch(function(){
       if(me.boardStatus){ me.boardStatus.setText("Global unavailable - showing mine"); me.boardStatus.setColor("#ffdf75"); }
       me.drawTabs("mine");
       me.renderRecords(readRecords(),"My records");
+    });
+  },
+  showChinaRecords:function(){
+    var me = this;
+    me.drawTabs("china");
+    if(!CLOUD_LEADERBOARD.enabled){
+      me.drawTabs("mine");
+      me.renderRecords(readRecords(),"My records");
+      return;
+    }
+    if(me.boardStatus){ me.boardStatus.setText("Loading China Top..."); me.boardStatus.setColor("#ffdf75"); }
+    me.renderRecords([],"Loading China Top...");
+    fetchCloudLeaderboard("china").then(function(records){
+      if(!me.scene || !me.scene.isActive("RecordsScene")){ return; }
+      me.renderRecords(records,"China Top 50");
+    }).catch(function(){
+      if(me.boardStatus){ me.boardStatus.setText("China board unavailable"); me.boardStatus.setColor("#ffdf75"); }
+      me.renderRecords([],"China Top 50");
     });
   },
   renderRecords:function(records,label){
@@ -1270,11 +1356,12 @@ var RecordsScene = {
     }
     me.recordItems = [];
     var isGlobal = label.indexOf("Global") === 0;
+    var isChina = label.indexOf("China") === 0;
     var isMine = label.indexOf("My") === 0;
     var isLoading = label.indexOf("Loading") === 0;
     if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor((isGlobal || isLoading) ? "#8ff0bc" : "#ffdf75"); }
     if(!records.length){
-      var emptyText = isLoading ? "Loading global scores..." : isMine ? "No best score yet\nSet profile, then finish one run" : "Global board is syncing\nSet profile to join automatically";
+      var emptyText = isLoading ? (isChina ? "Loading China scores..." : "Loading global scores...") : isMine ? "No best score yet\nSet profile, then finish one run" : isChina ? "China board is empty\nSet profile and play from China" : "Global board is syncing\nSet profile to join automatically";
       me.recordItems.push(me.add.text(GW/2,370,emptyText,{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5));
@@ -1284,17 +1371,26 @@ var RecordsScene = {
       var y = 226 + index * 39;
       var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
       me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
-      if(isGlobal){
-        var flagItems = drawRemoteFlag(me,118,y,item.countryCode,function(){
+      if(isGlobal || isChina){
+        if(isChina){
+          var av = drawAvatar(me,118,y,item.avatar || "bolt",false,.68);
+          me.recordItems.push(av);
+        }else{
+          var flagItems = drawRemoteFlag(me,118,y,item.countryCode,function(){
           if(me.scene && me.scene.isActive("RecordsScene")){ me.renderRecords(records,label); }
-        });
-        me.recordItems = me.recordItems.concat(flagItems);
+          });
+          me.recordItems = me.recordItems.concat(flagItems);
+        }
+        var scoreText = me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5);
         var nameText = me.add.text(152,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
-        fitTextWidth(nameText,132,.72);
+        var nameMax = Math.max(74,scoreText.x - scoreText.displayWidth - 18 - nameText.x);
+        fitTextWidth(nameText,Math.min(isChina ? 142 : 132,nameMax),.56);
         me.recordItems.push(nameText);
-        me.recordItems.push(me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5));
+        me.recordItems.push(scoreText);
       }else{
-        me.recordItems.push(me.add.text(106,y-9,cleanPlayerName(item.name || "Runner"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5));
+        var localName = me.add.text(106,y-9,cleanPlayerName(item.name || "Runner"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5);
+        fitTextWidth(localName,134,.72);
+        me.recordItems.push(localName);
         me.recordItems.push(me.add.text(106,y+10,formatScore(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5));
         me.recordItems.push(me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5));
         me.recordItems.push(me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5));
