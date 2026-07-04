@@ -22,22 +22,22 @@
   canvas{display:block}
   .native-name-input{
     position:fixed;
-    z-index:50;
+    z-index:-1;
     border:0;
     outline:0;
-    border-radius:13px;
-    background:#0d1722;
-    color:#eaf7ff;
-    font:700 20px Arial,"Microsoft YaHei","PingFang SC",sans-serif;
-    text-align:center;
-    box-shadow:inset 0 0 0 2px rgba(143,240,188,.32);
-    padding:0 14px;
+    opacity:.01;
+    width:1px;
+    height:1px;
+    left:0;
+    top:0;
+    transform:translate3d(-12px,-12px,0);
+    background:transparent;
+    color:transparent;
+    font-size:16px;
     touch-action:auto;
     -webkit-user-select:text;
     user-select:text;
   }
-  .native-name-input::placeholder{color:#6f8295}
-  .native-name-input.input-warn{box-shadow:inset 0 0 0 2px rgba(255,223,117,.82),0 0 18px rgba(255,223,117,.25)}
   @media (max-aspect-ratio: 2/3){
     #gw{width:100vw;height:100vh;height:100dvh}
     canvas{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
@@ -238,14 +238,64 @@ function countryFlag(code){
 
 function countryBadge(code){
   code = cleanCountryCode(code);
-  return code || "GL";
+  return code || "--";
 }
 
 function guessedCountryCode(){
+  var tz = "";
+  try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){}
+  var tzMap = {
+    "Asia/Shanghai":"CN",
+    "Asia/Chongqing":"CN",
+    "Asia/Harbin":"CN",
+    "Asia/Urumqi":"CN",
+    "Asia/Hong_Kong":"CN",
+    "Asia/Macau":"CN",
+    "Asia/Taipei":"CN",
+    "America/New_York":"US",
+    "America/Chicago":"US",
+    "America/Denver":"US",
+    "America/Los_Angeles":"US",
+    "America/Phoenix":"US",
+    "America/Anchorage":"US",
+    "Pacific/Honolulu":"US",
+    "Europe/London":"GB",
+    "Asia/Tokyo":"JP",
+    "Asia/Seoul":"KR",
+    "Asia/Singapore":"SG",
+    "Asia/Bangkok":"TH",
+    "Asia/Jakarta":"ID",
+    "Asia/Manila":"PH",
+    "Asia/Kuala_Lumpur":"MY",
+    "Asia/Kolkata":"IN",
+    "Australia/Sydney":"AU",
+    "Australia/Melbourne":"AU",
+    "Europe/Paris":"FR",
+    "Europe/Berlin":"DE",
+    "Europe/Madrid":"ES",
+    "Europe/Rome":"IT",
+    "America/Toronto":"CA",
+    "America/Vancouver":"CA",
+    "America/Sao_Paulo":"BR",
+    "America/Mexico_City":"MX"
+  };
+  if(tzMap[tz]){ return tzMap[tz]; }
   var lang = "";
   try{ lang = (navigator.languages && navigator.languages[0]) || navigator.language || ""; }catch(e){}
   var match = String(lang).match(/[-_]([A-Za-z]{2})\b/);
-  return match ? cleanCountryCode(match[1]) : "";
+  var code = match ? cleanCountryCode(match[1]) : "";
+  if(code === "HK" || code === "MO" || code === "TW"){ return "CN"; }
+  if(code){ return code; }
+  lang = String(lang).toLowerCase();
+  if(lang.indexOf("zh") === 0){ return "CN"; }
+  if(lang.indexOf("ja") === 0){ return "JP"; }
+  if(lang.indexOf("ko") === 0){ return "KR"; }
+  if(lang.indexOf("th") === 0){ return "TH"; }
+  if(lang.indexOf("id") === 0){ return "ID"; }
+  if(lang.indexOf("vi") === 0){ return "VN"; }
+  if(lang.indexOf("hi") === 0){ return "IN"; }
+  if(lang.indexOf("en") === 0){ return "US"; }
+  return "";
 }
 
 function beatPercent(score){
@@ -459,7 +509,8 @@ function submitCloudScore(record){
       packages:Math.floor(record.delivered || 0),
       combo:Math.floor(record.combo || 0),
       accuracy:Math.floor(record.rate || 0),
-      country_code:guessedCountryCode()
+      country_code:guessedCountryCode(),
+      timezone:(function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){ return ""; } })()
     })
   }).then(function(res){
     if(!res.ok){ throw new Error("Submit " + res.status); }
@@ -1792,14 +1843,21 @@ var GameOverScene = {
     var inputBack = me.add.graphics();
     inputBack.fillStyle(0x0d1722,1).fillRoundedRect(92,top+130,296,54,13);
     inputBack.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(92,top+130,296,54,13);
+    me.saveNameValue = cleanEditableName(playerName || "");
+    me.saveDisplayText = me.add.text(GW/2,top+157,me.saveNameValue || "Type your name",{
+      fontSize:"22px",color:me.saveNameValue ? "#eaf7ff" : "#6f8295",fontStyle:"bold"
+    }).setOrigin(.5);
+    me.saveDisplayCursor = me.add.text(GW/2 + 72,top+157,"|",{
+      fontSize:"23px",color:"#8ff0bc",fontStyle:"bold"
+    }).setOrigin(.5);
+    me.tweens.add({targets:me.saveDisplayCursor,alpha:.18,duration:420,yoyo:true,repeat:-1});
     var hint = me.add.text(GW/2,top+210,"Use your keyboard. Any language is supported.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
+    var inputZone = me.add.zone(GW/2,top+157,300,58).setInteractive({useHandCursor:true});
+    inputZone.on("pointerdown",function(){ if(me.saveInput){ me.saveInput.focus(); me.saveInput.select(); } });
     var saveBtn = makeButton(me,306,top+258,154,"Save",0x20c879,function(){ me.submitScoreFromDialog(data); });
     var cancelBtn = makeButton(me,176,top+258,122,"Cancel",0xe65353,function(){ me.closeSaveDialog(); });
-    layer.add([shade,card,title,score,label,inputBack,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
+    layer.add([shade,card,title,score,label,inputBack,me.saveDisplayText,me.saveDisplayCursor,inputZone,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
     me.saveLayer = layer;
-    var rect = me.game.canvas.getBoundingClientRect();
-    var scaleX = rect.width / GW;
-    var scaleY = rect.height / GH;
     var input = document.createElement("input");
     input.className = "native-name-input";
     input.type = "text";
@@ -1809,18 +1867,37 @@ var GameOverScene = {
     input.spellcheck = false;
     input.maxLength = 28;
     input.placeholder = "Type your name";
-    input.value = cleanEditableName(playerName || "");
-    input.style.left = (rect.left + 92 * scaleX) + "px";
-    input.style.top = (rect.top + (top + 130) * scaleY) + "px";
-    input.style.width = (296 * scaleX) + "px";
-    input.style.height = (54 * scaleY) + "px";
+    input.value = me.saveNameValue;
+    input.addEventListener("input",function(){
+      me.saveNameValue = cleanEditableName(input.value);
+      if(input.value !== me.saveNameValue){ input.value = me.saveNameValue; }
+      me.refreshNativeNameDisplay();
+    });
     document.body.appendChild(input);
     me.saveInput = input;
+    me.refreshNativeNameDisplay = GameOverScene.refreshNativeNameDisplay;
+    me.refreshNativeNameDisplay();
     setTimeout(function(){ if(me.saveInput){ me.saveInput.focus(); me.saveInput.select(); } },80);
+  },
+  refreshNativeNameDisplay:function(){
+    var value = this.saveNameValue || "";
+    if(this.saveDisplayText){
+      this.saveDisplayText.setText(value || "Type your name");
+      this.saveDisplayText.setColor(value ? "#eaf7ff" : "#6f8295");
+      this.saveDisplayText.setScale(1);
+      fitTextWidth(this.saveDisplayText,244,.72);
+    }
+    if(this.saveDisplayCursor && this.saveDisplayText){
+      this.saveDisplayCursor.x = Math.min(GW/2 + 132,this.saveDisplayText.x + this.saveDisplayText.displayWidth / 2 + 13);
+    }
   },
   closeSaveDialog:function(){
     if(this.saveInput && this.saveInput.parentNode){ this.saveInput.parentNode.removeChild(this.saveInput); }
     this.saveInput = null;
+    this.saveNameValue = null;
+    this.saveDisplayText = null;
+    this.saveDisplayCursor = null;
+    this.refreshNativeNameDisplay = null;
     if(this.saveLayer){ this.saveLayer.destroy(true); }
     this.saveLayer = null;
     this.savingScore = false;
@@ -1828,19 +1905,16 @@ var GameOverScene = {
   submitScoreFromDialog:function(data){
     var me = this;
     if(me.savingScore){ return; }
-    var typed = cleanEditableName(me.saveInput ? me.saveInput.value : "");
+    var typed = cleanEditableName(me.saveInput ? me.saveInput.value : me.saveNameValue);
     if(!typed){
       toast(me,"Choose a name first","#ffdf75");
-      if(me.saveInput){
-        me.saveInput.classList.add("input-warn");
-        me.saveInput.focus();
-        setTimeout(function(){ if(me.saveInput){ me.saveInput.classList.remove("input-warn"); } },360);
-      }
+      if(me.saveInput){ me.saveInput.focus(); }
+      me.bumpScore(me.saveDisplayText,1.12);
       return;
     }
     me.savingScore = true;
     var nextName = savePlayerName(typed);
-    var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()};
+    var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,countryCode:guessedCountryCode(),time:data.time || Date.now(),day:todayKey()};
     saveRecord(record);
     toast(me,CLOUD_LEADERBOARD.enabled ? "Saving online..." : "Score saved","#ffdf75");
     submitCloudScore(record).then(function(){
