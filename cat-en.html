@@ -42,9 +42,9 @@ var STORE_KEY = "neonSortRushRecordsENv1";
 var DAILY_KEY = "neonSortRushDailyENv1";
 var PLAYER_KEY = "neonSortRushPlayerENv1";
 var CLOUD_LEADERBOARD = {
-  enabled:false,
-  url:"",
-  anonKey:""
+  enabled:true,
+  url:"https://ztscfxpepqfiqttxasdb.supabase.co",
+  anonKey:"sb_publishable_SdrYUBMn1ahVt7xzOVTWPA_pbnU_gLQ"
 };
 var LANE_X = [78, 186, 294, 402];
 var COLORS = [
@@ -350,6 +350,59 @@ function saveRecord(record){
   return records;
 }
 
+function cloudHeaders(){
+  return {
+    apikey:CLOUD_LEADERBOARD.anonKey,
+    Authorization:"Bearer " + CLOUD_LEADERBOARD.anonKey,
+    "Content-Type":"application/json"
+  };
+}
+
+function normalizeCloudRecord(item){
+  return {
+    name:cleanPlayerName(item.name || "Guest"),
+    score:Math.floor(item.score || 0),
+    delivered:Math.floor(item.packages || item.delivered || 0),
+    combo:Math.floor(item.combo || 0),
+    rate:Math.floor(item.accuracy || item.rate || 0),
+    time:item.created_at ? Date.parse(item.created_at) || 0 : 0
+  };
+}
+
+function fetchCloudLeaderboard(){
+  if(!CLOUD_LEADERBOARD.enabled || !CLOUD_LEADERBOARD.url || !CLOUD_LEADERBOARD.anonKey || !window.fetch){
+    return Promise.reject(new Error("Cloud leaderboard disabled"));
+  }
+  var url = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/rest/v1/leaderboard_scores?select=name,score,packages,combo,accuracy,created_at&order=score.desc&limit=50";
+  return fetch(url,{headers:cloudHeaders()}).then(function(res){
+    if(!res.ok){ throw new Error("Leaderboard " + res.status); }
+    return res.json();
+  }).then(function(rows){
+    return Array.isArray(rows) ? rows.map(normalizeCloudRecord) : [];
+  });
+}
+
+function submitCloudScore(record){
+  if(!CLOUD_LEADERBOARD.enabled || !CLOUD_LEADERBOARD.url || !CLOUD_LEADERBOARD.anonKey || !window.fetch){
+    return Promise.reject(new Error("Cloud submit disabled"));
+  }
+  var url = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/functions/v1/submit-score";
+  return fetch(url,{
+    method:"POST",
+    headers:cloudHeaders(),
+    body:JSON.stringify({
+      name:cleanPlayerName(record.name),
+      score:Math.floor(record.score || 0),
+      packages:Math.floor(record.delivered || 0),
+      combo:Math.floor(record.combo || 0),
+      accuracy:Math.floor(record.rate || 0)
+    })
+  }).then(function(res){
+    if(!res.ok){ throw new Error("Submit " + res.status); }
+    return res.json().catch(function(){ return {ok:true}; });
+  });
+}
+
 function flash(scene,color,alpha,duration){
   var g = scene.add.graphics().setDepth(90);
   g.fillStyle(color,alpha).fillRect(0,0,GW,GH);
@@ -623,27 +676,45 @@ var RecordsScene = {
     var me = this;
     gradientBackground(me);
     me.add.text(GW/2,76,"Leaderboard",{fontSize:"32px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
-    me.add.text(GW/2,110,CLOUD_LEADERBOARD.enabled ? "Global beta" : "Local MVP - cloud ready",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    me.boardStatus = me.add.text(GW/2,110,CLOUD_LEADERBOARD.enabled ? "Loading Global Top..." : "Local MVP - cloud ready",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var panel = me.add.graphics();
     panel.fillStyle(0x111b27,.94).fillRoundedRect(46,130,388,420,10);
     panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,130,388,420,10);
-    var records = readRecords();
-    if(!records.length){
-      me.add.text(GW/2,330,"No record yet\nFinish one run to save it",{
-        fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
-      }).setOrigin(.5);
-    }else{
-      records.slice(0,8).forEach(function(item,index){
-        var y = 166 + index * 46;
-        var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
-        me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5);
-        me.add.text(106,y-9,cleanPlayerName(item.name || "Guest"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5);
-        me.add.text(106,y+10,(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5);
-        me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5);
-        me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5);
+    me.recordItems = [];
+    me.renderRecords = RecordsScene.renderRecords;
+    me.renderRecords(readRecords(),"Local scores");
+    if(CLOUD_LEADERBOARD.enabled){
+      fetchCloudLeaderboard().then(function(records){
+        if(!me.scene || !me.scene.isActive("RecordsScene")){ return; }
+        me.renderRecords(records,"Global Top 50");
+      }).catch(function(){
+        if(me.boardStatus){ me.boardStatus.setText("Local scores - cloud unavailable"); me.boardStatus.setColor("#ffdf75"); }
       });
     }
     makeButton(me,GW/2,610,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
+  },
+  renderRecords:function(records,label){
+    var me = this;
+    if(me.recordItems){
+      me.recordItems.forEach(function(item){ if(item && item.destroy){ item.destroy(); } });
+    }
+    me.recordItems = [];
+    if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor(label.indexOf("Global") === 0 ? "#8ff0bc" : "#ffdf75"); }
+    if(!records.length){
+      me.recordItems.push(me.add.text(GW/2,330,"No score yet\nFinish one run to save it",{
+        fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
+      }).setOrigin(.5));
+      return;
+    }
+    records.slice(0,8).forEach(function(item,index){
+      var y = 166 + index * 46;
+      var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
+      me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
+      me.recordItems.push(me.add.text(106,y-9,cleanPlayerName(item.name || "Guest"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5));
+      me.recordItems.push(me.add.text(106,y+10,(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5));
+      me.recordItems.push(me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5));
+      me.recordItems.push(me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5));
+    });
   }
 };
 
@@ -1564,9 +1635,16 @@ var GameOverScene = {
         var typed = window.prompt("Nickname", playerName);
         if(typed !== null){ nextName = savePlayerName(typed); }
       }catch(e){ nextName = savePlayerName(playerName); }
-      saveRecord({name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()});
-      toast(me,"Score saved","#ffdf75");
-      me.time.delayedCall(280,function(){me.scene.start("RecordsScene");});
+      var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()};
+      saveRecord(record);
+      toast(me,CLOUD_LEADERBOARD.enabled ? "Saving online..." : "Score saved","#ffdf75");
+      submitCloudScore(record).then(function(){
+        toast(me,"Global score saved","#8ff0bc");
+        me.time.delayedCall(280,function(){me.scene.start("RecordsScene");});
+      }).catch(function(){
+        toast(me,"Saved locally","#ffdf75");
+        me.time.delayedCall(360,function(){me.scene.start("RecordsScene");});
+      });
     });
     makeButton(me,GW/2,buttonY + buttonGap * 3,buttonW,"Menu",0x4a8fe7,function(){me.scene.start("MenuScene");});
   }
