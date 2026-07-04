@@ -20,30 +20,6 @@
   }
   #gw{display:flex;align-items:center;justify-content:center;background:#080d13}
   canvas{display:block}
-  .name-input{
-    position:fixed;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    width:min(72vw,300px);
-    height:48px;
-    z-index:20;
-    border:2px solid rgba(143,240,188,.72);
-    border-radius:12px;
-    background:#071018;
-    color:#eaf7ff;
-    font:700 20px Arial,"Segoe UI Emoji","Microsoft YaHei",sans-serif;
-    text-align:center;
-    outline:none;
-    box-shadow:0 18px 48px rgba(0,0,0,.55),0 0 24px rgba(32,200,121,.18);
-    letter-spacing:0;
-  }
-  .name-input.compact{
-    width:min(64vw,270px);
-    height:42px;
-    font-size:18px;
-  }
-  .name-input::placeholder{color:#6f8295}
   @media (max-aspect-ratio: 2/3){
     #gw{width:100vw;height:100vh;height:100dvh}
     canvas{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
@@ -240,24 +216,6 @@ function countryFlag(code){
   code = cleanCountryCode(code);
   if(!code){ return String.fromCodePoint(0x1F310); }
   return String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
-}
-
-function gameRectToCss(left,top,width,height){
-  var canvas = document.querySelector("canvas");
-  if(!canvas){ return {left:left,top:top,width:width,height:height}; }
-  var rect = canvas.getBoundingClientRect();
-  var sx = rect.width / GW;
-  var sy = rect.height / GH;
-  return {
-    left:rect.left + left * sx,
-    top:rect.top + top * sy,
-    width:width * sx,
-    height:height * sy
-  };
-}
-
-function isMobileViewport(){
-  return window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
 }
 
 function beatPercent(score){
@@ -748,8 +706,8 @@ var RecordsScene = {
     me.add.text(GW/2,76,"Leaderboard",{fontSize:"32px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
     me.boardStatus = me.add.text(GW/2,110,CLOUD_LEADERBOARD.enabled ? "Global Top 50" : "My records",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var panel = me.add.graphics();
-    panel.fillStyle(0x111b27,.94).fillRoundedRect(46,150,388,400,10);
-    panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,150,388,400,10);
+    panel.fillStyle(0x111b27,.94).fillRoundedRect(46,150,388,492,12);
+    panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(46,150,388,492,12);
     me.recordItems = [];
     me.tabItems = [];
     me.renderRecords = RecordsScene.renderRecords;
@@ -757,7 +715,7 @@ var RecordsScene = {
     me.showGlobalRecords = RecordsScene.showGlobalRecords;
     me.drawTabs = RecordsScene.drawTabs;
     me.showGlobalRecords();
-    makeButton(me,GW/2,610,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
+    makeButton(me,GW/2,606,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
   },
   drawTabs:function(active){
     var me = this;
@@ -812,7 +770,7 @@ var RecordsScene = {
     if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor((isGlobal || isLoading) ? "#8ff0bc" : "#ffdf75"); }
     if(!records.length){
       var emptyText = isLoading ? "Loading global scores..." : isMine ? "No personal score yet\nFinish one run to save it" : "No global scores yet\nBe the first to post one";
-      me.recordItems.push(me.add.text(GW/2,330,emptyText,{
+      me.recordItems.push(me.add.text(GW/2,348,emptyText,{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5));
       return;
@@ -856,12 +814,12 @@ var PlayScene = {
     this.level = 1;
     this.lane = 1;
     this.carry = null;
-    this.speed = 140;
-    this.spawnDelay = 980;
+    this.speed = 118;
+    this.spawnDelay = 1220;
     this.finished = false;
     this.rngSeed = (Date.now() ^ Math.floor(Math.random() * 4294967295)) >>> 0;
     this.rushTimer = 0;
-    this.openingSprintTimer = 12000;
+    this.openingSprintTimer = 9000;
     this.autoTimer = 0;
     this.loopTimer = 0;
     this.isPaused = false;
@@ -937,7 +895,7 @@ var PlayScene = {
     me.physics.add.overlap(me.player,me.boosts,me.collectBoost,null,me);
     me.packageTimer = me.time.addEvent({delay:me.spawnDelay,callback:me.spawnPackage,callbackScope:me,loop:true});
     me.time.delayedCall(150,function(){ me.spawnOpeningPackage(); },null,me);
-    me.time.delayedCall(900,function(){ me.spawnOpeningPackage(true); },null,me);
+    me.time.delayedCall(1500,function(){ me.spawnOpeningPackage(true); },null,me);
     me.boostTimer = me.time.addEvent({delay:9000,callback:me.spawnBoost,callbackScope:me,loop:true});
     me.refreshPlayerStyle();
     me.drawLaneFx();
@@ -972,7 +930,7 @@ var PlayScene = {
     if(me.openingSprintTimer > 0){
       me.openingSprintTimer -= delta;
       if(me.openingSprintTimer <= 0){
-        me.spawnDelay = Math.max(720,me.spawnDelay + 180);
+        me.spawnDelay = Math.max(980,me.spawnDelay - 120);
         if(me.packageTimer){ me.packageTimer.delay = me.spawnDelay; }
       }
     }
@@ -1029,8 +987,8 @@ var PlayScene = {
     var newLevel = 1 + Math.floor((me.delivered + me.missed) / 12);
     if(newLevel !== me.level){
       me.level = newLevel;
-      me.speed = Math.min(140 + (newLevel-1)*20, 340);
-      me.spawnDelay = Math.max(520, 1120 - (newLevel-1)*86);
+      me.speed = Math.min(118 + (newLevel-1)*18, 330);
+      me.spawnDelay = Math.max(560, 1220 - (newLevel-1)*78);
       me.packageTimer.delay = me.spawnDelay;
       me.modeText.setText("SPEED " + me.level);
       toast(me,"Speed up","#ffdf75");
@@ -1083,12 +1041,12 @@ var PlayScene = {
     if(this.isPaused || this.finished || !this.packages || !this.player){ return; }
     var c = second ? COLORS[3] : COLORS[2];
     var lane = second ? 3 : this.lane;
-    var y = Math.max(190,this.player.y - (second ? 280 : 235));
+    var y = Math.max(190,this.player.y - (second ? 300 : 250));
     var pkg = this.packages.create(LANE_X[lane],y,"pkg_"+c.key).setDepth(12);
     pkg.colorKey = c.key;
     pkg.colorName = c.name;
     pkg.colorHex = c.hex;
-    pkg.setVelocityY(this.speed + (second ? 108 : 92));
+    pkg.setVelocityY(this.speed + (second ? 72 : 64));
     pkg.setAngularVelocity(24);
     pkg.setScale(1.08);
     var glow = this.add.circle(pkg.x,pkg.y,19,c.hex,.18).setDepth(11);
@@ -1760,7 +1718,8 @@ var GameOverScene = {
     me.resultData = data;
     me.showSaveScoreDialog = GameOverScene.showSaveScoreDialog;
     me.closeSaveDialog = GameOverScene.closeSaveDialog;
-    me.positionSaveInput = GameOverScene.positionSaveInput;
+    me.editSaveName = GameOverScene.editSaveName;
+    me.refreshSaveName = GameOverScene.refreshSaveName;
     me.submitScoreFromDialog = GameOverScene.submitScoreFromDialog;
     makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Save Score",0xf3a326,function(){
       me.showSaveScoreDialog(playerName,data);
@@ -1773,69 +1732,69 @@ var GameOverScene = {
     var layer = me.add.container(0,0).setDepth(150);
     var shade = me.add.graphics();
     shade.fillStyle(0x000000,.70).fillRect(0,0,GW,GH);
-    var mobileInput = isMobileViewport();
-    var top = mobileInput ? Math.max(58,Math.round(GH * .18)) : Math.round(GH/2 - 158);
+    var cardH = 430;
+    var top = Math.max(34,Math.round(GH/2 - cardH/2));
     var card = me.add.graphics();
-    card.fillStyle(0x071018,.98).fillRoundedRect(54,top,372,316,20);
-    card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(54,top,372,316,20);
-    card.fillStyle(0x20c879,.10).fillRoundedRect(76,top+22,328,72,16);
-    card.lineStyle(1,0xffffff,.10).strokeRoundedRect(76,top+22,328,72,16);
+    card.fillStyle(0x071018,.98).fillRoundedRect(50,top,380,cardH,20);
+    card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(50,top,380,cardH,20);
+    card.fillStyle(0x20c879,.10).fillRoundedRect(76,top+20,328,70,16);
+    card.lineStyle(1,0xffffff,.10).strokeRoundedRect(76,top+20,328,70,16);
     var title = me.add.text(GW/2,top+44,"Save to Global Board",{fontSize:"24px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setOrigin(.5);
-    var score = me.add.text(GW/2,top+76,formatScore(data.score || 0) + " pts",{fontSize:"20px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var label = me.add.text(GW/2,top+119,"Nickname",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    var score = me.add.text(GW/2,top+74,formatScore(data.score || 0) + " pts",{fontSize:"20px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var label = me.add.text(GW/2,top+112,"Nickname",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var inputBack = me.add.graphics();
-    inputBack.fillStyle(0x0d1722,1).fillRoundedRect(90,top+136,300,52,13);
-    inputBack.lineStyle(2,0x8ff0bc,.28).strokeRoundedRect(90,top+136,300,52,13);
-    var hint = me.add.text(GW/2,top+208,"Your score will show as flag + name + score.",{fontSize:"13px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
-    var saveBtn = makeButton(me,GW/2,top+252,212,"Save Globally",0x20c879,function(){ me.submitScoreFromDialog(data); });
-    var cancelBtn = makeButton(me,GW/2,top+302,158,"Cancel",0x4a8fe7,function(){ me.closeSaveDialog(); });
-    layer.add([shade,card,title,score,label,inputBack,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
-    var input = document.createElement("input");
-    input.className = mobileInput ? "name-input compact" : "name-input";
-    input.type = "text";
-    input.inputMode = "text";
-    input.autocomplete = "nickname";
-    input.maxLength = 14;
-    input.placeholder = "Guest";
-    input.value = cleanPlayerName(playerName || readPlayerName());
-    input.dataset.gameLeft = "102";
-    input.dataset.gameTop = String(top + 142);
-    input.dataset.gameWidth = "276";
-    input.dataset.gameHeight = "40";
-    document.body.appendChild(input);
-    me.saveInput = input;
-    me.positionSaveInput();
-    if(!mobileInput){ setTimeout(function(){ try{ input.focus(); input.select(); }catch(e){} },60); }
-    input.addEventListener("focus",function(){ me.time.delayedCall(90,function(){ if(me.saveInput){ me.positionSaveInput(true); } }); });
-    input.addEventListener("blur",function(){ me.time.delayedCall(90,function(){ if(me.saveInput){ me.positionSaveInput(false); } }); });
-    input.addEventListener("keydown",function(event){
-      if(event.key === "Enter"){ event.preventDefault(); me.submitScoreFromDialog(data); }
-      if(event.key === "Escape"){ event.preventDefault(); me.closeSaveDialog(); }
+    inputBack.fillStyle(0x0d1722,1).fillRoundedRect(92,top+128,296,50,13);
+    inputBack.lineStyle(2,0x8ff0bc,.28).strokeRoundedRect(92,top+128,296,50,13);
+    me.saveName = cleanPlayerName(playerName || readPlayerName());
+    me.saveNameText = me.add.text(GW/2,top+153,me.saveName,{fontSize:"23px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
+    me.saveCursor = me.add.text(GW/2 + 52,top+153,"|",{fontSize:"24px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    me.tweens.add({targets:me.saveCursor,alpha:.18,duration:420,yoyo:true,repeat:-1});
+    var hint = me.add.text(GW/2,top+197,"Tap letters below. Score shows as flag + name + score.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
+    var keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    var keyItems = [];
+    keys.forEach(function(ch,index){
+      var col = index % 9;
+      var row = Math.floor(index / 9);
+      var x = 78 + col * 40;
+      var y = top + 232 + row * 38;
+      var keyBg = me.add.graphics();
+      keyBg.fillStyle(0x132232,1).fillRoundedRect(x-16,y-15,32,30,8);
+      keyBg.lineStyle(1,0xffffff,.10).strokeRoundedRect(x-16,y-15,32,30,8);
+      var keyText = me.add.text(x,y,ch,{fontSize:"15px",color:"#dce9f5",fontStyle:"bold"}).setOrigin(.5);
+      var zone = me.add.zone(x,y,34,32).setInteractive({useHandCursor:true});
+      zone.on("pointerdown",function(){ me.editSaveName(ch); });
+      keyItems.push(keyBg,keyText,zone);
     });
+    var delBtn = makeButton(me,176,top+354,122,"Delete",0x4a8fe7,function(){ me.editSaveName("BACK"); });
+    var saveBtn = makeButton(me,306,top+354,154,"Save",0x20c879,function(){ me.submitScoreFromDialog(data); });
+    var cancelBtn = makeButton(me,GW/2,top+402,150,"Cancel",0xe65353,function(){ me.closeSaveDialog(); });
+    layer.add([shade,card,title,score,label,inputBack,me.saveNameText,me.saveCursor,hint].concat(keyItems,[delBtn.bg,delBtn.text,delBtn.zone,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]));
     me.saveLayer = layer;
   },
-  positionSaveInput:function(forceCompact){
-    var input = this.saveInput;
-    if(!input){ return; }
-    var left = Number(input.dataset.gameLeft || 102);
-    var top = Number(input.dataset.gameTop || 0);
-    var width = Number(input.dataset.gameWidth || 276);
-    var height = Number(input.dataset.gameHeight || 40);
-    var cssBox = gameRectToCss(left,top,width,height);
-    var compact = forceCompact || (isMobileViewport() && document.activeElement === input);
-    if(compact && window.visualViewport){
-      cssBox.top = Math.min(cssBox.top, window.visualViewport.offsetTop + Math.max(84, window.visualViewport.height * .24));
+  editSaveName:function(value){
+    var next = this.saveName || "";
+    if(value === "BACK"){
+      next = next.slice(0,-1);
+    }else if(next.length < 14){
+      next += value;
     }
-    input.classList.toggle("compact", !!compact);
-    input.style.left = (cssBox.left + cssBox.width / 2) + "px";
-    input.style.top = (cssBox.top + cssBox.height / 2) + "px";
-    input.style.width = cssBox.width + "px";
-    input.style.height = cssBox.height + "px";
-    input.style.fontSize = Math.max(16,Math.min(20,cssBox.height * .46)) + "px";
+    this.saveName = cleanPlayerName(next);
+    this.refreshSaveName();
+  },
+  refreshSaveName:function(){
+    var name = this.saveName || "Guest";
+    if(this.saveNameText){
+      this.saveNameText.setText(name);
+      fitTextWidth(this.saveNameText,244,.72);
+    }
+    if(this.saveCursor && this.saveNameText){
+      this.saveCursor.x = Math.min(GW/2 + 132,this.saveNameText.x + this.saveNameText.displayWidth / 2 + 13);
+    }
   },
   closeSaveDialog:function(){
-    if(this.saveInput && this.saveInput.parentNode){ this.saveInput.parentNode.removeChild(this.saveInput); }
-    this.saveInput = null;
+    this.saveNameText = null;
+    this.saveCursor = null;
+    this.saveName = null;
     if(this.saveLayer){ this.saveLayer.destroy(true); }
     this.saveLayer = null;
     this.savingScore = false;
@@ -1844,11 +1803,10 @@ var GameOverScene = {
     var me = this;
     if(me.savingScore){ return; }
     me.savingScore = true;
-    var typed = me.saveInput ? me.saveInput.value : readPlayerName();
+    var typed = me.saveName || readPlayerName();
     var nextName = savePlayerName(typed);
     var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()};
     saveRecord(record);
-    if(me.saveInput){ me.saveInput.disabled = true; }
     toast(me,CLOUD_LEADERBOARD.enabled ? "Saving online..." : "Score saved","#ffdf75");
     submitCloudScore(record).then(function(){
       toast(me,"Global score saved","#8ff0bc");
