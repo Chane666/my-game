@@ -241,6 +241,87 @@ function countryBadge(code){
   return code || "--";
 }
 
+function drawFlag(scene,x,y,code){
+  code = cleanCountryCode(code);
+  var g = scene.add.graphics();
+  var w = 42, h = 28, r = 7, left = x - w / 2, top = y - h / 2;
+  function base(color){
+    g.fillStyle(0x000000,.24).fillRoundedRect(left+2,top+3,w,h,r);
+    g.fillStyle(color,1).fillRoundedRect(left,top,w,h,r);
+    g.lineStyle(1,0xffffff,.28).strokeRoundedRect(left,top,w,h,r);
+  }
+  function stripe(colors,vertical){
+    var size = vertical ? w / colors.length : h / colors.length;
+    colors.forEach(function(color,i){
+      g.fillStyle(color,1);
+      if(vertical){ g.fillRect(left + i * size, top, Math.ceil(size), h); }
+      else{ g.fillRect(left, top + i * size, w, Math.ceil(size)); }
+    });
+    g.lineStyle(1,0xffffff,.28).strokeRoundedRect(left,top,w,h,r);
+  }
+  function star(cx,cy,color,scale){
+    scale = scale || 1;
+    g.fillStyle(color,1);
+    var pts = [];
+    for(var i=0;i<10;i++){
+      var a = -Math.PI / 2 + i * Math.PI / 5;
+      var rr = (i % 2 === 0 ? 4.8 : 2.1) * scale;
+      pts.push(new Phaser.Geom.Point(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr));
+    }
+    g.fillPoints(pts,true);
+  }
+  if(!code){
+    base(0x0b1520);
+    g.lineStyle(2,0x627487,.30).strokeRoundedRect(left,top,w,h,r);
+    var text = scene.add.text(x,y,"--",{fontSize:"14px",color:"#9fb0c1",fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5);
+    return {items:[g,text],known:false};
+  }
+  if(code === "CN"){
+    base(0xde2910); star(left+10,top+9,0xffde00,1.06); star(left+21,top+6,0xffde00,.42); star(left+26,top+11,0xffde00,.42); star(left+26,top+18,0xffde00,.42); star(left+20,top+22,0xffde00,.42);
+  }else if(code === "US"){
+    stripe([0xb22234,0xffffff,0xb22234,0xffffff,0xb22234,0xffffff,0xb22234],false);
+    g.fillStyle(0x3c3b6e,1).fillRoundedRect(left,top,w*.46,h*.54,5);
+    for(var uy=0;uy<3;uy++){ for(var ux=0;ux<4;ux++){ g.fillStyle(0xffffff,.95).fillCircle(left+5+ux*4,top+5+uy*5,1); } }
+  }else if(code === "JP"){
+    base(0xffffff); g.fillStyle(0xbc002d,1).fillCircle(x,y,8);
+  }else if(code === "KR"){
+    base(0xffffff); g.fillStyle(0xcd2e3a,1).slice(x,y,8,-Math.PI,0).fillPath(); g.fillStyle(0x0047a0,1).slice(x,y,8,0,Math.PI).fillPath();
+    g.lineStyle(2,0x111111,.88).lineBetween(left+8,top+7,left+14,top+4).lineBetween(left+28,top+24,left+34,top+21);
+  }else if(code === "GB"){
+    base(0x012169);
+    g.lineStyle(5,0xffffff,1).lineBetween(left,top,left+w,top+h).lineBetween(left+w,top,left,top+h);
+    g.lineStyle(2,0xc8102e,1).lineBetween(left,top,left+w,top+h).lineBetween(left+w,top,left,top+h);
+    g.lineStyle(7,0xffffff,1).lineBetween(x,top,x,top+h).lineBetween(left,y,left+w,y);
+    g.lineStyle(4,0xc8102e,1).lineBetween(x,top,x,top+h).lineBetween(left,y,left+w,y);
+  }else if(code === "FR"){ stripe([0x0055a4,0xffffff,0xef4135],true);
+  }else if(code === "DE"){ stripe([0x000000,0xdd0000,0xffce00],false);
+  }else if(code === "IT"){ stripe([0x009246,0xffffff,0xce2b37],true);
+  }else if(code === "ES"){ stripe([0xaa151b,0xf1bf00,0xaa151b],false);
+  }else if(code === "CA"){
+    stripe([0xff0000,0xffffff,0xff0000],true); g.fillStyle(0xff0000,1).fillTriangle(x,top+7,x-5,top+18,x+5,top+18);
+  }else if(code === "AU"){
+    base(0x00008b); star(left+30,top+17,0xffffff,.9); star(left+20,top+8,0xffffff,.55);
+  }else if(code === "SG" || code === "ID" || code === "PL"){
+    stripe(code === "PL" ? [0xffffff,0xdc143c] : [0xef3340,0xffffff],false);
+    if(code === "SG"){ g.fillStyle(0xffffff,1).fillCircle(left+11,top+8,5); g.fillStyle(0xef3340,1).fillCircle(left+13,top+8,5); star(left+20,top+7,0xffffff,.35); }
+  }else if(code === "BR"){
+    base(0x009b3a); g.fillStyle(0xffdf00,1).fillPoints([new Phaser.Geom.Point(x,top+4),new Phaser.Geom.Point(left+w-6,y),new Phaser.Geom.Point(x,top+h-4),new Phaser.Geom.Point(left+6,y)],true); g.fillStyle(0x002776,1).fillCircle(x,y,6);
+  }else if(code === "IN"){
+    stripe([0xff9933,0xffffff,0x138808],false); g.lineStyle(2,0x000080,1).strokeCircle(x,y,4);
+  }else if(code === "TH"){
+    stripe([0xa51931,0xffffff,0x2d2a4a,0xffffff,0xa51931],false);
+  }else if(code === "VN"){
+    base(0xda251d); star(x,y,0xffff00,1.1);
+  }else if(code === "MX"){
+    stripe([0x006847,0xffffff,0xce1126],true); g.fillStyle(0x8c6b2e,1).fillCircle(x,y,3);
+  }else{
+    base(0x0b1520);
+    var fallback = scene.add.text(x,y,code,{fontSize:"12px",color:"#7de4ff",fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5);
+    return {items:[g,fallback],known:false};
+  }
+  return {items:[g],known:true};
+}
+
 function guessedCountryCode(){
   var tz = "";
   try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){}
@@ -786,6 +867,9 @@ var MenuScene = {
 
 var RecordsScene = {
   key:"RecordsScene",
+  init:function(data){
+    this.initialTab = data && data.tab === "mine" ? "mine" : "global";
+  },
   create:function(){
     activeScene = this;
     var me = this;
@@ -801,7 +885,8 @@ var RecordsScene = {
     me.showLocalRecords = RecordsScene.showLocalRecords;
     me.showGlobalRecords = RecordsScene.showGlobalRecords;
     me.drawTabs = RecordsScene.drawTabs;
-    me.showGlobalRecords();
+    if(me.initialTab === "mine"){ me.showLocalRecords(); }
+    else{ me.showGlobalRecords(); }
     makeButton(me,GW/2,606,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
   },
   drawTabs:function(active){
@@ -867,14 +952,10 @@ var RecordsScene = {
       var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
       me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
       if(isGlobal){
-        var badgeCode = countryBadge(item.countryCode);
-        var badge = me.add.graphics();
-        badge.fillStyle(0x0b1520,.96).fillRoundedRect(94,y-17,48,34,9);
-        badge.lineStyle(2,item.countryCode ? 0x7de4ff : 0x627487,item.countryCode ? .42 : .28).strokeRoundedRect(94,y-17,48,34,9);
-        var badgeText = me.add.text(118,y,badgeCode,{fontSize:"14px",color:item.countryCode ? "#7de4ff" : "#9fb0c1",fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5);
-        me.recordItems.push(badge,badgeText);
-        var nameText = me.add.text(154,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
-        fitTextWidth(nameText,132,.72);
+        var flag = drawFlag(me,118,y,item.countryCode);
+        me.recordItems = me.recordItems.concat(flag.items);
+        var nameText = me.add.text(152,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
+        fitTextWidth(nameText,134,.72);
         me.recordItems.push(nameText);
         me.recordItems.push(me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5));
       }else{
@@ -1856,6 +1937,8 @@ var GameOverScene = {
     inputZone.on("pointerdown",function(){ if(me.saveInput){ me.saveInput.focus(); me.saveInput.select(); } });
     var saveBtn = makeButton(me,306,top+258,154,"Save",0x20c879,function(){ me.submitScoreFromDialog(data); });
     var cancelBtn = makeButton(me,176,top+258,122,"Cancel",0xe65353,function(){ me.closeSaveDialog(); });
+    me.saveDialogSaveButton = saveBtn;
+    me.saveDialogCancelButton = cancelBtn;
     layer.add([shade,card,title,score,label,inputBack,me.saveDisplayText,me.saveDisplayCursor,inputZone,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
     me.saveLayer = layer;
     var input = document.createElement("input");
@@ -1897,6 +1980,8 @@ var GameOverScene = {
     this.saveNameValue = null;
     this.saveDisplayText = null;
     this.saveDisplayCursor = null;
+    this.saveDialogSaveButton = null;
+    this.saveDialogCancelButton = null;
     this.refreshNativeNameDisplay = null;
     if(this.saveLayer){ this.saveLayer.destroy(true); }
     this.saveLayer = null;
@@ -1913,18 +1998,22 @@ var GameOverScene = {
       return;
     }
     me.savingScore = true;
+    if(me.saveDialogSaveButton){
+      me.saveDialogSaveButton.zone.disableInteractive();
+      me.saveDialogSaveButton.text.setText("Saving...");
+      me.saveDialogSaveButton.text.setColor("#eaf7ff");
+      me.saveDialogSaveButton.text.setScale(.94);
+    }
     var nextName = savePlayerName(typed);
     var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,countryCode:guessedCountryCode(),time:data.time || Date.now(),day:todayKey()};
     saveRecord(record);
-    toast(me,CLOUD_LEADERBOARD.enabled ? "Saving online..." : "Score saved","#ffdf75");
+    me.closeSaveDialog();
+    toast(me,CLOUD_LEADERBOARD.enabled ? "Score saved. Syncing global..." : "Score saved","#8ff0bc");
+    me.time.delayedCall(260,function(){ if(me.scene && me.scene.isActive("GameOverScene")){ me.scene.start("RecordsScene",{tab:"mine"}); } });
     submitCloudScore(record).then(function(){
-      toast(me,"Global score saved","#8ff0bc");
-      me.closeSaveDialog();
-      me.time.delayedCall(280,function(){me.scene.start("RecordsScene");});
+      if(me.scene && me.scene.isActive("GameOverScene")){ toast(me,"Global score saved","#8ff0bc"); }
     }).catch(function(){
-      toast(me,"Saved locally","#ffdf75");
-      me.closeSaveDialog();
-      me.time.delayedCall(360,function(){me.scene.start("RecordsScene");});
+      if(me.scene && me.scene.isActive("GameOverScene")){ toast(me,"Saved locally. Global sync failed.","#ffdf75"); }
     });
   }
 };
