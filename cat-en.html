@@ -20,6 +20,25 @@
   }
   #gw{display:flex;align-items:center;justify-content:center;background:#080d13}
   canvas{display:block}
+  .name-input{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:min(72vw,300px);
+    height:48px;
+    z-index:20;
+    border:2px solid rgba(143,240,188,.72);
+    border-radius:12px;
+    background:#071018;
+    color:#eaf7ff;
+    font:700 20px Arial,"Segoe UI Emoji","Microsoft YaHei",sans-serif;
+    text-align:center;
+    outline:none;
+    box-shadow:0 18px 48px rgba(0,0,0,.55),0 0 24px rgba(32,200,121,.18);
+    letter-spacing:0;
+  }
+  .name-input::placeholder{color:#6f8295}
   @media (max-aspect-ratio: 2/3){
     #gw{width:100vw;height:100vh;height:100dvh}
     canvas{width:100vw;height:100vh;height:100dvh;border-radius:0;box-shadow:none}
@@ -216,6 +235,20 @@ function countryFlag(code){
   code = cleanCountryCode(code);
   if(!code){ return String.fromCodePoint(0x1F310); }
   return String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
+}
+
+function gameRectToCss(left,top,width,height){
+  var canvas = document.querySelector("canvas");
+  if(!canvas){ return {left:left,top:top,width:width,height:height}; }
+  var rect = canvas.getBoundingClientRect();
+  var sx = rect.width / GW;
+  var sy = rect.height / GH;
+  return {
+    left:rect.left + left * sx,
+    top:rect.top + top * sy,
+    width:width * sx,
+    height:height * sy
+  };
 }
 
 function beatPercent(score){
@@ -1706,24 +1739,86 @@ var GameOverScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"Challenge link copied","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
+    me.resultData = data;
+    me.showSaveScoreDialog = GameOverScene.showSaveScoreDialog;
+    me.closeSaveDialog = GameOverScene.closeSaveDialog;
+    me.submitScoreFromDialog = GameOverScene.submitScoreFromDialog;
     makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Save Score",0xf3a326,function(){
-      var nextName = playerName;
-      try{
-        var typed = window.prompt("Nickname", playerName);
-        if(typed !== null){ nextName = savePlayerName(typed); }
-      }catch(e){ nextName = savePlayerName(playerName); }
-      var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()};
-      saveRecord(record);
-      toast(me,CLOUD_LEADERBOARD.enabled ? "Saving online..." : "Score saved","#ffdf75");
-      submitCloudScore(record).then(function(){
-        toast(me,"Global score saved","#8ff0bc");
-        me.time.delayedCall(280,function(){me.scene.start("RecordsScene");});
-      }).catch(function(){
-        toast(me,"Saved locally","#ffdf75");
-        me.time.delayedCall(360,function(){me.scene.start("RecordsScene");});
-      });
+      me.showSaveScoreDialog(playerName,data);
     });
     makeButton(me,GW/2,buttonY + buttonGap * 3,buttonW,"Menu",0x4a8fe7,function(){me.scene.start("MenuScene");});
+  },
+  showSaveScoreDialog:function(playerName,data){
+    var me = this;
+    if(me.saveLayer){ return; }
+    var layer = me.add.container(0,0).setDepth(150);
+    var shade = me.add.graphics();
+    shade.fillStyle(0x000000,.70).fillRect(0,0,GW,GH);
+    var top = Math.round(GH/2 - 158);
+    var card = me.add.graphics();
+    card.fillStyle(0x071018,.98).fillRoundedRect(54,top,372,316,20);
+    card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(54,top,372,316,20);
+    card.fillStyle(0x20c879,.10).fillRoundedRect(76,top+22,328,72,16);
+    card.lineStyle(1,0xffffff,.10).strokeRoundedRect(76,top+22,328,72,16);
+    var title = me.add.text(GW/2,top+44,"Save to Global Board",{fontSize:"24px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setOrigin(.5);
+    var score = me.add.text(GW/2,top+76,formatScore(data.score || 0) + " pts",{fontSize:"20px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
+    var label = me.add.text(GW/2,top+119,"Nickname",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    var inputBack = me.add.graphics();
+    inputBack.fillStyle(0x0d1722,1).fillRoundedRect(90,top+136,300,52,13);
+    inputBack.lineStyle(2,0x8ff0bc,.28).strokeRoundedRect(90,top+136,300,52,13);
+    var hint = me.add.text(GW/2,top+208,"Your score will show as flag + name + score.",{fontSize:"13px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
+    var saveBtn = makeButton(me,GW/2,top+252,212,"Save Globally",0x20c879,function(){ me.submitScoreFromDialog(data); });
+    var cancelBtn = makeButton(me,GW/2,top+302,158,"Cancel",0x4a8fe7,function(){ me.closeSaveDialog(); });
+    layer.add([shade,card,title,score,label,inputBack,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
+    var input = document.createElement("input");
+    input.className = "name-input";
+    input.type = "text";
+    input.inputMode = "text";
+    input.autocomplete = "nickname";
+    input.maxLength = 14;
+    input.placeholder = "Guest";
+    input.value = cleanPlayerName(playerName || readPlayerName());
+    var cssBox = gameRectToCss(102,top+142,276,40);
+    input.style.left = (cssBox.left + cssBox.width / 2) + "px";
+    input.style.top = (cssBox.top + cssBox.height / 2) + "px";
+    input.style.width = cssBox.width + "px";
+    input.style.height = cssBox.height + "px";
+    input.style.fontSize = Math.max(16,Math.min(20,cssBox.height * .46)) + "px";
+    document.body.appendChild(input);
+    setTimeout(function(){ try{ input.focus(); input.select(); }catch(e){} },60);
+    input.addEventListener("keydown",function(event){
+      if(event.key === "Enter"){ event.preventDefault(); me.submitScoreFromDialog(data); }
+      if(event.key === "Escape"){ event.preventDefault(); me.closeSaveDialog(); }
+    });
+    me.saveLayer = layer;
+    me.saveInput = input;
+  },
+  closeSaveDialog:function(){
+    if(this.saveInput && this.saveInput.parentNode){ this.saveInput.parentNode.removeChild(this.saveInput); }
+    this.saveInput = null;
+    if(this.saveLayer){ this.saveLayer.destroy(true); }
+    this.saveLayer = null;
+    this.savingScore = false;
+  },
+  submitScoreFromDialog:function(data){
+    var me = this;
+    if(me.savingScore){ return; }
+    me.savingScore = true;
+    var typed = me.saveInput ? me.saveInput.value : readPlayerName();
+    var nextName = savePlayerName(typed);
+    var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()};
+    saveRecord(record);
+    if(me.saveInput){ me.saveInput.disabled = true; }
+    toast(me,CLOUD_LEADERBOARD.enabled ? "Saving online..." : "Score saved","#ffdf75");
+    submitCloudScore(record).then(function(){
+      toast(me,"Global score saved","#8ff0bc");
+      me.closeSaveDialog();
+      me.time.delayedCall(280,function(){me.scene.start("RecordsScene");});
+    }).catch(function(){
+      toast(me,"Saved locally","#ffdf75");
+      me.closeSaveDialog();
+      me.time.delayedCall(360,function(){me.scene.start("RecordsScene");});
+    });
   }
 };
 
