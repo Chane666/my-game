@@ -59,6 +59,9 @@ var GH = Math.max(720, Math.round(GW * (window.innerHeight || 720) / Math.max(wi
 var STORE_KEY = "neonSortRushRecordsENv1";
 var DAILY_KEY = "neonSortRushDailyENv1";
 var PLAYER_KEY = "neonSortRushPlayerENv1";
+var PROFILE_KEY = "neonSortRushProfileENv1";
+var DEVICE_KEY = "neonSortRushDeviceENv1";
+var NAME_CHANGE_COOLDOWN = 30 * 24 * 60 * 60 * 1000;
 var CLOUD_LEADERBOARD = {
   enabled:true,
   url:"https://ztscfxpepqfiqttxasdb.supabase.co",
@@ -241,7 +244,11 @@ function countryBadge(code){
   return code || "--";
 }
 
-var FLAG_CDN_BASE = "https://flagcdn.com/w40/";
+var FLAG_CDN_BASE = "https://flagcdn.com/w80/";
+var FLAG_BADGE_W = 34;
+var FLAG_BADGE_H = 24;
+var FLAG_IMAGE_W = 30;
+var FLAG_IMAGE_H = 21;
 
 function flagTextureKey(code){
   code = cleanCountryCode(code);
@@ -276,18 +283,20 @@ function drawRemoteFlag(scene,x,y,code,onReady){
   code = cleanCountryCode(code);
   var items = [];
   var g = scene.add.graphics();
-  g.fillStyle(0x000000,.24).fillRoundedRect(x-21+2,y-14+3,42,28,7);
-  g.fillStyle(code ? 0x0b1520 : 0x101923,.96).fillRoundedRect(x-21,y-14,42,28,7);
-  g.lineStyle(1,code ? 0x7de4ff : 0x627487,code ? .30 : .22).strokeRoundedRect(x-21,y-14,42,28,7);
+  var left = x - FLAG_BADGE_W / 2;
+  var top = y - FLAG_BADGE_H / 2;
+  g.fillStyle(0x000000,.24).fillRoundedRect(left+2,top+3,FLAG_BADGE_W,FLAG_BADGE_H,7);
+  g.fillStyle(code ? 0x0b1520 : 0x101923,.96).fillRoundedRect(left,top,FLAG_BADGE_W,FLAG_BADGE_H,7);
+  g.lineStyle(1,code ? 0x7de4ff : 0x627487,code ? .30 : .22).strokeRoundedRect(left,top,FLAG_BADGE_W,FLAG_BADGE_H,7);
   items.push(g);
   var key = flagTextureKey(code);
   if(code && scene.textures.exists(key)){
-    var img = scene.add.image(x,y,key).setDisplaySize(40,28);
+    var img = scene.add.image(x,y,key).setDisplaySize(FLAG_IMAGE_W,FLAG_IMAGE_H);
     items.push(img);
   }else{
     queueFlagTexture(scene,code,onReady);
-    var label = scene.add.text(x,y,code || "--",{fontSize:"11px",color:code ? "#7de4ff" : "#8293a6",fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5);
-    items.push(label);
+    var fallback = drawFlag(scene,x,y,code);
+    if(fallback && fallback.items){ items = items.concat(fallback.items); }
   }
   return items;
 }
@@ -542,7 +551,12 @@ function sfx(type){
 function readRecords(){
   try{
     var data = JSON.parse(localStorage.getItem(STORE_KEY) || "[]");
-    return Array.isArray(data) ? data : [];
+    if(!Array.isArray(data)){ return []; }
+    data = data.filter(function(item){ return item && typeof item === "object" && (item.score || 0) > 0; }).sort(function(a,b){
+      var bs = b.score || 0, as = a.score || 0;
+      return bs !== as ? bs - as : (b.delivered || 0) - (a.delivered || 0);
+    }).slice(0,1);
+    return data;
   }catch(e){ return []; }
 }
 
@@ -557,30 +571,94 @@ function cleanEditableName(name){
   return Array.from(name).slice(0,14).join("");
 }
 
-function readPlayerName(){
-  try{ return cleanEditableName(localStorage.getItem(PLAYER_KEY) || ""); }catch(e){ return ""; }
+function makeDeviceId(){
+  var raw = Date.now().toString(36) + Math.random().toString(36).slice(2,12);
+  return "dev_" + raw.slice(0,18);
 }
 
-function savePlayerName(name){
-  name = cleanEditableName(name);
-  try{ localStorage.setItem(PLAYER_KEY,name); }catch(e){}
-  return name;
+function readDeviceId(){
+  try{
+    var id = localStorage.getItem(DEVICE_KEY);
+    if(!id){
+      id = makeDeviceId();
+      localStorage.setItem(DEVICE_KEY,id);
+    }
+    return id;
+  }catch(e){ return makeDeviceId(); }
 }
 
-function saveRecord(record){
-  var records = readRecords();
-  record.name = cleanPlayerName(record.name || readPlayerName());
-  if(record.time){
-    records = records.filter(function(item){ return item.time !== record.time; });
+function readProfile(){
+  var profile = {};
+  try{ profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}") || {}; }catch(e){ profile = {}; }
+  if(!profile.deviceId){ profile.deviceId = readDeviceId(); }
+  profile.name = cleanEditableName(profile.name || "");
+  profile.avatar = String(profile.avatar || "bolt").slice(0,18);
+  profile.nameChangedAt = Math.floor(Number(profile.nameChangedAt || 0)) || 0;
+  if(!profile.name){
+    try{
+      var oldName = cleanEditableName(localStorage.getItem(PLAYER_KEY) || "");
+      if(oldName){ profile.name = oldName; }
+    }catch(e){}
   }
-  records.push(record);
-  records.sort(function(a,b){
-    var as = a.score || 0, bs = b.score || 0;
-    return bs !== as ? bs - as : (b.delivered || 0) - (a.delivered || 0);
-  });
-  records = records.slice(0,8);
+  return profile;
+}
+
+function saveProfile(profile){
+  profile = profile || {};
+  var next = {
+    deviceId:String(profile.deviceId || readDeviceId()).slice(0,32),
+    name:cleanEditableName(profile.name || ""),
+    avatar:String(profile.avatar || "bolt").slice(0,18),
+    nameChangedAt:Math.floor(Number(profile.nameChangedAt || 0)) || 0
+  };
+  try{
+    localStorage.setItem(PROFILE_KEY,JSON.stringify(next));
+    if(next.name){ localStorage.setItem(PLAYER_KEY,next.name); }
+  }catch(e){}
+  return next;
+}
+
+function readPlayerName(){
+  return readProfile().name || "";
+}
+
+function canChangeProfileName(profile){
+  profile = profile || readProfile();
+  if(!profile.name || !profile.nameChangedAt){ return true; }
+  return Date.now() - profile.nameChangedAt >= NAME_CHANGE_COOLDOWN;
+}
+
+function nameChangeDaysLeft(profile){
+  profile = profile || readProfile();
+  if(canChangeProfileName(profile)){ return 0; }
+  return Math.max(1,Math.ceil((NAME_CHANGE_COOLDOWN - (Date.now() - profile.nameChangedAt)) / 86400000));
+}
+
+function saveBestRecord(record){
+  if(!record || (record.score || 0) <= 0){
+    return {saved:false,records:readRecords(),best:readRecords()[0] || null};
+  }
+  var records = readRecords();
+  var name = cleanPlayerName(record.name || readPlayerName());
+  var old = records[0] || null;
+  if(old && (old.score || 0) >= (record.score || 0)){
+    return {saved:false,records:records,best:old};
+  }
+  var next = Object.assign({},record,{name:name,time:record.time || Date.now()});
+  records = [next];
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(records)); }catch(e){}
-  return records;
+  return {saved:true,records:records,best:next};
+}
+
+function updateBestRecordProfile(name){
+  var records = readRecords();
+  if(!records.length){ return null; }
+  var best = Object.assign({},records[0],{
+    name:cleanPlayerName(name || readPlayerName()),
+    countryCode:records[0].countryCode || guessedCountryCode()
+  });
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify([best])); }catch(e){}
+  return best;
 }
 
 function cloudHeaders(){
@@ -623,7 +701,17 @@ function fetchCloudLeaderboard(){
   return read(richUrl).catch(function(){
     return read(legacyUrl);
   }).then(function(rows){
-    return Array.isArray(rows) ? rows.map(normalizeCloudRecord) : [];
+    var mapped = Array.isArray(rows) ? rows.map(normalizeCloudRecord) : [];
+    var bestByName = {};
+    mapped.forEach(function(item){
+      var key = cleanPlayerName(item.name || "Runner").toLowerCase();
+      if(!bestByName[key] || (item.score || 0) > (bestByName[key].score || 0)){
+        bestByName[key] = item;
+      }
+    });
+    return Object.keys(bestByName).map(function(key){ return bestByName[key]; }).sort(function(a,b){
+      return (b.score || 0) - (a.score || 0);
+    }).slice(0,50);
   });
 }
 
@@ -632,6 +720,7 @@ function submitCloudScore(record){
     return Promise.reject(new Error("Cloud submit disabled"));
   }
   var url = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/functions/v1/submit-score";
+  var profile = readProfile();
   return fetch(url,{
     method:"POST",
     headers:cloudHeaders(),
@@ -641,6 +730,8 @@ function submitCloudScore(record){
       packages:Math.floor(record.delivered || 0),
       combo:Math.floor(record.combo || 0),
       accuracy:Math.floor(record.rate || 0),
+      device_id:profile.deviceId,
+      avatar:profile.avatar,
       country_code:guessedCountryCode(),
       timezone:(function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){ return ""; } })()
     })
@@ -680,6 +771,44 @@ function makeButton(scene,x,y,w,label,color,onClick){
   zone.on("pointerout",function(){draw(color,1);text.setColor("#fff");});
   zone.on("pointerdown",function(){vibrate(18);sfx("tap");text.setScale(.95);scene.time.delayedCall(80,onClick);});
   return {bg:bg,text:text,zone:zone};
+}
+
+function avatarColor(key){
+  var map = {bolt:0xffdf75,star:0x8ff0bc,moon:0x7de4ff,fire:0xff7a8e,gem:0x9d7cff,leaf:0x42df8a};
+  return map[key] || 0xffdf75;
+}
+
+function drawAvatar(scene,x,y,key,selected){
+  var color = avatarColor(key);
+  var g = scene.add.graphics();
+  g.fillStyle(0x000000,.24).fillCircle(x+2,y+3,19);
+  g.fillStyle(0x101923,1).fillCircle(x,y,19);
+  g.lineStyle(selected ? 3 : 2,selected ? 0xffdf75 : color,selected ? .95 : .72).strokeCircle(x,y,18);
+  g.fillStyle(color,1);
+  if(key === "star"){
+    var pts = [];
+    for(var i=0;i<10;i++){
+      var a = -Math.PI/2 + i*Math.PI/5;
+      var r = i%2===0 ? 10 : 4.4;
+      pts.push(new Phaser.Geom.Point(x+Math.cos(a)*r,y+Math.sin(a)*r));
+    }
+    g.fillPoints(pts,true);
+  }else if(key === "moon"){
+    g.fillCircle(x-2,y,10); g.fillStyle(0x101923,1).fillCircle(x+3,y-2,10);
+  }else if(key === "fire"){
+    g.fillTriangle(x,y-12,x-10,y+10,x+10,y+10); g.fillStyle(0xffdf75,1).fillTriangle(x,y-4,x-5,y+10,x+5,y+10);
+  }else if(key === "gem"){
+    g.fillPoints([new Phaser.Geom.Point(x,y-12),new Phaser.Geom.Point(x+12,y-2),new Phaser.Geom.Point(x+6,y+12),new Phaser.Geom.Point(x-6,y+12),new Phaser.Geom.Point(x-12,y-2)],true);
+  }else if(key === "leaf"){
+    g.fillEllipse(x,y,18,24); g.lineStyle(2,0xffffff,.55).lineBetween(x-4,y+7,x+6,y-8);
+  }else{
+    g.fillTriangle(x-2,y-13,x-11,y+3,x-2,y+1).fillTriangle(x+2,y+13,x+11,y-3,x+2,y-1);
+  }
+  return g;
+}
+
+function sceneKey(scene){
+  return scene && scene.sys && scene.sys.settings ? scene.sys.settings.key : "";
 }
 
 function gradientBackground(scene){
@@ -858,12 +987,13 @@ var MenuScene = {
     var me = this, cx = GW/2;
     var target = challengeTarget();
     var best = readRecords()[0];
+    var profile = readProfile();
     var centerY = GH / 2;
     var iconY = centerY - 240;
     var titleY = centerY - 162;
     var subtitleY = centerY - 116;
     var statusY = centerY - 76;
-    var firstButtonY = centerY - 18;
+    var firstButtonY = centerY - 34;
     gradientBackground(me);
     for(var i=0;i<26;i++){
       var dot = me.add.circle(Phaser.Math.Between(22,GW-22),Phaser.Math.Between(28,GH-28),Phaser.Math.Between(1,3),COLORS[i%4].hex,.45);
@@ -878,7 +1008,7 @@ var MenuScene = {
     me.add.text(cx,subtitleY,"Endless neon sorting. Match packages to portals.",{
       fontSize:"16px",color:"#b9c9d8"
     }).setOrigin(.5);
-    me.add.text(cx,statusY,target ? "Friend target: " + target + " pts" : (best ? "Best: " + (best.score || 0) + " pts  |  Combo x" + (best.combo || 0) : "No record yet. Start your first run."),{
+    me.add.text(cx,statusY,target ? "Friend target: " + target + " pts" : (best ? "Best: " + (best.score || 0) + " pts  |  " + (profile.name || "Set profile") : (profile.name ? "Profile: " + profile.name : "Set profile to join the leaderboard.")),{
       fontSize:"16px",color:"#8ff0bc",fontStyle:"bold"
     }).setOrigin(.5);
     var panelY = Math.min(firstButtonY + 188, GH - 150);
@@ -899,7 +1029,8 @@ var MenuScene = {
     });
     makeButton(me,cx,firstButtonY,190,"Start Run",0x20c879,function(){me.scene.start("PlayScene");});
     makeButton(me,cx,firstButtonY + 58,190,"Records",0xf3a326,function(){me.scene.start("RecordsScene");});
-    makeButton(me,cx,firstButtonY + 116,190,"Share",0x4a8fe7,function(){
+    makeButton(me,cx,firstButtonY + 116,190,"Profile",0x7a67ff,function(){me.showProfileDialog();});
+    makeButton(me,cx,firstButtonY + 174,190,"Share",0x4a8fe7,function(){
       var baseCount = best ? best.delivered : 8;
       var baseScore = best ? best.score : 100;
       var url = shareUrl(baseCount,baseScore);
@@ -913,6 +1044,155 @@ var MenuScene = {
     me.add.text(cx,GH-44,"Tap lanes to switch. Survive the rush and keep your combo.",{
       fontSize:"14px",color:"#8b9bad"
     }).setOrigin(.5);
+    me.showProfileDialog = MenuScene.showProfileDialog;
+    me.closeProfileDialog = MenuScene.closeProfileDialog;
+    me.refreshProfileNameDisplay = MenuScene.refreshProfileNameDisplay;
+    me.saveProfileFromDialog = MenuScene.saveProfileFromDialog;
+  },
+  showProfileDialog:function(){
+    var me = this;
+    if(me.profileLayer){ return; }
+    var profile = readProfile();
+    var canEdit = canChangeProfileName(profile);
+    var daysLeft = nameChangeDaysLeft(profile);
+    var layer = me.add.container(0,0).setDepth(150);
+    var shade = me.add.graphics();
+    shade.fillStyle(0x000000,.70).fillRect(0,0,GW,GH);
+    var top = Math.max(42,Math.round(GH/2 - 214));
+    var card = me.add.graphics();
+    card.fillStyle(0x071018,.98).fillRoundedRect(48,top,384,428,20);
+    card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(48,top,384,428,20);
+    card.fillStyle(0x20c879,.10).fillRoundedRect(76,top+20,328,72,16);
+    card.lineStyle(1,0xffffff,.10).strokeRoundedRect(76,top+20,328,72,16);
+    var title = me.add.text(GW/2,top+44,"Player Profile",{fontSize:"24px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setOrigin(.5);
+    var subtitle = me.add.text(GW/2,top+73,profile.name ? "One device, one player name" : "Set a name to join records",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    var inputBack = me.add.graphics();
+    inputBack.fillStyle(0x0d1722,1).fillRoundedRect(86,top+122,308,52,13);
+    inputBack.lineStyle(2,canEdit ? 0x8ff0bc : 0x627487,canEdit ? .32 : .22).strokeRoundedRect(86,top+122,308,52,13);
+    me.profileNameValue = profile.name || "";
+    me.profileNameText = me.add.text(GW/2,top+148,me.profileNameValue || "Type your name",{
+      fontSize:"22px",color:me.profileNameValue ? "#eaf7ff" : "#6f8295",fontStyle:"bold"
+    }).setOrigin(.5);
+    me.profileCursor = me.add.text(GW/2+72,top+148,"|",{fontSize:"23px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    me.tweens.add({targets:me.profileCursor,alpha:canEdit ? .18 : 0,duration:420,yoyo:true,repeat:-1});
+    var hintText = canEdit ? "Best scores auto-save after your name is set." : "Name locked for " + daysLeft + " day" + (daysLeft > 1 ? "s. Avatar can update anytime." : ". Avatar can update anytime.");
+    var hint = me.add.text(GW/2,top+194,hintText,{fontSize:"12px",color:canEdit ? "#9fb0c1" : "#ffdf75",align:"center"}).setOrigin(.5);
+    var avatarLabel = me.add.text(GW/2,top+224,"Avatar",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    var avatarItems = [avatarLabel];
+    var avatars = ["bolt","star","moon","fire","gem","leaf"];
+    me.profileAvatar = profile.avatar || "bolt";
+    me.profileAvatarItems = [];
+    function refreshAvatars(){
+      if(me.profileAvatarItems){ me.profileAvatarItems.forEach(function(item){ if(item && item.destroy){ item.destroy(); } }); }
+      me.profileAvatarItems = [];
+      avatars.forEach(function(key,index){
+        var x = 95 + index * 58, y = top + 266;
+        var av = drawAvatar(me,x,y,key,me.profileAvatar === key);
+        var zone = me.add.zone(x,y,44,44).setInteractive({useHandCursor:true});
+        zone.on("pointerdown",function(){
+          me.profileAvatar = key;
+          refreshAvatars();
+        });
+        me.profileAvatarItems.push(av,zone);
+      });
+      if(me.profileLayer){ me.profileLayer.add(me.profileAvatarItems); }
+    }
+    var inputZone = me.add.zone(GW/2,top+148,310,56).setInteractive({useHandCursor:true});
+    inputZone.on("pointerdown",function(){ if(canEdit && me.profileInput){ me.profileInput.focus(); me.profileInput.select(); } });
+    var saveBtn = makeButton(me,314,top+374,140,canEdit ? (profile.name ? "Update" : "Save") : "Avatar",0x20c879,function(){ me.saveProfileFromDialog(); });
+    var cancelBtn = makeButton(me,170,top+374,120,"Close",0xe65353,function(){ me.closeProfileDialog(true); });
+    layer.add([shade,card,title,subtitle,inputBack,me.profileNameText,me.profileCursor,hint,inputZone].concat(avatarItems,[saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]));
+    me.profileLayer = layer;
+    refreshAvatars();
+    if(canEdit){
+      var input = document.createElement("input");
+      input.className = "native-name-input";
+      input.type = "text";
+      input.inputMode = "text";
+      input.autocomplete = "nickname";
+      input.autocapitalize = "words";
+      input.spellcheck = false;
+      input.maxLength = 28;
+      input.value = me.profileNameValue;
+      input.addEventListener("input",function(){
+        me.profileNameValue = cleanEditableName(input.value);
+        if(input.value !== me.profileNameValue){ input.value = me.profileNameValue; }
+        me.refreshProfileNameDisplay();
+      });
+      document.body.appendChild(input);
+      me.profileInput = input;
+      me.refreshProfileNameDisplay();
+      setTimeout(function(){ if(me.profileInput){ me.profileInput.focus(); me.profileInput.select(); } },80);
+    }
+  },
+  refreshProfileNameDisplay:function(){
+    var value = this.profileNameValue || "";
+    if(this.profileNameText){
+      this.profileNameText.setText(value || "Type your name");
+      this.profileNameText.setColor(value ? "#eaf7ff" : "#6f8295");
+      this.profileNameText.setScale(1);
+      fitTextWidth(this.profileNameText,250,.72);
+    }
+    if(this.profileCursor && this.profileNameText){
+      this.profileCursor.x = Math.min(GW/2 + 136,this.profileNameText.x + this.profileNameText.displayWidth / 2 + 13);
+    }
+  },
+  closeProfileDialog:function(reload){
+    if(this.profileInput && this.profileInput.parentNode){ this.profileInput.parentNode.removeChild(this.profileInput); }
+    this.profileInput = null;
+    this.profileLayer && this.profileLayer.destroy(true);
+    this.profileLayer = null;
+    this.profileNameText = null;
+    this.profileCursor = null;
+    this.profileAvatarItems = null;
+    if(reload){
+      if(sceneKey(this) === "GameOverScene" && this.resultData){
+        this.scene.restart(Object.assign({},this.resultData,{profileName:readPlayerName(),hasProfile:!!readPlayerName()}));
+      }else{
+        this.scene.restart();
+      }
+    }
+  },
+  saveProfileFromDialog:function(){
+    var me = this;
+    var profile = readProfile();
+    var canEdit = canChangeProfileName(profile);
+    var name = cleanEditableName(me.profileInput ? me.profileInput.value : me.profileNameValue);
+    if(!name && !profile.name){
+      toast(me,"Choose a name first","#ffdf75");
+      if(me.profileNameText){
+        me.tweens.killTweensOf(me.profileNameText);
+        me.profileNameText.setScale(1.12);
+        me.tweens.add({targets:me.profileNameText,scale:1,duration:160,ease:"Back.easeOut"});
+      }
+      if(me.profileInput){ me.profileInput.focus(); }
+      return;
+    }
+    if(canEdit && name && name !== profile.name){
+      profile.name = name;
+      profile.nameChangedAt = Date.now();
+    }else if(!canEdit){
+      name = profile.name;
+    }else if(!profile.name && name){
+      profile.name = name;
+      profile.nameChangedAt = Date.now();
+    }
+    profile.avatar = me.profileAvatar || profile.avatar || "bolt";
+    saveProfile(profile);
+    toast(me,"Profile saved","#8ff0bc");
+    name = profile.name;
+    if(sceneKey(me) === "GameOverScene" && me.resultData && !me.resultData.hasProfile){
+      var record = {name:name,score:me.resultData.score || 0,delivered:me.resultData.delivered || 0,combo:me.resultData.combo || 0,hot:me.resultData.hot || 0,rate:me.resultData.rate || 0,countryCode:guessedCountryCode(),time:me.resultData.time || Date.now(),day:todayKey()};
+      saveBestRecord(record);
+      submitCloudScore(record).catch(function(){});
+      me.resultData.autoSaved = true;
+    }else{
+      var best = updateBestRecordProfile(name);
+      if(best && best.score > 0){
+        submitCloudScore(best).catch(function(){});
+      }
+    }
+    me.closeProfileDialog(true);
   }
 };
 
@@ -994,7 +1274,7 @@ var RecordsScene = {
     var isLoading = label.indexOf("Loading") === 0;
     if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor((isGlobal || isLoading) ? "#8ff0bc" : "#ffdf75"); }
     if(!records.length){
-      var emptyText = isLoading ? "Loading global scores..." : isMine ? "No personal score yet\nFinish one run to save it" : "Global board is syncing\nSave a score to join";
+      var emptyText = isLoading ? "Loading global scores..." : isMine ? "No best score yet\nSet profile, then finish one run" : "Global board is syncing\nSet profile to join automatically";
       me.recordItems.push(me.add.text(GW/2,370,emptyText,{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5));
@@ -1885,14 +2165,23 @@ var PlayScene = {
     var playerName = readPlayerName();
     var recordTime = Date.now();
     var record = {name:playerName,score:finalScore,delivered:this.delivered,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,time:recordTime,day:todayKey()};
-    saveRecord(record);
-    saveDaily(record);
-    var records = readRecords();
+    var profile = readProfile();
+    var saveResult = {saved:false,records:readRecords(),best:readRecords()[0] || null};
+    if(profile.name && finalScore > 0){
+      record.name = profile.name;
+      record.countryCode = guessedCountryCode();
+      saveResult = saveBestRecord(record);
+      saveDaily(record);
+      if(saveResult.saved){
+        submitCloudScore(record).catch(function(){});
+      }
+    }
+    var records = saveResult.records || readRecords();
     var rank = 0;
     for(var i=0;i<records.length;i++){
       if(records[i].time && records[i].score === finalScore){ rank = i + 1; break; }
     }
-    this.scene.start("GameOverScene",{name:playerName,score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,rank:rank,time:recordTime});
+    this.scene.start("GameOverScene",{name:playerName,score:finalScore,combo:this.maxCombo,hot:this.maxHotStreak,rate:rate,delivered:this.delivered,challenge:this.challenge,prevBest:prevBest,rank:rank,time:recordTime,profileName:profile.name,autoSaved:saveResult.saved,hasProfile:!!profile.name});
   }
 };
 
@@ -1907,7 +2196,7 @@ var GameOverScene = {
     var pct = beatPercent(data.score || 0);
     var hint = resultHint(data);
     var retry = retryLabel(data);
-    var playerName = cleanEditableName(data.name || readPlayerName());
+    var playerName = cleanEditableName(data.profileName || data.name || readPlayerName());
     var displayName = playerName || "New Runner";
     gradientBackground(me);
     var panelH = 638;
@@ -1934,7 +2223,8 @@ var GameOverScene = {
       me.add.text(item.x,panelTop+300,item.v,{fontSize:"20px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
       me.add.text(item.x,panelTop+326,item.t,{fontSize:"12px",color:"#91a0ae",fontStyle:"bold"}).setOrigin(.5);
     });
-    var hintText = me.add.text(GW/2,panelTop+399,hint,{
+    var saveHint = playerName ? ((data.score || 0) <= 0 ? "Deliver one package to start your device best." : (data.autoSaved ? "New device best saved automatically." : "Only your best score is kept for this device.")) : "Set a profile name to save your best score.";
+    var hintText = me.add.text(GW/2,panelTop+399,saveHint,{
       fontSize:"14px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3,
       wordWrap:{width:GW-176,useAdvancedWrap:true},align:"center",lineSpacing:3
     }).setOrigin(.5);
@@ -1952,124 +2242,14 @@ var GameOverScene = {
       }else{ toast(me,url,"#fff"); }
     });
     me.resultData = data;
-    me.showSaveScoreDialog = GameOverScene.showSaveScoreDialog;
-    me.closeSaveDialog = GameOverScene.closeSaveDialog;
-    me.submitScoreFromDialog = GameOverScene.submitScoreFromDialog;
-    makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,"Save Score",0xf3a326,function(){
-      me.showSaveScoreDialog(playerName,data);
+    me.showProfileDialog = MenuScene.showProfileDialog;
+    me.closeProfileDialog = MenuScene.closeProfileDialog;
+    me.refreshProfileNameDisplay = MenuScene.refreshProfileNameDisplay;
+    me.saveProfileFromDialog = MenuScene.saveProfileFromDialog;
+    makeButton(me,GW/2,buttonY + buttonGap * 2,buttonW,playerName ? "Profile" : "Set Profile",0xf3a326,function(){
+      me.showProfileDialog();
     });
     makeButton(me,GW/2,buttonY + buttonGap * 3,buttonW,"Menu",0x4a8fe7,function(){me.scene.start("MenuScene");});
-  },
-  showSaveScoreDialog:function(playerName,data){
-    var me = this;
-    if(me.saveLayer){ return; }
-    var layer = me.add.container(0,0).setDepth(150);
-    var shade = me.add.graphics();
-    shade.fillStyle(0x000000,.70).fillRect(0,0,GW,GH);
-    var cardH = 310;
-    var top = Math.max(34,Math.round(GH/2 - cardH/2) - 48);
-    var card = me.add.graphics();
-    card.fillStyle(0x071018,.98).fillRoundedRect(50,top,380,cardH,20);
-    card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(50,top,380,cardH,20);
-    card.fillStyle(0x20c879,.10).fillRoundedRect(76,top+20,328,70,16);
-    card.lineStyle(1,0xffffff,.10).strokeRoundedRect(76,top+20,328,70,16);
-    var title = me.add.text(GW/2,top+44,"Create Your Player Name",{fontSize:"23px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setOrigin(.5);
-    var score = me.add.text(GW/2,top+74,formatScore(data.score || 0) + " pts",{fontSize:"20px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var label = me.add.text(GW/2,top+112,"Leaderboard name",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
-    var inputBack = me.add.graphics();
-    inputBack.fillStyle(0x0d1722,1).fillRoundedRect(92,top+130,296,54,13);
-    inputBack.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(92,top+130,296,54,13);
-    me.saveNameValue = cleanEditableName(playerName || "");
-    me.saveDisplayText = me.add.text(GW/2,top+157,me.saveNameValue || "Type your name",{
-      fontSize:"22px",color:me.saveNameValue ? "#eaf7ff" : "#6f8295",fontStyle:"bold"
-    }).setOrigin(.5);
-    me.saveDisplayCursor = me.add.text(GW/2 + 72,top+157,"|",{
-      fontSize:"23px",color:"#8ff0bc",fontStyle:"bold"
-    }).setOrigin(.5);
-    me.tweens.add({targets:me.saveDisplayCursor,alpha:.18,duration:420,yoyo:true,repeat:-1});
-    var hint = me.add.text(GW/2,top+210,"Use your keyboard. Any language is supported.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
-    var inputZone = me.add.zone(GW/2,top+157,300,58).setInteractive({useHandCursor:true});
-    inputZone.on("pointerdown",function(){ if(me.saveInput){ me.saveInput.focus(); me.saveInput.select(); } });
-    var saveBtn = makeButton(me,306,top+258,154,"Save",0x20c879,function(){ me.submitScoreFromDialog(data); });
-    var cancelBtn = makeButton(me,176,top+258,122,"Cancel",0xe65353,function(){ me.closeSaveDialog(); });
-    me.saveDialogSaveButton = saveBtn;
-    me.saveDialogCancelButton = cancelBtn;
-    layer.add([shade,card,title,score,label,inputBack,me.saveDisplayText,me.saveDisplayCursor,inputZone,hint,saveBtn.bg,saveBtn.text,saveBtn.zone,cancelBtn.bg,cancelBtn.text,cancelBtn.zone]);
-    me.saveLayer = layer;
-    var input = document.createElement("input");
-    input.className = "native-name-input";
-    input.type = "text";
-    input.inputMode = "text";
-    input.autocomplete = "nickname";
-    input.autocapitalize = "words";
-    input.spellcheck = false;
-    input.maxLength = 28;
-    input.placeholder = "Type your name";
-    input.value = me.saveNameValue;
-    input.addEventListener("input",function(){
-      me.saveNameValue = cleanEditableName(input.value);
-      if(input.value !== me.saveNameValue){ input.value = me.saveNameValue; }
-      me.refreshNativeNameDisplay();
-    });
-    document.body.appendChild(input);
-    me.saveInput = input;
-    me.refreshNativeNameDisplay = GameOverScene.refreshNativeNameDisplay;
-    me.refreshNativeNameDisplay();
-    setTimeout(function(){ if(me.saveInput){ me.saveInput.focus(); me.saveInput.select(); } },80);
-  },
-  refreshNativeNameDisplay:function(){
-    var value = this.saveNameValue || "";
-    if(this.saveDisplayText){
-      this.saveDisplayText.setText(value || "Type your name");
-      this.saveDisplayText.setColor(value ? "#eaf7ff" : "#6f8295");
-      this.saveDisplayText.setScale(1);
-      fitTextWidth(this.saveDisplayText,244,.72);
-    }
-    if(this.saveDisplayCursor && this.saveDisplayText){
-      this.saveDisplayCursor.x = Math.min(GW/2 + 132,this.saveDisplayText.x + this.saveDisplayText.displayWidth / 2 + 13);
-    }
-  },
-  closeSaveDialog:function(){
-    if(this.saveInput && this.saveInput.parentNode){ this.saveInput.parentNode.removeChild(this.saveInput); }
-    this.saveInput = null;
-    this.saveNameValue = null;
-    this.saveDisplayText = null;
-    this.saveDisplayCursor = null;
-    this.saveDialogSaveButton = null;
-    this.saveDialogCancelButton = null;
-    this.refreshNativeNameDisplay = null;
-    if(this.saveLayer){ this.saveLayer.destroy(true); }
-    this.saveLayer = null;
-    this.savingScore = false;
-  },
-  submitScoreFromDialog:function(data){
-    var me = this;
-    if(me.savingScore){ return; }
-    var typed = cleanEditableName(me.saveInput ? me.saveInput.value : me.saveNameValue);
-    if(!typed){
-      toast(me,"Choose a name first","#ffdf75");
-      if(me.saveInput){ me.saveInput.focus(); }
-      me.bumpScore(me.saveDisplayText,1.12);
-      return;
-    }
-    me.savingScore = true;
-    if(me.saveDialogSaveButton){
-      me.saveDialogSaveButton.zone.disableInteractive();
-      me.saveDialogSaveButton.text.setText("Saving...");
-      me.saveDialogSaveButton.text.setColor("#eaf7ff");
-      me.saveDialogSaveButton.text.setScale(.94);
-    }
-    var nextName = savePlayerName(typed);
-    var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,countryCode:guessedCountryCode(),time:data.time || Date.now(),day:todayKey()};
-    saveRecord(record);
-    me.closeSaveDialog();
-    toast(me,CLOUD_LEADERBOARD.enabled ? "Score saved. Syncing global..." : "Score saved","#8ff0bc");
-    me.time.delayedCall(260,function(){ if(me.scene && me.scene.isActive("GameOverScene")){ me.scene.start("RecordsScene",{tab:"mine"}); } });
-    submitCloudScore(record).then(function(){
-      if(me.scene && me.scene.isActive("GameOverScene")){ toast(me,"Global score saved","#8ff0bc"); }
-    }).catch(function(){
-      if(me.scene && me.scene.isActive("GameOverScene")){ toast(me,"Saved locally. Global sync failed.","#ffdf75"); }
-    });
   }
 };
 
