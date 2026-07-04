@@ -336,7 +336,7 @@ function readRecords(){
 
 function cleanPlayerName(name){
   name = String(name || "").replace(/[^\w .-]/g,"").trim();
-  if(!name){ return "Guest"; }
+  if(!name || name.toLowerCase() === "guest"){ return "Runner"; }
   return name.slice(0,14);
 }
 
@@ -345,11 +345,11 @@ function cleanEditableName(name){
 }
 
 function readPlayerName(){
-  try{ return cleanPlayerName(localStorage.getItem(PLAYER_KEY) || "Guest"); }catch(e){ return "Guest"; }
+  try{ return cleanEditableName(localStorage.getItem(PLAYER_KEY) || ""); }catch(e){ return ""; }
 }
 
 function savePlayerName(name){
-  name = cleanPlayerName(name);
+  name = cleanEditableName(name);
   try{ localStorage.setItem(PLAYER_KEY,name); }catch(e){}
   return name;
 }
@@ -381,7 +381,7 @@ function cloudHeaders(){
 function normalizeCloudRecord(item){
   var countryCode = cleanCountryCode(item.country_code || item.countryCode || item.country || "");
   return {
-    name:cleanPlayerName(item.name || "Guest"),
+    name:cleanPlayerName(item.name || "Runner"),
     score:Math.floor(item.score || 0),
     delivered:Math.floor(item.packages || item.delivered || 0),
     combo:Math.floor(item.combo || 0),
@@ -773,7 +773,7 @@ var RecordsScene = {
     var isLoading = label.indexOf("Loading") === 0;
     if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor((isGlobal || isLoading) ? "#8ff0bc" : "#ffdf75"); }
     if(!records.length){
-      var emptyText = isLoading ? "Loading global scores..." : isMine ? "No personal score yet\nFinish one run to save it" : "No global scores yet\nBe the first to post one";
+      var emptyText = isLoading ? "Loading global scores..." : isMine ? "No personal score yet\nFinish one run to save it" : "Global board is syncing\nSave a score to join";
       me.recordItems.push(me.add.text(GW/2,348,emptyText,{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5));
@@ -785,12 +785,12 @@ var RecordsScene = {
       me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
       if(isGlobal){
         me.recordItems.push(me.add.text(112,y,item.flag || countryFlag(item.countryCode),{fontSize:"22px",color:"#fff"}).setOrigin(.5));
-        var nameText = me.add.text(144,y,cleanPlayerName(item.name || "Guest"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
+        var nameText = me.add.text(144,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
         fitTextWidth(nameText,142,.72);
         me.recordItems.push(nameText);
         me.recordItems.push(me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5));
       }else{
-        me.recordItems.push(me.add.text(106,y-9,cleanPlayerName(item.name || "Guest"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5));
+        me.recordItems.push(me.add.text(106,y-9,cleanPlayerName(item.name || "Runner"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5));
         me.recordItems.push(me.add.text(106,y+10,formatScore(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5));
         me.recordItems.push(me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5));
         me.recordItems.push(me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5));
@@ -1676,7 +1676,8 @@ var GameOverScene = {
     var pct = beatPercent(data.score || 0);
     var hint = resultHint(data);
     var retry = retryLabel(data);
-    var playerName = cleanPlayerName(data.name || readPlayerName());
+    var playerName = cleanEditableName(data.name || readPlayerName());
+    var displayName = playerName || "New Runner";
     gradientBackground(me);
     var panelH = 638;
     var panelTop = Math.max(28,Math.round((GH - panelH) / 2) - 12);
@@ -1693,7 +1694,7 @@ var GameOverScene = {
     me.add.text(GW/2,panelTop+154,String(data.score || 0),{fontSize:"53px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:4}).setOrigin(.5);
     me.add.text(GW/2,panelTop+192,"score",{fontSize:"17px",color:"#ffdf75",fontStyle:"bold",stroke:"#221909",strokeThickness:3}).setOrigin(.5);
     me.add.text(GW/2,panelTop+214,title,{fontSize:"19px",color:"#8ff0bc",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    me.add.text(GW/2,panelTop+240,playerName + "  |  Delivered " + (data.delivered || 0) + "  |  beats " + pct + "%",{fontSize:"14px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
+    me.add.text(GW/2,panelTop+240,displayName + "  |  Delivered " + (data.delivered || 0) + "  |  beats " + pct + "%",{fontSize:"14px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(.5);
     [
       {x:128,t:"Combo",v:"x" + (data.combo || 0),c:"#8ff0bc"},
       {x:240,t:"Packages",v:String(data.delivered || 0),c:"#ffdf75"},
@@ -1743,18 +1744,18 @@ var GameOverScene = {
     card.lineStyle(2,0x8ff0bc,.30).strokeRoundedRect(50,top,380,cardH,20);
     card.fillStyle(0x20c879,.10).fillRoundedRect(76,top+20,328,70,16);
     card.lineStyle(1,0xffffff,.10).strokeRoundedRect(76,top+20,328,70,16);
-    var title = me.add.text(GW/2,top+44,"Save to Global Board",{fontSize:"24px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setOrigin(.5);
+    var title = me.add.text(GW/2,top+44,"Create Your Player Name",{fontSize:"23px",color:"#eaf7ff",fontStyle:"bold",stroke:"#000",strokeThickness:4}).setOrigin(.5);
     var score = me.add.text(GW/2,top+74,formatScore(data.score || 0) + " pts",{fontSize:"20px",color:"#ffdf75",fontStyle:"bold",stroke:"#000",strokeThickness:3}).setOrigin(.5);
-    var label = me.add.text(GW/2,top+112,"Nickname",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    var label = me.add.text(GW/2,top+112,"Leaderboard name",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var inputBack = me.add.graphics();
     inputBack.fillStyle(0x0d1722,1).fillRoundedRect(92,top+128,296,50,13);
     inputBack.lineStyle(2,0x8ff0bc,.28).strokeRoundedRect(92,top+128,296,50,13);
-    me.saveName = cleanEditableName(playerName || readPlayerName());
+    me.saveName = "";
     me.saveNameText = me.add.text(GW/2,top+153,me.saveName,{fontSize:"23px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
     me.saveCursor = me.add.text(GW/2 + 52,top+153,"|",{fontSize:"24px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     me.tweens.add({targets:me.saveCursor,alpha:.18,duration:420,yoyo:true,repeat:-1});
     me.refreshSaveName();
-    var hint = me.add.text(GW/2,top+197,"Tap letters below. Score shows as flag + name + score.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
+    var hint = me.add.text(GW/2,top+197,"Pick 1-14 letters. This name appears on the global board.",{fontSize:"12px",color:"#9fb0c1",align:"center"}).setOrigin(.5);
     var keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
     var keyItems = [];
     keys.forEach(function(ch,index){
@@ -1787,7 +1788,7 @@ var GameOverScene = {
     this.refreshSaveName();
   },
   refreshSaveName:function(){
-    var name = this.saveName || "Name";
+    var name = this.saveName || "TYPE NAME";
     if(this.saveNameText){
       this.saveNameText.setText(name);
       this.saveNameText.setColor(this.saveName ? "#eaf7ff" : "#6f8295");
@@ -1808,8 +1809,13 @@ var GameOverScene = {
   submitScoreFromDialog:function(data){
     var me = this;
     if(me.savingScore){ return; }
+    var typed = cleanEditableName(me.saveName);
+    if(!typed){
+      toast(me,"Choose a name first","#ffdf75");
+      me.bumpScore(me.saveNameText,1.12);
+      return;
+    }
     me.savingScore = true;
-    var typed = cleanEditableName(me.saveName) || "Guest";
     var nextName = savePlayerName(typed);
     var record = {name:nextName,score:data.score || 0,delivered:data.delivered || 0,combo:data.combo || 0,hot:data.hot || 0,rate:data.rate || 0,time:data.time || Date.now(),day:todayKey()};
     saveRecord(record);
