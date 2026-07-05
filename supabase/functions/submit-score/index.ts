@@ -3,7 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
@@ -93,14 +93,58 @@ function countryFromTimezone(value: unknown) {
   return cleanCountryCode(timezoneMap[timezone] || null);
 }
 
-function getCountry(req: Request, body: Record<string, unknown> | null) {
-  const rawCode = cleanCountryCode(
+function clientIp(req: Request) {
+  const raw =
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("true-client-ip") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for") ||
+    "";
+  const ip = raw.split(",")[0].trim();
+  if (!ip || ip === "::1" || ip === "127.0.0.1" || ip.startsWith("10.") || ip.startsWith("192.168.")) {
+    return null;
+  }
+  return /^[0-9a-fA-F:.]+$/.test(ip) ? ip : null;
+}
+
+async function countryFromIp(req: Request) {
+  const ip = clientIp(req);
+  if (!ip) return null;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1200);
+  try {
+    const res = await fetch(`https://api.country.is/${encodeURIComponent(ip)}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return cleanCountryCode(data?.country || null);
+  } catch (_) {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function getCountry(req: Request, body: Record<string, unknown> | null) {
+  const url = new URL(req.url);
+  const headerCode = cleanCountryCode(
     req.headers.get("cf-ipcountry") ||
       req.headers.get("x-country-code") ||
-      req.headers.get("x-vercel-ip-country") ||
+      req.headers.get("x-vercel-ip-country"),
+  );
+  const fallbackCode = cleanCountryCode(
+      url.searchParams.get("country_code") ||
       String(body?.country_code || ""),
   );
-  const countryCode = normalizeCountryCode(rawCode || countryFromTimezone(body?.timezone));
+  const countryCode = normalizeCountryCode(
+    headerCode ||
+      (await countryFromIp(req)) ||
+      fallbackCode ||
+      countryFromTimezone(body?.timezone || url.searchParams.get("timezone")),
+  );
 
   return {
     country_code: countryCode,
@@ -108,16 +152,58 @@ function getCountry(req: Request, body: Record<string, unknown> | null) {
   };
 }
 
+function cleanLimit(value: string | null) {
+  const limit = cleanNumber(value, 50);
+  return Math.max(1, Math.min(50, limit));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+      JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default;
+
+    if (!supabaseUrl || !serviceKey) {
+      return json({ error: "Server config missing" }, 500);
+    }
+
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    if (req.method === "GET") {
+      const url = new URL(req.url);
+      const scope = url.searchParams.get("scope") || "country";
+      const country = scope === "global" ? { country_code: null, country_name: null } : await getCountry(req, null);
+      let query = supabase
+        .from("leaderboard_scores")
+        .select("name,score,packages,combo,accuracy,country_code,country_name,avatar,device_id,created_at")
+        .order("score", { ascending: false })
+        .limit(cleanLimit(url.searchParams.get("limit")));
+
+      if (scope !== "global") {
+        if (!country.country_code) {
+          return json({ country, records: [] });
+        }
+        query = query.eq("country_code", country.country_code);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error(error);
+        return json({ error: "Database read failed" }, 500);
+      }
+
+      return json({ country, records: data || [] });
+    }
+
     const body = ((await req.json().catch(() => ({}))) || {}) as Record<string, unknown>;
     const score = cleanNumber(body.score);
 
@@ -132,17 +218,7 @@ Deno.serve(async (req) => {
       return json({ error: "Profile required" }, 400);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceKey =
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
-      JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default;
-
-    if (!supabaseUrl || !serviceKey) {
-      return json({ error: "Server config missing" }, 500);
-    }
-
-    const supabase = createClient(supabaseUrl, serviceKey);
-    const country = getCountry(req, body);
+    const country = await getCountry(req, body);
 
     const payload = {
       device_id: deviceId,
