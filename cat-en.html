@@ -1107,19 +1107,21 @@ var MenuScene = {
     }).setOrigin(.5);
     var buttonGap = menuCompact ? 52 : 58;
     var buttonW = menuCompact ? 176 : 190;
-    var panelY = Math.max(firstButtonY + buttonGap * 4 + 22, Math.min(firstButtonY + 208, GH - 150));
+    var panelY = Math.max(firstButtonY + buttonGap * 4 + 14, Math.min(firstButtonY + 200, GH - 160));
     var tipPanel = me.add.graphics();
-    tipPanel.fillStyle(0x071018,.18).fillRoundedRect(74,panelY+18,332,52,16);
-    tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(86,panelY+20,308,48,14);
+    tipPanel.fillStyle(0x000000,.18).fillRoundedRect(67,panelY+5,346,75,17);
+    tipPanel.fillStyle(0x071018,.74).fillRoundedRect(64,panelY,352,76,17);
+    tipPanel.lineStyle(1,0x8ff0bc,.16).strokeRoundedRect(64,panelY,352,76,17);
+    tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(76,panelY+12,328,52,14);
     [
       {x:118,t:"Endless",d:"Speed ramps",c:"#7de4ff",icon:"rule_lane"},
       {x:240,t:"Color Match",d:"Same-color portal",c:"#ffdf75",icon:"rule_match"},
       {x:362,t:"Survive",d:"Misses cost",c:"#ff7a8e",icon:"rule_capacity"}
     ].forEach(function(item){
       var halo = me.add.circle(item.x,panelY+22,22,parseInt(item.c.slice(1),16),.11).setDepth(2);
-      me.add.image(item.x,panelY+22,item.icon).setScale(.66).setDepth(3);
-      me.add.text(item.x,panelY+55,item.t,{fontSize:"13px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5).setDepth(3);
-      me.add.text(item.x,panelY+70,item.d,{fontSize:"9px",color:"#d5e2ef"}).setOrigin(.5).setDepth(3);
+      me.add.image(item.x,panelY+22,item.icon).setScale(.64).setDepth(3);
+      me.add.text(item.x,panelY+53,item.t,{fontSize:"13px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5).setDepth(3);
+      me.add.text(item.x,panelY+67,item.d,{fontSize:"9px",color:"#d5e2ef"}).setOrigin(.5).setDepth(3);
       me.tweens.add({targets:halo,scale:1.18,alpha:.035,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     });
     makeButton(me,cx,firstButtonY,buttonW,"Start Run",0x20c879,function(){me.scene.start("PlayScene");});
@@ -1136,7 +1138,7 @@ var MenuScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"Link copied","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    me.add.text(cx,Math.min(GH-32,panelY+104),"Tap lanes to switch. Survive the rush and keep your combo.",{
+    me.add.text(cx,Math.min(GH-30,panelY+108),"Tap lanes to switch. Survive the rush and keep your combo.",{
       fontSize:"13px",color:"#8b9bad"
     }).setOrigin(.5);
     me.showProfileDialog = MenuScene.showProfileDialog;
