@@ -244,6 +244,24 @@ function countryFlag(code){
   return String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
 }
 
+function countryDisplayName(code,fallback){
+  code = cleanCountryCode(code);
+  fallback = String(fallback || "").trim();
+  if(fallback && fallback !== code){ return fallback.slice(0,32); }
+  if(!code){ return "Local"; }
+  try{
+    if(window.Intl && Intl.DisplayNames){
+      var names = new Intl.DisplayNames(["en"],{type:"region"});
+      return (names.of(code) || code).slice(0,32);
+    }
+  }catch(e){}
+  return code;
+}
+
+function currentTimezone(){
+  try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){ return ""; }
+}
+
 function countryBadge(code){
   code = cleanCountryCode(code);
   return code || "--";
@@ -696,9 +714,9 @@ function fetchCloudLeaderboard(scope){
     return Promise.reject(new Error("Cloud leaderboard disabled"));
   }
   var base = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/rest/v1/leaderboard_scores";
-  var isChina = scope === "china";
+  var countryCode = cleanCountryCode(scope === "china" ? "CN" : scope && scope.countryCode);
   var order = "&order=score.desc&limit=50";
-  var countryFilter = isChina ? "&country_code=eq.CN" : "";
+  var countryFilter = countryCode ? "&country_code=eq." + encodeURIComponent(countryCode) : "";
   var richUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,avatar,device_id,created_at" + countryFilter + order;
   var legacyUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,created_at" + countryFilter + order;
   function read(url){
@@ -711,22 +729,53 @@ function fetchCloudLeaderboard(scope){
     return read(legacyUrl);
   }).then(function(rows){
     var mapped = Array.isArray(rows) ? rows.map(normalizeCloudRecord) : [];
-    var bestByDevice = {};
-    mapped.forEach(function(item,index){
-      var legacyKey = [
-        cleanPlayerName(item.name || "Runner").toLowerCase(),
-        item.score || 0,
-        item.time || index,
-        item.countryCode || ""
-      ].join(":");
-      var key = item.deviceId ? "device:" + item.deviceId : "legacy:" + legacyKey;
-      if(!bestByDevice[key] || (item.score || 0) > (bestByDevice[key].score || 0)){
-        bestByDevice[key] = item;
-      }
+    return dedupeCloudRecords(mapped);
+  });
+}
+
+function dedupeCloudRecords(mapped){
+  var bestByDevice = {};
+  mapped.forEach(function(item,index){
+    var legacyKey = [
+      cleanPlayerName(item.name || "Runner").toLowerCase(),
+      item.score || 0,
+      item.time || index,
+      item.countryCode || ""
+    ].join(":");
+    var key = item.deviceId ? "device:" + item.deviceId : "legacy:" + legacyKey;
+    if(!bestByDevice[key] || (item.score || 0) > (bestByDevice[key].score || 0)){
+      bestByDevice[key] = item;
+    }
+  });
+  return Object.keys(bestByDevice).map(function(key){ return bestByDevice[key]; }).sort(function(a,b){
+    return (b.score || 0) - (a.score || 0);
+  }).slice(0,50);
+}
+
+function fetchLocalCountryLeaderboard(){
+  if(!CLOUD_LEADERBOARD.enabled || !CLOUD_LEADERBOARD.url || !CLOUD_LEADERBOARD.anonKey || !window.fetch){
+    return Promise.reject(new Error("Cloud leaderboard disabled"));
+  }
+  var fallbackCode = cleanCountryCode(guessedCountryCode());
+  var url = CLOUD_LEADERBOARD.url.replace(/\/$/,"") + "/functions/v1/submit-score?scope=country&limit=50&country_code=" + encodeURIComponent(fallbackCode || "") + "&timezone=" + encodeURIComponent(currentTimezone());
+  var controller = window.AbortController ? new AbortController() : null;
+  var timeout = controller ? setTimeout(function(){ controller.abort(); },2200) : null;
+  return fetch(url,{headers:cloudHeaders(),signal:controller ? controller.signal : undefined}).then(function(res){
+    if(timeout){ clearTimeout(timeout); }
+    if(!res.ok){ throw new Error("Country leaderboard " + res.status); }
+    return res.json();
+  }).then(function(data){
+    var country = data && data.country ? data.country : {};
+    var countryCode = cleanCountryCode(country.country_code || country.countryCode || fallbackCode || "");
+    var countryName = countryDisplayName(countryCode,country.country_name || country.countryName || "");
+    var mapped = Array.isArray(data && data.records) ? data.records.map(normalizeCloudRecord) : [];
+    return {records:dedupeCloudRecords(mapped),countryCode:countryCode,countryName:countryName};
+  }).catch(function(error){
+    if(timeout){ clearTimeout(timeout); }
+    if(!fallbackCode){ throw error; }
+    return fetchCloudLeaderboard({countryCode:fallbackCode}).then(function(records){
+      return {records:records,countryCode:fallbackCode,countryName:countryDisplayName(fallbackCode)};
     });
-    return Object.keys(bestByDevice).map(function(key){ return bestByDevice[key]; }).sort(function(a,b){
-      return (b.score || 0) - (a.score || 0);
-    }).slice(0,50);
   });
 }
 
@@ -748,7 +797,7 @@ function submitCloudScore(record){
       device_id:profile.deviceId,
       avatar:profile.avatar,
       country_code:guessedCountryCode(),
-      timezone:(function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){ return ""; } })()
+      timezone:currentTimezone()
     })
   }).then(function(res){
     if(!res.ok){ throw new Error("Submit " + res.status); }
@@ -1267,7 +1316,7 @@ var MenuScene = {
 var RecordsScene = {
   key:"RecordsScene",
   init:function(data){
-    this.initialTab = data && data.tab === "mine" ? "mine" : data && data.tab === "china" ? "china" : "global";
+    this.initialTab = data && data.tab === "mine" ? "mine" : (data && (data.tab === "local" || data.tab === "china")) ? "local" : "global";
   },
   create:function(){
     activeScene = this;
@@ -1285,10 +1334,10 @@ var RecordsScene = {
     me.renderRecords = RecordsScene.renderRecords;
     me.showLocalRecords = RecordsScene.showLocalRecords;
     me.showGlobalRecords = RecordsScene.showGlobalRecords;
-    me.showChinaRecords = RecordsScene.showChinaRecords;
+    me.showCountryRecords = RecordsScene.showCountryRecords;
     me.drawTabs = RecordsScene.drawTabs;
     if(me.initialTab === "mine"){ me.showLocalRecords(); }
-    else if(me.initialTab === "china"){ me.showChinaRecords(); }
+    else if(me.initialTab === "local"){ me.showCountryRecords(); }
     else{ me.showGlobalRecords(); }
     makeButton(me,GW/2,616,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
   },
@@ -1305,13 +1354,13 @@ var RecordsScene = {
       var zone = me.add.zone(x,154,w,40).setInteractive({useHandCursor:true}).setDepth(12);
       zone.on("pointerdown",function(){
         if(key === "global"){ me.showGlobalRecords(); }
-        else if(key === "china"){ me.showChinaRecords(); }
+        else if(key === "local"){ me.showCountryRecords(); }
         else{ me.showLocalRecords(); }
       });
       me.tabItems.push(bg,tx,zone);
     }
     tab(112,116,"Global","global");
-    tab(240,116,"China","china");
+    tab(240,116,"Local","local");
     tab(368,116,"Mine","mine");
   },
   showLocalRecords:function(){
@@ -1337,22 +1386,23 @@ var RecordsScene = {
       me.renderRecords(readRecords(),"My records");
     });
   },
-  showChinaRecords:function(){
+  showCountryRecords:function(){
     var me = this;
-    me.drawTabs("china");
+    me.drawTabs("local");
     if(!CLOUD_LEADERBOARD.enabled){
       me.drawTabs("mine");
       me.renderRecords(readRecords(),"My records");
       return;
     }
-    if(me.boardStatus){ me.boardStatus.setText("Loading China Top..."); me.boardStatus.setColor("#ffdf75"); }
-    me.renderRecords([],"Loading China Top...");
-    fetchCloudLeaderboard("china").then(function(records){
+    if(me.boardStatus){ me.boardStatus.setText("Loading Local Top..."); me.boardStatus.setColor("#ffdf75"); }
+    me.renderRecords([],"Loading Local Top...");
+    fetchLocalCountryLeaderboard().then(function(result){
       if(!me.scene || !me.scene.isActive("RecordsScene")){ return; }
-      me.renderRecords(records,"China Top 50");
+      var name = countryDisplayName(result.countryCode,result.countryName);
+      me.renderRecords(result.records,name + " Top 50");
     }).catch(function(){
-      if(me.boardStatus){ me.boardStatus.setText("China board unavailable"); me.boardStatus.setColor("#ffdf75"); }
-      me.renderRecords([],"China Top 50");
+      if(me.boardStatus){ me.boardStatus.setText("Local board unavailable"); me.boardStatus.setColor("#ffdf75"); }
+      me.renderRecords([],"Local Top 50");
     });
   },
   renderRecords:function(records,label){
@@ -1363,12 +1413,12 @@ var RecordsScene = {
     }
     me.recordItems = [];
     var isGlobal = label.indexOf("Global") === 0;
-    var isChina = label.indexOf("China") === 0;
+    var isCountry = !isGlobal && label.indexOf("Top 50") > 0;
     var isMine = label.indexOf("My") === 0;
     var isLoading = label.indexOf("Loading") === 0;
     if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor((isGlobal || isLoading) ? "#8ff0bc" : "#ffdf75"); }
     if(!records.length){
-      var emptyText = isLoading ? (isChina ? "Loading China scores..." : "Loading global scores...") : isMine ? "No best score yet\nSet profile, then finish one run" : isChina ? "China board is empty\nSet profile and play from China" : "Global board is syncing\nSet profile to join automatically";
+      var emptyText = isLoading ? (label.indexOf("Local") >= 0 ? "Finding your country board..." : "Loading global scores...") : isMine ? "No best score yet\nSet profile, then finish one run" : isCountry ? "Local board is empty\nSet profile and play to join it" : "Global board is syncing\nSet profile to join automatically";
       me.recordItems.push(me.add.text(GW/2,370,emptyText,{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5));
@@ -1378,8 +1428,8 @@ var RecordsScene = {
       var y = 226 + index * 39;
       var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
       me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
-      if(isGlobal || isChina){
-        if(isChina){
+      if(isGlobal || isCountry){
+        if(isCountry){
           var av = drawAvatar(me,118,y,item.avatar || "bolt",false,.68);
           me.recordItems.push(av);
         }else{
@@ -1391,7 +1441,7 @@ var RecordsScene = {
         var scoreText = me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5);
         var nameText = me.add.text(152,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
         var nameMax = Math.max(74,scoreText.x - scoreText.displayWidth - 18 - nameText.x);
-        fitTextWidth(nameText,Math.min(isChina ? 142 : 132,nameMax),.56);
+        fitTextWidth(nameText,Math.min(isCountry ? 142 : 132,nameMax),.56);
         me.recordItems.push(nameText);
         me.recordItems.push(scoreText);
       }else{
