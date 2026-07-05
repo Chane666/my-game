@@ -67,6 +67,7 @@ var PROFILE_KEY = "neonSortRushProfileENv1";
 var DEVICE_KEY = "neonSortRushDeviceENv1";
 var NAME_CHANGE_COOLDOWN = 30 * 24 * 60 * 60 * 1000;
 var MAX_PLAYER_NAME_CHARS = 10;
+var MIN_PLAYER_NAME_CHARS = 2;
 var CLOUD_LEADERBOARD = {
   enabled:true,
   url:"https://ztscfxpepqfiqttxasdb.supabase.co",
@@ -594,6 +595,12 @@ function cleanEditableName(name){
   return Array.from(name).slice(0,MAX_PLAYER_NAME_CHARS).join("");
 }
 
+function isUsablePlayerName(name){
+  name = cleanEditableName(name);
+  if(Array.from(name).length < MIN_PLAYER_NAME_CHARS){ return false; }
+  return name.toLowerCase() !== "guest" && name.toLowerCase() !== "runner";
+}
+
 function makeDeviceId(){
   var raw = Date.now().toString(36) + Math.random().toString(36).slice(2,12);
   return "dev_" + raw.slice(0,18);
@@ -615,12 +622,14 @@ function readProfile(){
   try{ profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}") || {}; }catch(e){ profile = {}; }
   if(!profile.deviceId){ profile.deviceId = readDeviceId(); }
   profile.name = cleanEditableName(profile.name || "");
+  if(profile.name && !isUsablePlayerName(profile.name)){ profile.name = ""; }
   profile.avatar = String(profile.avatar || "bolt").slice(0,18);
   profile.nameChangedAt = Math.floor(Number(profile.nameChangedAt || 0)) || 0;
   if(!profile.name){
     try{
       var oldName = cleanEditableName(localStorage.getItem(PLAYER_KEY) || "");
-      if(oldName){ profile.name = oldName; }
+      if(isUsablePlayerName(oldName)){ profile.name = oldName; }
+      else if(oldName){ localStorage.removeItem(PLAYER_KEY); }
     }catch(e){}
   }
   return profile;
@@ -630,13 +639,14 @@ function saveProfile(profile){
   profile = profile || {};
   var next = {
     deviceId:String(profile.deviceId || readDeviceId()).slice(0,32),
-    name:cleanEditableName(profile.name || ""),
+    name:isUsablePlayerName(profile.name) ? cleanEditableName(profile.name || "") : "",
     avatar:String(profile.avatar || "bolt").slice(0,18),
     nameChangedAt:Math.floor(Number(profile.nameChangedAt || 0)) || 0
   };
   try{
     localStorage.setItem(PROFILE_KEY,JSON.stringify(next));
     if(next.name){ localStorage.setItem(PLAYER_KEY,next.name); }
+    else{ localStorage.removeItem(PLAYER_KEY); }
   }catch(e){}
   return next;
 }
@@ -1275,6 +1285,19 @@ var MenuScene = {
     var name = cleanEditableName(me.profileInput ? me.profileInput.value : me.profileNameValue);
     if(!name && !profile.name){
       toast(me,"Choose a name first","#ffdf75");
+      if(me.profileNameText){
+        me.tweens.killTweensOf(me.profileNameText);
+        me.profileNameText.setScale(1.12);
+        me.tweens.add({targets:me.profileNameText,scale:1,duration:160,ease:"Back.easeOut"});
+      }
+      if(me.profileInput){
+        if(me.profileInputPlace){ me.profileInputPlace(); }
+        focusNativeInput(me.profileInput);
+      }
+      return;
+    }
+    if(name && !isUsablePlayerName(name)){
+      toast(me,"Use at least 2 characters","#ffdf75");
       if(me.profileNameText){
         me.tweens.killTweensOf(me.profileNameText);
         me.profileNameText.setScale(1.12);
