@@ -1107,20 +1107,19 @@ var MenuScene = {
     }).setOrigin(.5);
     var buttonGap = menuCompact ? 52 : 58;
     var buttonW = menuCompact ? 176 : 190;
-    var panelY = Math.max(firstButtonY + buttonGap * 4 + 30, Math.min(firstButtonY + 218, GH - 168));
+    var panelY = Math.max(firstButtonY + buttonGap * 4 + 22, Math.min(firstButtonY + 208, GH - 150));
     var tipPanel = me.add.graphics();
-    tipPanel.fillStyle(0x071018,.48).fillRoundedRect(54,panelY,372,94,16);
-    tipPanel.lineStyle(2,0xffffff,.10).strokeRoundedRect(54,panelY,372,94,16);
-    tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(68,panelY+12,344,70,13);
+    tipPanel.fillStyle(0x071018,.18).fillRoundedRect(74,panelY+18,332,52,16);
+    tipPanel.fillStyle(0xffffff,.035).fillRoundedRect(86,panelY+20,308,48,14);
     [
-      {x:116,t:"Endless",d:"Speed ramps up",c:"#7de4ff",icon:"rule_lane"},
+      {x:118,t:"Endless",d:"Speed ramps",c:"#7de4ff",icon:"rule_lane"},
       {x:240,t:"Color Match",d:"Same-color portal",c:"#ffdf75",icon:"rule_match"},
-      {x:364,t:"Survive",d:"Misses cost capacity",c:"#ff7a8e",icon:"rule_capacity"}
+      {x:362,t:"Survive",d:"Misses cost",c:"#ff7a8e",icon:"rule_capacity"}
     ].forEach(function(item){
-      var halo = me.add.circle(item.x,panelY+28,24,parseInt(item.c.slice(1),16),.08).setDepth(2);
-      me.add.image(item.x,panelY+28,item.icon).setScale(.72).setDepth(3);
-      me.add.text(item.x,panelY+63,item.t,{fontSize:"13px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5).setDepth(3);
-      me.add.text(item.x,panelY+80,item.d,{fontSize:"10px",color:"#d5e2ef"}).setOrigin(.5).setDepth(3);
+      var halo = me.add.circle(item.x,panelY+22,22,parseInt(item.c.slice(1),16),.11).setDepth(2);
+      me.add.image(item.x,panelY+22,item.icon).setScale(.66).setDepth(3);
+      me.add.text(item.x,panelY+55,item.t,{fontSize:"13px",color:item.c,fontStyle:"bold",stroke:"#000",strokeThickness:2}).setOrigin(.5).setDepth(3);
+      me.add.text(item.x,panelY+70,item.d,{fontSize:"9px",color:"#d5e2ef"}).setOrigin(.5).setDepth(3);
       me.tweens.add({targets:halo,scale:1.18,alpha:.035,duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
     });
     makeButton(me,cx,firstButtonY,buttonW,"Start Run",0x20c879,function(){me.scene.start("PlayScene");});
@@ -1137,8 +1136,8 @@ var MenuScene = {
         navigator.clipboard.writeText(url).then(function(){toast(me,"Link copied","#fff");});
       }else{ toast(me,url,"#fff"); }
     });
-    me.add.text(cx,GH-44,"Tap lanes to switch. Survive the rush and keep your combo.",{
-      fontSize:"14px",color:"#8b9bad"
+    me.add.text(cx,Math.min(GH-32,panelY+104),"Tap lanes to switch. Survive the rush and keep your combo.",{
+      fontSize:"13px",color:"#8b9bad"
     }).setOrigin(.5);
     me.showProfileDialog = MenuScene.showProfileDialog;
     me.closeProfileDialog = MenuScene.closeProfileDialog;
