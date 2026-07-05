@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+const MIN_PLAYER_NAME_CHARS = 2;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -23,7 +24,8 @@ function cleanName(value: unknown) {
     .slice(0, 28);
 
   const clean = Array.from(name).slice(0, 10).join("");
-  return clean && clean.toLowerCase() !== "guest" ? clean : null;
+  const lower = clean.toLowerCase();
+  return Array.from(clean).length >= MIN_PLAYER_NAME_CHARS && lower !== "guest" && lower !== "runner" ? clean : null;
 }
 
 function cleanNumber(value: unknown, fallback = 0) {
