@@ -677,6 +677,7 @@ function cloudHeaders(){
 function normalizeCloudRecord(item){
   var countryCode = cleanCountryCode(item.country_code || item.countryCode || item.country || "");
   return {
+    deviceId:String(item.device_id || item.deviceId || "").slice(0,48),
     name:cleanPlayerName(item.name || "Runner"),
     score:Math.floor(item.score || 0),
     delivered:Math.floor(item.packages || item.delivered || 0),
@@ -698,7 +699,7 @@ function fetchCloudLeaderboard(scope){
   var isChina = scope === "china";
   var order = "&order=score.desc&limit=50";
   var countryFilter = isChina ? "&country_code=eq.CN" : "";
-  var richUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,avatar,created_at" + countryFilter + order;
+  var richUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,avatar,device_id,created_at" + countryFilter + order;
   var legacyUrl = base + "?select=name,score,packages,combo,accuracy,country_code,country_name,created_at" + countryFilter + order;
   function read(url){
     return fetch(url,{headers:cloudHeaders()}).then(function(res){
@@ -710,14 +711,20 @@ function fetchCloudLeaderboard(scope){
     return read(legacyUrl);
   }).then(function(rows){
     var mapped = Array.isArray(rows) ? rows.map(normalizeCloudRecord) : [];
-    var bestByName = {};
-    mapped.forEach(function(item){
-      var key = cleanPlayerName(item.name || "Runner").toLowerCase();
-      if(!bestByName[key] || (item.score || 0) > (bestByName[key].score || 0)){
-        bestByName[key] = item;
+    var bestByDevice = {};
+    mapped.forEach(function(item,index){
+      var legacyKey = [
+        cleanPlayerName(item.name || "Runner").toLowerCase(),
+        item.score || 0,
+        item.time || index,
+        item.countryCode || ""
+      ].join(":");
+      var key = item.deviceId ? "device:" + item.deviceId : "legacy:" + legacyKey;
+      if(!bestByDevice[key] || (item.score || 0) > (bestByDevice[key].score || 0)){
+        bestByDevice[key] = item;
       }
     });
-    return Object.keys(bestByName).map(function(key){ return bestByName[key]; }).sort(function(a,b){
+    return Object.keys(bestByDevice).map(function(key){ return bestByDevice[key]; }).sort(function(a,b){
       return (b.score || 0) - (a.score || 0);
     }).slice(0,50);
   });
