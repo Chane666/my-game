@@ -1346,36 +1346,46 @@ var RecordsScene = {
     activeScene = this;
     var me = this;
     gradientBackground(me);
-    me.add.text(GW/2,66,"Leaderboard",{fontSize:"32px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
-    me.boardStatus = me.add.text(GW/2,108,CLOUD_LEADERBOARD.enabled ? "Global Top 50" : "My records",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
+    me.layoutShift = Math.max(0,Math.round((GH - 720) / 2));
+    me.listScroll = 0;
+    me.currentRecords = [];
+    me.currentLabel = "";
+    var y0 = me.layoutShift;
+    me.add.text(GW/2,66 + y0,"Leaderboard",{fontSize:"32px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(.5);
+    me.boardStatus = me.add.text(GW/2,108 + y0,CLOUD_LEADERBOARD.enabled ? "Global Top 50" : "My records",{fontSize:"13px",color:"#8ff0bc",fontStyle:"bold"}).setOrigin(.5);
     var panel = me.add.graphics();
-    panel.fillStyle(0x071018,.36).fillRoundedRect(34,126,412,526,18);
-    panel.lineStyle(2,0xffffff,.055).strokeRoundedRect(34,126,412,526,18);
-    panel.fillStyle(0x111b27,.94).fillRoundedRect(58,194,364,372,12);
-    panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(58,194,364,372,12);
+    panel.fillStyle(0x071018,.36).fillRoundedRect(34,126 + y0,412,526,18);
+    panel.lineStyle(2,0xffffff,.055).strokeRoundedRect(34,126 + y0,412,526,18);
+    panel.fillStyle(0x111b27,.94).fillRoundedRect(58,194 + y0,364,372,12);
+    panel.lineStyle(2,0xffffff,.08).strokeRoundedRect(58,194 + y0,364,372,12);
     me.recordItems = [];
     me.tabItems = [];
+    me.scrollItems = [];
     me.renderRecords = RecordsScene.renderRecords;
+    me.renderRecordRows = RecordsScene.renderRecordRows;
     me.showLocalRecords = RecordsScene.showLocalRecords;
     me.showGlobalRecords = RecordsScene.showGlobalRecords;
     me.showCountryRecords = RecordsScene.showCountryRecords;
     me.drawTabs = RecordsScene.drawTabs;
+    me.installRecordScroll = RecordsScene.installRecordScroll;
+    me.installRecordScroll();
     if(me.initialTab === "mine"){ me.showLocalRecords(); }
     else if(me.initialTab === "local"){ me.showCountryRecords(); }
     else{ me.showGlobalRecords(); }
-    makeButton(me,GW/2,616,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
+    makeButton(me,GW/2,616 + y0,178,"Menu",0xe65353,function(){me.scene.start("MenuScene");});
   },
   drawTabs:function(active){
     var me = this;
     if(me.tabItems){ me.tabItems.forEach(function(item){ if(item && item.destroy){ item.destroy(); } }); }
     me.tabItems = [];
+    var y0 = me.layoutShift || 0;
     function tab(x,w,label,key){
       var selected = active === key;
       var bg = me.add.graphics().setDepth(10);
-      bg.fillStyle(selected ? 0x20c879 : 0x0b1520, selected ? 1 : .92).fillRoundedRect(x-w/2,136,w,36,9);
-      bg.lineStyle(1, selected ? 0x8ff0bc : 0xffffff, selected ? .38 : .12).strokeRoundedRect(x-w/2,136,w,36,9);
-      var tx = me.add.text(x,154,label,{fontSize:"14px",color:selected ? "#ffffff" : "#9fb0c1",fontStyle:"bold"}).setOrigin(.5).setDepth(11);
-      var zone = me.add.zone(x,154,w,40).setInteractive({useHandCursor:true}).setDepth(12);
+      bg.fillStyle(selected ? 0x20c879 : 0x0b1520, selected ? 1 : .92).fillRoundedRect(x-w/2,136 + y0,w,36,9);
+      bg.lineStyle(1, selected ? 0x8ff0bc : 0xffffff, selected ? .38 : .12).strokeRoundedRect(x-w/2,136 + y0,w,36,9);
+      var tx = me.add.text(x,154 + y0,label,{fontSize:"14px",color:selected ? "#ffffff" : "#9fb0c1",fontStyle:"bold"}).setOrigin(.5).setDepth(11);
+      var zone = me.add.zone(x,154 + y0,w,40).setInteractive({useHandCursor:true}).setDepth(12);
       zone.on("pointerdown",function(){
         if(key === "global"){ me.showGlobalRecords(); }
         else if(key === "local"){ me.showCountryRecords(); }
@@ -1386,6 +1396,34 @@ var RecordsScene = {
     tab(112,116,"Global","global");
     tab(240,116,"Local","local");
     tab(368,116,"Mine","mine");
+  },
+  installRecordScroll:function(){
+    var me = this;
+    var y0 = me.layoutShift || 0;
+    me.scrollZone = me.add.zone(GW/2,380 + y0,364,372).setInteractive({useHandCursor:true}).setDepth(20);
+    me.scrollDragStartY = 0;
+    me.scrollDragStartIndex = 0;
+    me.scrollZone.on("pointerdown",function(pointer){
+      me.scrollDragStartY = pointer.y;
+      me.scrollDragStartIndex = me.listScroll || 0;
+    });
+    me.scrollZone.on("pointermove",function(pointer){
+      if(!pointer.isDown || !me.currentRecords || me.currentRecords.length <= 8){ return; }
+      var delta = pointer.y - me.scrollDragStartY;
+      var next = me.scrollDragStartIndex - Math.round(delta / 38);
+      me.setRecordScroll(next);
+    });
+    me.input.on("wheel",function(pointer,objects,dx,dy){
+      if(!me.currentRecords || me.currentRecords.length <= 8){ return; }
+      me.setRecordScroll((me.listScroll || 0) + (dy > 0 ? 1 : -1));
+    });
+  },
+  setRecordScroll:function(index){
+    var max = Math.max(0,(this.currentRecords || []).length - 8);
+    var next = Math.max(0,Math.min(max,index || 0));
+    if(next === this.listScroll){ return; }
+    this.listScroll = next;
+    this.renderRecordRows();
   },
   showLocalRecords:function(){
     this.drawTabs("mine");
@@ -1435,48 +1473,82 @@ var RecordsScene = {
     if(me.recordItems){
       me.recordItems.forEach(function(item){ if(item && item.destroy){ item.destroy(); } });
     }
+    if(me.scrollItems){
+      me.scrollItems.forEach(function(item){ if(item && item.destroy){ item.destroy(); } });
+    }
     me.recordItems = [];
+    me.scrollItems = [];
+    me.currentRecords = records;
+    me.currentLabel = label;
+    me.listScroll = 0;
     var isGlobal = label.indexOf("Global") === 0;
     var isCountry = !isGlobal && label.indexOf("Top 50") > 0;
     var isMine = label.indexOf("My") === 0;
     var isLoading = label.indexOf("Loading") === 0;
+    var y0 = me.layoutShift || 0;
     if(me.boardStatus){ me.boardStatus.setText(label); me.boardStatus.setColor((isGlobal || isLoading) ? "#8ff0bc" : "#ffdf75"); }
     if(!records.length){
       var emptyText = isLoading ? (label.indexOf("Local") >= 0 ? "Finding your country board..." : "Loading global scores...") : isMine ? "No best score yet\nSet profile, then finish one run" : isCountry ? "Local board is empty\nSet profile and play to join it" : "Global board is syncing\nSet profile to join automatically";
-      me.recordItems.push(me.add.text(GW/2,370,emptyText,{
+      me.recordItems.push(me.add.text(GW/2,370 + y0,emptyText,{
         fontSize:"18px",color:"#9fb0c1",align:"center",lineSpacing:10
       }).setOrigin(.5));
       return;
     }
-    records.slice(0,8).forEach(function(item,index){
-      var y = 226 + index * 39;
+    me.renderRecordRows();
+  },
+  renderRecordRows:function(){
+    var me = this;
+    var records = Array.isArray(me.currentRecords) ? me.currentRecords : [];
+    var label = me.currentLabel || "";
+    var isGlobal = label.indexOf("Global") === 0;
+    var isCountry = !isGlobal && label.indexOf("Top 50") > 0;
+    var y0 = me.layoutShift || 0;
+    if(me.scrollItems){
+      me.scrollItems.forEach(function(item){ if(item && item.destroy){ item.destroy(); } });
+    }
+    me.scrollItems = [];
+    var maxScroll = Math.max(0,records.length - 8);
+    me.listScroll = Math.max(0,Math.min(maxScroll,me.listScroll || 0));
+    records.slice(me.listScroll,me.listScroll + 8).forEach(function(item,visibleIndex){
+      var index = visibleIndex + me.listScroll;
+      var y = 226 + y0 + visibleIndex * 39;
       var rankColor = index === 0 ? "#ffdf75" : index < 3 ? "#9de6ff" : "#d6e2ee";
-      me.recordItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
+      me.scrollItems.push(me.add.text(78,y,String(index+1),{fontSize:"20px",color:rankColor,fontStyle:"bold"}).setOrigin(.5));
       if(isGlobal || isCountry){
         if(isCountry){
           var av = drawAvatar(me,118,y,item.avatar || "bolt",false,.68);
-          me.recordItems.push(av);
+          me.scrollItems.push(av);
         }else{
           var flagItems = drawRemoteFlag(me,118,y,item.countryCode,function(){
-          if(me.scene && me.scene.isActive("RecordsScene")){ me.renderRecords(records,label); }
+          if(me.scene && me.scene.isActive("RecordsScene")){ me.renderRecordRows(); }
           });
-          me.recordItems = me.recordItems.concat(flagItems);
+          me.scrollItems = me.scrollItems.concat(flagItems);
         }
         var scoreText = me.add.text(390,y,formatScore(item.score || 0) + " pts",{fontSize:"18px",color:index===0?"#ffdf75":"#ffffff",fontStyle:"bold"}).setOrigin(1,.5);
         var nameText = me.add.text(152,y,cleanPlayerName(item.name || "Runner"),{fontSize:"17px",color:"#eaf7ff",fontStyle:"bold"}).setOrigin(0,.5);
         var nameMax = Math.max(74,scoreText.x - scoreText.displayWidth - 18 - nameText.x);
         fitTextWidth(nameText,Math.min(isCountry ? 142 : 132,nameMax),.56);
-        me.recordItems.push(nameText);
-        me.recordItems.push(scoreText);
+        me.scrollItems.push(nameText);
+        me.scrollItems.push(scoreText);
       }else{
         var localName = me.add.text(106,y-9,cleanPlayerName(item.name || "Runner"),{fontSize:"13px",color:"#cbd7e3",fontStyle:"bold"}).setOrigin(0,.5);
         fitTextWidth(localName,134,.72);
-        me.recordItems.push(localName);
-        me.recordItems.push(me.add.text(106,y+10,formatScore(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5));
-        me.recordItems.push(me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5));
-        me.recordItems.push(me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5));
+        me.scrollItems.push(localName);
+        me.scrollItems.push(me.add.text(106,y+10,formatScore(item.score || 0) + " pts",{fontSize:"17px",color:"#fff",fontStyle:index===0?"bold":"normal"}).setOrigin(0,.5));
+        me.scrollItems.push(me.add.text(272,y,(item.delivered || 0) + " pkgs",{fontSize:"13px",color:"#7de4ff",fontStyle:"bold"}).setOrigin(.5));
+        me.scrollItems.push(me.add.text(390,y,(item.rate || 0) + "%",{fontSize:"14px",color:"#91a0ae"}).setOrigin(1,.5));
       }
     });
+    if(maxScroll > 0){
+      var progress = (me.listScroll + 8) + "/" + records.length;
+      var hint = me.add.text(GW/2,548 + y0,"Drag to scroll  " + progress,{fontSize:"11px",color:"#7f91a5",fontStyle:"bold"}).setOrigin(.5);
+      var track = me.add.graphics();
+      track.fillStyle(0xffffff,.08).fillRoundedRect(408,220 + y0,4,308,3);
+      var thumbH = Math.max(34,308 * Math.min(1,8 / records.length));
+      var thumbY = 220 + y0 + (308 - thumbH) * (me.listScroll / maxScroll);
+      track.fillStyle(0x8ff0bc,.42).fillRoundedRect(408,thumbY,4,thumbH,3);
+      me.scrollItems.push(hint,track);
+    }
   }
 };
 
