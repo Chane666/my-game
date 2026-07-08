@@ -811,30 +811,121 @@
       display: none;
       place-items: center;
       padding: 18px;
-      background: rgba(34, 30, 25, .46);
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255, 212, 95, .24), transparent 28%),
+        rgba(34, 30, 25, .5);
     }
 
     .overlay.show { display: grid; }
 
     .dialog {
-      width: min(340px, 100%);
-      padding: 18px;
+      width: min(390px, 100%);
+      padding: 18px 16px 16px;
       border-radius: 14px;
-      background: var(--paper);
+      background:
+        linear-gradient(180deg, rgba(255, 253, 247, .98), rgba(255, 246, 230, .98));
       border: 1px solid var(--line);
-      box-shadow: var(--shadow);
+      box-shadow: 0 18px 42px rgba(47, 33, 22, .24);
       text-align: center;
       display: grid;
-      gap: 12px;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dialog::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 86px;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(255, 255, 255, .72) 0 8px, transparent 9px),
+        radial-gradient(circle at 82% 20%, rgba(255, 255, 255, .58) 0 7px, transparent 8px),
+        linear-gradient(135deg, rgba(255, 212, 95, .7), rgba(101, 185, 111, .34));
+      pointer-events: none;
+    }
+
+    .dialog.lose::before {
+      background:
+        radial-gradient(circle at 20% 26%, rgba(255, 255, 255, .56) 0 8px, transparent 9px),
+        linear-gradient(135deg, rgba(98, 152, 239, .52), rgba(255, 212, 95, .26));
+    }
+
+    .result-badge,
+    .dialog h2,
+    .dialog p,
+    .reward-grid,
+    .next-goal,
+    .action {
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-badge {
+      width: 86px;
+      height: 86px;
+      margin: -2px auto 0;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, .86), transparent 25%),
+        linear-gradient(145deg, #ffd45f, #ef604f);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 42px;
+      font-weight: 1000;
+      text-shadow: 0 3px 0 rgba(120, 70, 20, .16);
+      border: 5px solid rgba(255, 255, 255, .82);
+      box-shadow: 0 10px 22px rgba(112, 70, 22, .22);
+      animation: badgePop .34s ease both;
+    }
+
+    .dialog.lose .result-badge {
+      background:
+        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, .82), transparent 25%),
+        linear-gradient(145deg, #6298ef, #65b96f);
+    }
+
+    .star-row {
+      height: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      color: #f6b629;
+      font-size: 23px;
+      line-height: 1;
+      text-shadow: 0 2px 0 rgba(120, 75, 20, .12);
+      position: relative;
+      z-index: 1;
+    }
+
+    .star-row .dim {
+      color: rgba(117, 105, 92, .28);
+      text-shadow: none;
     }
 
     .dialog.auto .action {
       display: none;
     }
 
+    .dialog.auto {
+      width: min(340px, 100%);
+      padding: 18px;
+      gap: 10px;
+    }
+
+    .dialog.auto::before,
+    .dialog.auto .result-badge,
+    .dialog.auto .star-row,
+    .dialog.auto .next-goal {
+      display: none;
+    }
+
     .dialog h2 {
       margin: 0;
-      font-size: 25px;
+      font-size: 27px;
+      line-height: 1.05;
     }
 
     .dialog p {
@@ -847,7 +938,7 @@
 
     .reward-grid {
       display: none;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 7px;
     }
 
@@ -860,10 +951,10 @@
     }
 
     .reward-chip {
-      min-height: 46px;
+      min-height: 52px;
       border-radius: 9px;
-      background: rgba(244, 236, 222, .86);
-      border: 1px solid rgba(222, 204, 176, .9);
+      background: rgba(255, 255, 255, .68);
+      border: 1px solid rgba(222, 204, 176, .95);
       display: grid;
       place-items: center;
       padding: 6px;
@@ -878,6 +969,49 @@
       color: var(--ink);
       font-size: 16px;
       line-height: 1;
+    }
+
+    .reward-chip.highlight {
+      color: #fff;
+      background: linear-gradient(145deg, var(--green), #4a9b58);
+      border-color: rgba(255, 255, 255, .82);
+      box-shadow: inset 0 -3px rgba(34, 82, 43, .12);
+    }
+
+    .reward-chip.highlight strong { color: #fff; }
+
+    .reward-chip.wide {
+      grid-column: 1 / -1;
+    }
+
+    .next-goal {
+      min-height: 36px;
+      border-radius: 10px;
+      padding: 8px 10px;
+      color: #6a5630;
+      background: rgba(255, 212, 95, .2);
+      border: 1px solid rgba(224, 183, 77, .46);
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1.35;
+    }
+
+    .dialog.lose .next-goal {
+      color: #46613d;
+      background: rgba(101, 185, 111, .16);
+      border-color: rgba(101, 185, 111, .34);
+    }
+
+    .dialog .action {
+      margin-top: 2px;
+      min-height: 50px;
+      font-size: 18px;
+    }
+
+    @keyframes badgePop {
+      0% { transform: scale(.72); opacity: 0; }
+      72% { transform: scale(1.06); opacity: 1; }
+      100% { transform: scale(1); }
     }
 
     @keyframes pulse {
@@ -1118,9 +1252,12 @@
 
   <div class="overlay" id="overlay">
     <div class="dialog">
+      <div class="result-badge" id="resultBadge">★</div>
+      <div class="star-row" id="starRow">★★★</div>
       <h2 id="resultTitle">猫猫都来了</h2>
       <p id="resultText">这罐很成功。</p>
       <div class="reward-grid" id="rewardGrid"></div>
+      <div class="next-goal" id="nextGoal">下一局冲三星。</div>
       <button class="action restart" id="againBtn">再来一罐</button>
     </div>
   </div>
@@ -1442,6 +1579,7 @@
     let firstCan = true;
     let progress = loadProgress();
     let runStats = null;
+    let pendingNextLevel = false;
 
     const yardEl = document.getElementById("yard");
     const catsLayerEl = document.getElementById("catsLayer");
@@ -1460,9 +1598,13 @@
     const bestEl = document.getElementById("best");
     const tipEl = document.getElementById("tip");
     const overlayEl = document.getElementById("overlay");
+    const dialogEl = document.querySelector(".dialog");
+    const resultBadgeEl = document.getElementById("resultBadge");
+    const starRowEl = document.getElementById("starRow");
     const resultTitleEl = document.getElementById("resultTitle");
     const resultTextEl = document.getElementById("resultText");
     const rewardGridEl = document.getElementById("rewardGrid");
+    const nextGoalEl = document.getElementById("nextGoal");
     const rankNameEl = document.getElementById("rankName");
     const totalFishEl = document.getElementById("totalFish");
     const xpFillEl = document.getElementById("xpFill");
@@ -1497,10 +1639,11 @@
       activeCan = null;
       ended = false;
       firstCan = true;
+      pendingNextLevel = false;
       lastTime = 0;
       canLayerEl.innerHTML = "";
       fxLayerEl.innerHTML = "";
-      document.querySelector(".dialog").classList.remove("auto");
+      dialogEl.classList.remove("auto", "win", "lose");
       overlayEl.classList.remove("show");
       rewardGridEl.innerHTML = "";
       setupWaveView();
@@ -2035,7 +2178,7 @@
         return;
       }
       if (cans <= 0 && !activeCan) {
-        end(false, `还差 ${currentLevel.goal - levelCaught} 只。${currentLevel.hint}`);
+        end(false, buildLoseSummary());
         return;
       }
       if (!activeCan && caught >= (currentWave.goal || Infinity)) {
@@ -2082,17 +2225,13 @@
         runStats.levelsCleared += 1;
         if (stars >= 3) runStats.perfectLevels += 1;
       }
-      const bonus = reward.newRecord ? " 新纪录！" : "";
-      const promote = reward.promoted ? ` 晋升为${reward.rankName}。` : "";
-      const extraRewards = reward.rewards.length ? ` ${reward.rewards.join("，")}。` : "";
-      const line = `${finishedLevel.name}：${starText(stars)} 来了 ${levelCaught} 只，最大猫潮 ${levelBest}，鱼干 +${earned}，经验 +${reward.xpGain}。${bonus}${promote}${extraRewards}`;
+      const result = buildWinSummary(stars, earned, reward, finishedLevel);
       if (levelIndex >= levels.length - 1) {
-        end(true, `${line} ${levels.length} 关完成，本轮鱼干 ${fish}。`);
+        end(true, { ...result, button: "再开一轮" });
         return;
       }
-      levelIndex += 1;
-      showLevelToast(line);
-      setTimeout(() => init(false), 1050);
+      pendingNextLevel = true;
+      end(true, result);
     }
 
     function starCount() {
@@ -2106,39 +2245,135 @@
       return "★".repeat(count) + "☆".repeat(3 - count);
     }
 
+    function starMarkup(count) {
+      return [0, 1, 2].map(index => `<span class="${index < count ? "" : "dim"}">★</span>`).join("");
+    }
+
+    function buildWinSummary(stars, earned, reward, finishedLevel = currentLevel) {
+      const total = totalStars();
+      const nextRank = rankState().next;
+      const nextLine = nextRank ? `再拿 ${Math.max(1, nextRank.xp - progress.xp)} 经验，冲 ${nextRank.name}` : "已到首席段位，继续刷满星纪录";
+      return {
+        title: stars >= 3 ? "完美收编！" : "猫猫到岗！",
+        text: `本局吸到 ${levelCaught} 只，最大猫潮 ${levelBest}。鱼干 +${earned}，经验 +${reward.xpGain}。${reward.promoted ? `晋升为${reward.rankName}！` : reward.newRecord ? "刷新本关纪录！" : "稳定进账。"}`,
+        badge: stars >= 3 ? "★" : "猫",
+        stars,
+        chips: [
+          ["本局鱼干", `+${earned}`, true],
+          ["经验", `+${reward.xpGain}`, false],
+          ["最大猫潮", `${levelBest} 只`, false],
+          ["本关", finishedLevel.name, false],
+          ["总星级", `${total}/${levels.length * 3}`, false]
+        ],
+        extra: reward.rewards,
+        next: reward.rewards.length ? `${reward.rewards.join("，")} 已到账。${nextLine}` : nextLine,
+        button: levelIndex >= levels.length - 1 ? "再开一轮" : "进入下一关"
+      };
+    }
+
+    function buildLoseSummary() {
+      const missing = Math.max(0, currentLevel.goal - levelCaught);
+      const keepFish = Math.max(1, Math.floor(levelCaught / 5));
+      progress.totalFish += keepFish;
+      saveProgress();
+      renderCareer();
+      return {
+        title: "差一点就聚齐",
+        text: `已经吸到 ${levelCaught} 只，只差 ${missing} 只。最大猫潮 ${levelBest}，这局仍保留 +${keepFish} 鱼干。`,
+        badge: "↻",
+        stars: 0,
+        chips: [
+          ["已吸到", `${levelCaught}/${currentLevel.goal}`, true],
+          ["还差", `${missing} 只`, false],
+          ["最大猫潮", `${levelBest} 只`, false],
+          ["保底鱼干", `+${keepFish}`, false]
+        ],
+        extra: [],
+        next: currentLevel.hint,
+        button: "再试一罐"
+      };
+    }
+
     function showLevelToast(text) {
+      resultBadgeEl.textContent = "✓";
+      starRowEl.innerHTML = "";
       resultTitleEl.textContent = "这罐很成功";
       resultTextEl.textContent = text;
       rewardGridEl.innerHTML = "";
-      document.querySelector(".dialog").classList.add("auto");
+      nextGoalEl.textContent = "下一波猫群已经靠近。";
+      dialogEl.classList.add("auto");
       overlayEl.classList.add("show");
       setTimeout(() => {
         overlayEl.classList.remove("show");
-        document.querySelector(".dialog").classList.remove("auto");
+        dialogEl.classList.remove("auto");
       }, 950);
     }
 
-    function end(win, text) {
+    function end(win, result) {
       ended = true;
-      resultTitleEl.textContent = win ? "猫猫都来了" : "猫还没聚齐";
-      resultTextEl.textContent = text;
-      rewardGridEl.innerHTML = resultChips(win);
-      document.querySelector(".dialog").classList.remove("auto");
+      const data = typeof result === "string" ? legacyResult(win, result) : result;
+      dialogEl.classList.remove("auto", "win", "lose");
+      dialogEl.classList.add(win ? "win" : "lose");
+      resultBadgeEl.textContent = data.badge;
+      starRowEl.innerHTML = starMarkup(data.stars);
+      resultTitleEl.textContent = data.title;
+      resultTextEl.textContent = data.text;
+      rewardGridEl.innerHTML = resultChips(data);
+      nextGoalEl.textContent = data.next;
+      document.getElementById("againBtn").textContent = data.button;
       overlayEl.classList.add("show");
     }
 
-    function resultChips(win) {
+    function legacyResult(win, text) {
       const rank = rankState();
-      const stars = totalStars();
-      const chips = [
-        ["职位", rank.current.name],
-        ["累计鱼干", progress.totalFish],
-        ["总星级", `${stars}/${levels.length * 3}`]
-      ];
-      if (!win) {
-        chips[2] = ["还差", `${currentLevel.goal - levelCaught} 只`];
+      return {
+        title: win ? "猫猫都来了" : "猫还没聚齐",
+        text,
+        badge: win ? "★" : "↻",
+        stars: win ? 2 : 0,
+        chips: [
+          ["职位", rank.current.name, true],
+          ["累计鱼干", progress.totalFish, false],
+          ["总星级", `${totalStars()}/${levels.length * 3}`, false],
+          ["最大猫潮", `${levelBest} 只`, false]
+        ],
+        extra: [],
+        next: win ? "继续冲更高星级。" : currentLevel.hint,
+        button: win ? "继续吸猫" : "再试一罐"
+      };
+    }
+
+    function resultChips(data) {
+      const chips = [...data.chips];
+      if (data.extra?.length) {
+        chips.push(["额外奖励", data.extra.join(" / "), true, true]);
       }
-      return chips.map(([label, value]) => `<div class="reward-chip">${label}<strong>${value}</strong></div>`).join("");
+      return chips.map(([label, value, highlight, wide]) => `<div class="reward-chip ${highlight ? "highlight" : ""} ${wide ? "wide" : ""}">${label}<strong>${value}</strong></div>`).join("");
+    }
+
+    function handleAgain() {
+      if (pendingNextLevel) {
+        pendingNextLevel = false;
+        levelIndex += 1;
+        init(false);
+        return;
+      }
+      init();
+    }
+
+    function previewSettlement() {
+      const params = new URLSearchParams(location.search);
+      const preview = params.get("preview");
+      if (!preview) return;
+      levelCaught = preview === "win" ? currentLevel.goal : Math.max(1, currentLevel.goal - 6);
+      levelBest = preview === "win" ? 14 : 8;
+      const reward = { xpGain: 74, promoted: preview === "win", rankName: "金牌吸猫官", newRecord: true, rewards: preview === "win" ? ["星级宝箱 +18鱼干"] : [] };
+      if (preview === "win") {
+        pendingNextLevel = true;
+        end(true, buildWinSummary(3, 22, reward, currentLevel));
+      } else if (preview === "lose") {
+        end(false, buildLoseSummary());
+      }
     }
 
     function say(text, hot = false) {
@@ -2156,9 +2391,10 @@
     yardEl.addEventListener("pointerdown", placeCan);
     document.getElementById("hintBtn").addEventListener("click", showStrategy);
     document.getElementById("restartBtn").addEventListener("click", init);
-    document.getElementById("againBtn").addEventListener("click", init);
+    document.getElementById("againBtn").addEventListener("click", handleAgain);
 
     init();
+    previewSettlement();
   </script>
 </body>
 </html>
