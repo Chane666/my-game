@@ -534,6 +534,10 @@
 
     .hotspot.hide { display: none; }
 
+    .yard-hud {
+      display: none;
+    }
+
     .can-layer,
     .cats-layer,
     .fx-layer {
@@ -938,7 +942,7 @@
 
     .reward-grid {
       display: none;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 7px;
     }
 
@@ -967,7 +971,7 @@
     .reward-chip strong {
       display: block;
       color: var(--ink);
-      font-size: 16px;
+      font-size: 17px;
       line-height: 1;
     }
 
@@ -1047,87 +1051,174 @@
     }
 
     @media (max-width: 520px) {
-      body { padding: 8px 8px 10px; }
-      .app { gap: 7px; }
-      .top { gap: 8px; }
-      h1 { font-size: 26px; }
-      .sub { margin-top: 4px; font-size: 11px; }
+      body { padding: 6px 8px 8px; }
+      .app { gap: 6px; }
+      .top { display: none; }
+      h1 { font-size: 25px; }
+      .sub { display: none; }
       .score {
-        min-width: 76px;
-        padding: 7px 8px;
+        min-width: 68px;
+        padding: 5px 7px;
       }
-      .score strong { font-size: 21px; }
-      .career-card {
-        padding: 7px 8px;
+      .score span { font-size: 10px; }
+      .score strong { font-size: 20px; }
+      .career-card { display: none; }
+      .level-card {
+        padding: 7px 9px;
         gap: 5px;
       }
-      .rank-block strong { font-size: 15px; }
-      .mission-row { gap: 5px; }
-      .mission {
-        min-height: 30px;
-        padding: 4px 5px;
-        font-size: 9px;
-      }
-      .career-tag {
-        min-height: 23px;
-        padding: 3px 5px;
-        font-size: 9px;
-      }
-      .level-card {
-        padding: 7px 8px;
-        gap: 6px;
-      }
-      .level-name strong { font-size: 15px; }
+      .level-head { gap: 6px; }
+      .level-name span { font-size: 10px; }
+      .level-name strong { font-size: 18px; }
       .goal-pill {
         min-width: 72px;
+        max-width: 46%;
         padding: 5px 7px;
-        font-size: 10px;
+        font-size: 11px;
       }
+      .route { display: none; }
+      .wave-row {
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+      }
+      .wave-dot { height: 6px; }
+      .fish-pill {
+        min-width: 58px;
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+      .hud { display: none; }
       .stat {
-        min-height: 50px;
+        min-height: 46px;
         padding: 5px;
       }
-      .stat strong { font-size: 20px; }
+      .stat span { font-size: 10px; }
+      .stat strong { font-size: 22px; }
       .tip {
-        min-height: 29px;
-        padding: 6px 10px;
-        font-size: 12px;
+        display: none;
       }
       .yard {
-        height: min(390px, max(300px, calc(100svh - 488px)));
+        height: min(560px, max(468px, calc(100svh - 218px)));
         border-radius: 14px;
       }
+      .yard-hud {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        z-index: 12;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        pointer-events: none;
+      }
+      .yard-pill {
+        min-height: 44px;
+        border-radius: 12px;
+        background: rgba(255, 253, 247, .9);
+        border: 1px solid rgba(255, 255, 255, .86);
+        box-shadow: 0 8px 18px rgba(44, 34, 20, .13);
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 1000;
+        line-height: 1.1;
+      }
+      .yard-pill strong {
+        display: block;
+        color: var(--ink);
+        margin-top: 2px;
+        font-size: 17px;
+        line-height: 1;
+      }
+      .yard-pill.can strong { color: var(--can); }
+      .yard-pill.caught strong { color: var(--green); }
+      .yard-pill.best strong { color: var(--pink); }
+      .cat-token {
+        width: 70px;
+        height: 76px;
+      }
+      .cat {
+        width: 70px;
+        height: 76px;
+      }
       .controls { gap: 7px; }
-      .action { min-height: 40px; }
+      .controls {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        align-content: center;
+        height: 42px;
+      }
+      .controls .action {
+        min-height: 42px;
+        height: 42px;
+        font-size: 15px;
+      }
+      .controls .restart {
+        min-width: 62px;
+        padding: 0 10px;
+        color: var(--muted);
+        background: transparent;
+        box-shadow: none;
+        font-size: 13px;
+      }
+      .dialog {
+        width: min(354px, 100%);
+        padding: 16px 14px 14px;
+        gap: 9px;
+      }
+      .result-badge {
+        width: 76px;
+        height: 76px;
+        font-size: 36px;
+      }
+      .dialog h2 { font-size: 25px; }
+      .dialog p {
+        font-size: 13px;
+        line-height: 1.38;
+      }
+      .reward-grid { gap: 6px; }
+      .reward-chip {
+        min-height: 48px;
+        padding: 5px;
+        font-size: 9px;
+      }
+      .reward-chip strong { font-size: 16px; }
+      .next-goal {
+        min-height: 32px;
+        padding: 7px 9px;
+        font-size: 11px;
+      }
+      .dialog .action {
+        min-height: 52px;
+        font-size: 18px;
+      }
     }
 
     @media (max-width: 380px) {
-      body { padding: 10px 8px 14px; }
+      body { padding: 6px 8px 8px; }
       h1 { font-size: 24px; }
       .yard {
-        height: min(360px, max(286px, calc(100svh - 486px)));
+        height: min(540px, max(450px, calc(100svh - 212px)));
       }
-      .mission-row { gap: 4px; }
-      .mission { font-size: 9px; padding: 4px; }
       .cat-token {
-        width: 58px;
-        height: 63px;
+        width: 66px;
+        height: 72px;
       }
       .cat {
-        width: 58px;
-        height: 63px;
+        width: 66px;
+        height: 72px;
       }
       .hud { gap: 6px; }
-      .stat { min-height: 52px; }
-      .stat strong { font-size: 20px; }
+      .stat { min-height: 44px; }
+      .stat strong { font-size: 21px; }
     }
 
     @media (max-width: 520px) and (max-height: 720px) {
-      body { padding: 6px 8px 8px; }
-      .app { gap: 5px; }
+      .app { gap: 4px; }
       .top { gap: 6px; }
       h1 { font-size: 23px; }
-      .sub { display: none; }
       .score {
         min-width: 68px;
         padding: 5px 7px;
@@ -1140,30 +1231,20 @@
         font-size: 10px;
       }
       .score strong { font-size: 19px; }
-      .career-card {
-        padding: 6px 7px;
+      .level-card {
+        padding: 5px 7px;
         gap: 4px;
       }
-      .career-fish {
-        min-width: 74px;
-        padding: 4px 6px;
-        font-size: 11px;
-      }
-      .mission-row { display: none; }
-      .level-card {
-        padding: 6px 7px;
-        gap: 5px;
-      }
-      .hud { gap: 5px; }
-      .stat { min-height: 46px; }
-      .tip {
-        min-height: 27px;
-        padding: 5px 9px;
-      }
       .yard {
-        height: min(250px, max(218px, calc(100svh - 410px)));
+        height: min(454px, max(410px, calc(100svh - 202px)));
       }
-      .action { min-height: 38px; }
+      .controls .action {
+        min-height: 38px;
+        height: 38px;
+      }
+      .controls {
+        height: 38px;
+      }
     }
   </style>
 </head>
@@ -1232,6 +1313,11 @@
     <div class="tip" id="tip">点这里开罐头</div>
 
     <section class="yard level-sun" id="yard">
+      <div class="yard-hud">
+        <div class="yard-pill can">罐头<strong id="yardCans">5</strong></div>
+        <div class="yard-pill caught">吸到<strong id="yardCaught">0/18</strong></div>
+        <div class="yard-pill best">猫潮<strong id="yardBest">0</strong></div>
+      </div>
       <div class="patio"></div>
       <div class="bush a"></div>
       <div class="bush b"></div>
@@ -1596,6 +1682,9 @@
     const cansEl = document.getElementById("cans");
     const caughtEl = document.getElementById("caught");
     const bestEl = document.getElementById("best");
+    const yardCansEl = document.getElementById("yardCans");
+    const yardCaughtEl = document.getElementById("yardCaught");
+    const yardBestEl = document.getElementById("yardBest");
     const tipEl = document.getElementById("tip");
     const overlayEl = document.getElementById("overlay");
     const dialogEl = document.querySelector(".dialog");
@@ -1780,14 +1869,14 @@
       const claimedStars = (progress.chestClaims || 0) * 6;
       const nextChest = Math.min(6, stars - claimedStars);
       rankNameEl.textContent = rank.current.name;
-      totalFishEl.textContent = `总鱼干 ${progress.totalFish}`;
+      totalFishEl.textContent = `鱼干 ${progress.totalFish}`;
       xpFillEl.style.width = `${Math.round(rank.ratio * 100)}%`;
       xpTextEl.textContent = rank.text;
       missionRowEl.innerHTML = missionList().map(mission => (
         `<div class="mission ${mission.done ? "done" : ""}">${progress.missions[mission.id] ? "已领奖" : mission.done ? "可领奖" : mission.text}</div>`
       )).join("");
-      rankPerkEl.textContent = `职位加成：${rank.current.perk}`;
-      chestStateEl.textContent = `星级宝箱 ${nextChest}/6`;
+      rankPerkEl.textContent = `${rank.current.perk}`;
+      chestStateEl.textContent = `宝箱 ${nextChest}/6`;
     }
 
     function applyProgressReward(stars, earnedFish, levelId) {
@@ -1823,7 +1912,7 @@
       const point = currentWave.hotspot || currentLevel.hotspot;
       const show = currentLevel.showHotspot && waveIndex === 0;
       hotspotEl.classList.toggle("hide", !show);
-      hotspotEl.textContent = point.text || `第 ${waveIndex + 1} 波`;
+      hotspotEl.textContent = waveIndex === 0 ? (point.text || "开罐") : "找边缘";
       hotspotEl.style.left = `${point.x}%`;
       hotspotEl.style.top = `${point.y}%`;
       say(currentWave.tip || currentLevel.tip);
@@ -2150,13 +2239,15 @@
       cansEl.textContent = cans;
       caughtEl.textContent = `${levelCaught}/${currentLevel.goal}`;
       bestEl.textContent = levelBest;
+      yardCansEl.textContent = cans;
+      yardCaughtEl.textContent = `${levelCaught}/${currentLevel.goal}`;
+      yardBestEl.textContent = levelBest;
     }
 
     function renderLevelHud() {
-      levelStepEl.textContent = `第 ${levelIndex + 1} / ${levels.length} 关 · ${currentLevel.label}`;
+      levelStepEl.textContent = `第 ${levelIndex + 1}/${levels.length} 关`;
       levelNameEl.textContent = `${currentLevel.name} · 第 ${waveIndex + 1} 波`;
-      const waveGoal = currentWave?.goal ? `｜本波 ${currentWave.goal}` : "";
-      goalPillEl.textContent = currentLevel.minCatch ? `目标 ${currentLevel.goal}${waveGoal}｜单罐≥${currentLevel.minCatch}` : `目标 ${currentLevel.goal}${waveGoal}`;
+      goalPillEl.textContent = currentLevel.minCatch ? `目标${currentLevel.goal} 单≥${currentLevel.minCatch}` : `目标${currentLevel.goal}`;
       routeEl.innerHTML = levels.map((_, index) => {
         const status = index < levelIndex ? "done" : index === levelIndex ? "now" : "";
         return `<span class="dot ${status}"></span>`;
@@ -2254,19 +2345,17 @@
       const nextRank = rankState().next;
       const nextLine = nextRank ? `再拿 ${Math.max(1, nextRank.xp - progress.xp)} 经验，冲 ${nextRank.name}` : "已到首席段位，继续刷满星纪录";
       return {
-        title: stars >= 3 ? "完美收编！" : "猫猫到岗！",
-        text: `本局吸到 ${levelCaught} 只，最大猫潮 ${levelBest}。鱼干 +${earned}，经验 +${reward.xpGain}。${reward.promoted ? `晋升为${reward.rankName}！` : reward.newRecord ? "刷新本关纪录！" : "稳定进账。"}`,
+        title: stars >= 3 ? "三星收编！" : "猫猫到岗！",
+        text: reward.promoted ? `晋升为${reward.rankName}！` : reward.newRecord ? "刷新本关纪录！" : "奖励已到账。",
         badge: stars >= 3 ? "★" : "猫",
         stars,
         chips: [
-          ["本局鱼干", `+${earned}`, true],
-          ["经验", `+${reward.xpGain}`, false],
-          ["最大猫潮", `${levelBest} 只`, false],
-          ["本关", finishedLevel.name, false],
-          ["总星级", `${total}/${levels.length * 3}`, false]
+          ["吸到", `${levelCaught}/${finishedLevel.goal}`, true],
+          ["猫潮", `${levelBest}`, false],
+          ["鱼干", `+${earned}`, false]
         ],
         extra: reward.rewards,
-        next: reward.rewards.length ? `${reward.rewards.join("，")} 已到账。${nextLine}` : nextLine,
+        next: reward.rewards.length ? `${reward.rewards.join("，")}。${nextLine}` : `总星 ${total}/${levels.length * 3}｜${nextLine}`,
         button: levelIndex >= levels.length - 1 ? "再开一轮" : "进入下一关"
       };
     }
@@ -2278,15 +2367,14 @@
       saveProgress();
       renderCareer();
       return {
-        title: "差一点就聚齐",
-        text: `已经吸到 ${levelCaught} 只，只差 ${missing} 只。最大猫潮 ${levelBest}，这局仍保留 +${keepFish} 鱼干。`,
+        title: `差 ${missing} 只`,
+        text: `保底 +${keepFish} 鱼干。换个位置就能过。`,
         badge: "↻",
         stars: 0,
         chips: [
-          ["已吸到", `${levelCaught}/${currentLevel.goal}`, true],
-          ["还差", `${missing} 只`, false],
-          ["最大猫潮", `${levelBest} 只`, false],
-          ["保底鱼干", `+${keepFish}`, false]
+          ["吸到", `${levelCaught}/${currentLevel.goal}`, true],
+          ["猫潮", `${levelBest}`, false],
+          ["鱼干", `+${keepFish}`, false]
         ],
         extra: [],
         next: currentLevel.hint,
@@ -2344,11 +2432,7 @@
     }
 
     function resultChips(data) {
-      const chips = [...data.chips];
-      if (data.extra?.length) {
-        chips.push(["额外奖励", data.extra.join(" / "), true, true]);
-      }
-      return chips.map(([label, value, highlight, wide]) => `<div class="reward-chip ${highlight ? "highlight" : ""} ${wide ? "wide" : ""}">${label}<strong>${value}</strong></div>`).join("");
+      return data.chips.map(([label, value, highlight]) => `<div class="reward-chip ${highlight ? "highlight" : ""}">${label}<strong>${value}</strong></div>`).join("");
     }
 
     function handleAgain() {
