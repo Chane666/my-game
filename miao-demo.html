@@ -1,0 +1,1579 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>开罐喵喵 Demo</title>
+  <style>
+    :root {
+      --paper: #fffdf7;
+      --ink: #2f2923;
+      --muted: #75695c;
+      --line: #eadbc4;
+      --can: #ef604f;
+      --yellow: #ffd45f;
+      --green: #65b96f;
+      --blue: #6298ef;
+      --pink: #d975c9;
+      --red: #ef6656;
+      --soil: #8a704f;
+      --grass: #6ebd75;
+      --shadow: 0 16px 34px rgba(72, 50, 26, .16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 14% 10%, rgba(255, 212, 95, .36), transparent 24%),
+        radial-gradient(circle at 90% 8%, rgba(101, 185, 111, .18), transparent 26%),
+        linear-gradient(160deg, #fff5e5 0%, #e4ecd8 100%);
+      display: flex;
+      justify-content: center;
+      padding: 12px 10px 16px;
+      letter-spacing: 0;
+      user-select: none;
+    }
+
+    button {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      width: min(440px, 100%);
+      display: grid;
+      gap: 10px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 29px;
+      line-height: 1;
+    }
+
+    .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .score {
+      min-width: 84px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      background: rgba(255, 253, 247, .92);
+      border: 1px solid rgba(234, 219, 196, .95);
+      box-shadow: 0 8px 18px rgba(70, 50, 25, .1);
+      text-align: center;
+    }
+
+    .score span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .score strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .level-card {
+      border-radius: 10px;
+      background: rgba(255, 253, 247, .92);
+      border: 1px solid rgba(234, 219, 196, .95);
+      box-shadow: 0 8px 18px rgba(70, 50, 25, .1);
+      padding: 9px 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .level-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .level-name {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .level-name span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .level-name strong {
+      font-size: 17px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .goal-pill {
+      min-width: 82px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--green);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .wave-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .wave-track {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .wave-dot {
+      height: 8px;
+      flex: 1;
+      border-radius: 999px;
+      background: #dccdb7;
+      box-shadow: inset 0 -2px rgba(80, 55, 30, .08);
+    }
+
+    .wave-dot.done { background: var(--green); }
+    .wave-dot.now { background: var(--can); }
+
+    .fish-pill {
+      min-width: 68px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--yellow);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 1000;
+      box-shadow: inset 0 -2px rgba(120, 80, 20, .12);
+    }
+
+    .route {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #dccdb7;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 5px rgba(70, 50, 25, .1);
+    }
+
+    .dot.done { background: var(--green); }
+    .dot.now {
+      width: 18px;
+      background: var(--can);
+    }
+
+    .stat {
+      min-height: 58px;
+      border-radius: 10px;
+      background: rgba(255, 253, 247, .92);
+      border: 1px solid rgba(234, 219, 196, .95);
+      box-shadow: 0 8px 18px rgba(70, 50, 25, .1);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 6px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .can-stat strong { color: var(--can); }
+    .cat-stat strong { color: var(--green); }
+    .tide-stat strong { color: var(--pink); }
+
+    .tip {
+      width: 100%;
+      min-height: 32px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(47, 41, 35, .92);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 1000;
+      line-height: 1.25;
+      box-shadow: 0 6px 14px rgba(41, 32, 20, .16);
+      pointer-events: none;
+    }
+
+    .tip.hot { background: var(--can); }
+    .tip.tip-bump { animation: tipPop .24s ease; }
+
+    .yard.level-sun {
+      background:
+        radial-gradient(ellipse at 22% 10%, rgba(255, 238, 166, .45), transparent 24%),
+        linear-gradient(180deg, rgba(117, 156, 98, .2) 0 18%, transparent 18%),
+        linear-gradient(145deg, #9bd38a 0%, #74bf78 58%, #5b9d67 100%);
+    }
+
+    .yard.level-corner {
+      background:
+        radial-gradient(ellipse at 18% 12%, rgba(255, 228, 152, .38), transparent 24%),
+        linear-gradient(90deg, rgba(128, 92, 60, .16) 0 19%, transparent 19%),
+        linear-gradient(145deg, #8ed29c 0%, #69b975 58%, #579d65 100%);
+    }
+
+    .yard.level-alley {
+      background:
+        radial-gradient(ellipse at 44% 48%, rgba(255, 229, 142, .22), transparent 22%),
+        linear-gradient(90deg, rgba(110, 95, 72, .22) 0 18%, transparent 18% 82%, rgba(110, 95, 72, .22) 82%),
+        linear-gradient(145deg, #84c487 0%, #6ab276 58%, #579764 100%);
+    }
+
+    .yard.level-rooftop {
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.12) 1px, transparent 1px),
+        linear-gradient(145deg, #b99162 0%, #95b56c 62%, #6ea363 100%);
+      background-size: 28px 28px, 28px 28px, auto;
+    }
+
+    .yard.level-rain {
+      background:
+        repeating-linear-gradient(115deg, rgba(255,255,255,.18) 0 2px, transparent 2px 20px),
+        linear-gradient(145deg, #8fb1a2 0%, #6f9f86 58%, #547c68 100%);
+    }
+
+    .yard {
+      height: min(560px, calc(100vh - 218px));
+      min-height: 430px;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 24% 22%, rgba(255, 212, 95, .28), transparent 15%),
+        radial-gradient(circle at 78% 74%, rgba(255, 255, 255, .28), transparent 13%),
+        linear-gradient(145deg, #95d183 0%, #72bf78 58%, #62aa6b 100%);
+      border: 1px solid rgba(85, 130, 70, .55);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      touch-action: manipulation;
+      cursor: crosshair;
+    }
+
+    .yard::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(117, 86, 58, .42) 0 44px, transparent 45px),
+        repeating-linear-gradient(90deg, rgba(92, 63, 39, .34) 0 2px, transparent 2px 43px),
+        radial-gradient(ellipse at 50% 104%, rgba(214, 177, 122, .82) 0 23%, rgba(190, 144, 88, .42) 24%, transparent 46%),
+        radial-gradient(circle at 12% 81%, rgba(67, 111, 60, .36), transparent 12%),
+        radial-gradient(circle at 87% 23%, rgba(67, 111, 60, .22), transparent 13%),
+        repeating-linear-gradient(36deg, rgba(255, 255, 255, .07) 0 2px, transparent 2px 31px);
+      pointer-events: none;
+    }
+
+    .yard::after {
+      content: "";
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      bottom: -18px;
+      height: 95px;
+      background:
+        radial-gradient(ellipse at 24% 74%, rgba(42, 113, 64, .58) 0 18px, transparent 19px),
+        radial-gradient(ellipse at 38% 70%, rgba(55, 138, 72, .56) 0 21px, transparent 22px),
+        radial-gradient(ellipse at 58% 74%, rgba(47, 123, 68, .52) 0 19px, transparent 20px),
+        radial-gradient(ellipse at 76% 72%, rgba(64, 145, 78, .5) 0 22px, transparent 23px);
+      opacity: .55;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .patio {
+      position: absolute;
+      right: -24px;
+      bottom: -18px;
+      width: 188px;
+      height: 128px;
+      border-radius: 54% 0 0 0;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.12) 1px, transparent 1px),
+        linear-gradient(145deg, #c49a68, #9f7649);
+      background-size: 28px 28px;
+      box-shadow: inset 10px 12px rgba(255, 235, 190, .16);
+      opacity: .92;
+      pointer-events: none;
+    }
+
+    .bush {
+      position: absolute;
+      width: 86px;
+      height: 58px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 28% 44%, #4f9b5a 0 22px, transparent 23px),
+        radial-gradient(circle at 52% 33%, #5cab62 0 27px, transparent 28px),
+        radial-gradient(circle at 76% 48%, #438f4f 0 23px, transparent 24px);
+      pointer-events: none;
+    }
+
+    .bush.a { left: -18px; top: 18px; }
+    .bush.b { right: -20px; top: 120px; transform: scale(.9); }
+    .bush.c { left: 18px; bottom: 28px; transform: scale(.78); }
+
+    .rock {
+      position: absolute;
+      width: 58px;
+      height: 38px;
+      border-radius: 55% 45% 46% 54%;
+      background: linear-gradient(145deg, #9c927f, #6f685c);
+      box-shadow: inset -8px -8px rgba(50, 45, 40, .12);
+      opacity: .82;
+      pointer-events: none;
+    }
+
+    .rock.a { left: 43%; top: 26%; transform: rotate(-12deg); }
+    .rock.b { left: 32%; top: 62%; transform: rotate(8deg) scale(.86); }
+
+    .hotspot {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: 118px;
+      height: 118px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      border: 2px dashed rgba(255, 255, 255, .86);
+      background: rgba(255, 212, 95, .14);
+      box-shadow: 0 0 0 10px rgba(255, 212, 95, .08);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 1000;
+      text-shadow: 0 2px 8px rgba(40, 60, 30, .35);
+      pointer-events: none;
+      animation: pulse 1s ease-in-out infinite alternate;
+      z-index: 2;
+    }
+
+    .hotspot.hide { display: none; }
+
+    .can-layer,
+    .cats-layer,
+    .fx-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .can {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 46px;
+      height: 38px;
+      transform: translate(-50%, -50%);
+      border-radius: 8px 8px 14px 14px;
+      background: linear-gradient(180deg, #ff978a, var(--can));
+      border: 2px solid rgba(150, 40, 30, .45);
+      box-shadow: 0 12px 20px rgba(50, 35, 18, .22);
+      z-index: 5;
+    }
+
+    .can::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -7px;
+      width: 42px;
+      height: 12px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: #ffd2bd;
+      border: 2px solid rgba(150, 40, 30, .38);
+    }
+
+    .scent {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: var(--d);
+      height: var(--d);
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 238, 160, .35), rgba(255, 212, 95, .13) 52%, transparent 70%);
+      border: 2px solid rgba(255, 255, 255, .58);
+      animation: scentPulse .65s ease-in-out infinite alternate;
+      z-index: 1;
+    }
+
+    .cat-token {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 66px;
+      height: 72px;
+      transform: translate(-50%, -50%) scale(var(--s, 1));
+      display: grid;
+      place-items: center;
+      transition: filter .14s ease, transform .16s ease;
+      z-index: 4;
+    }
+
+    .cat-token.running {
+      filter: drop-shadow(0 0 14px rgba(255, 244, 160, .9));
+      z-index: 7;
+    }
+
+    .cat-token.running .cat {
+      animation: catLure .38s ease-in-out infinite alternate;
+    }
+
+    .cat-token.caught {
+      animation: caught .32s ease forwards;
+    }
+
+    .cat {
+      width: 66px;
+      height: 72px;
+      position: relative;
+      display: block;
+      transform: scale(var(--cat-size, 1));
+      filter: drop-shadow(0 8px 7px rgba(52, 48, 26, .24));
+      --mood: var(--green);
+    }
+
+    .cat.trait-calm { --mood: var(--green); }
+    .cat.trait-shy { --mood: var(--blue); }
+    .cat.trait-rowdy { --mood: var(--red); }
+    .cat.trait-clingy { --mood: var(--pink); }
+
+    .cat-portrait {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      border: 0;
+      background: transparent;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .cat::after {
+      content: "";
+      position: absolute;
+      left: 13%;
+      right: 13%;
+      bottom: -5px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(74, 56, 30, .14);
+      filter: blur(3px);
+      z-index: -1;
+    }
+
+    .tail {
+      position: absolute;
+      left: 3px;
+      bottom: 17%;
+      width: 20px;
+      height: 36px;
+      border-radius: 18px 18px 4px 18px;
+      background: var(--fur);
+      transform: rotate(-34deg);
+      transform-origin: bottom center;
+    }
+
+    .body {
+      position: absolute;
+      bottom: 0;
+      width: 75%;
+      height: 58%;
+      border-radius: 48% 48% 38% 38%;
+      background: var(--fur);
+      box-shadow: inset -7px -8px rgba(80, 50, 24, .08);
+    }
+
+    .belly {
+      position: absolute;
+      width: 34%;
+      height: 30%;
+      bottom: 6%;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .42);
+    }
+
+    .face {
+      position: absolute;
+      top: 5%;
+      left: 50%;
+      width: 61%;
+      height: 55%;
+      border-radius: 48% 48% 44% 44%;
+      background: var(--fur);
+      transform: translateX(-50%);
+      box-shadow: inset -5px -6px rgba(80, 50, 24, .07);
+    }
+
+    .face::before,
+    .face::after {
+      content: "";
+      position: absolute;
+      top: -9px;
+      width: 19px;
+      height: 20px;
+      background: var(--fur);
+      clip-path: polygon(50% 0, 0 100%, 100% 100%);
+    }
+
+    .face::before {
+      left: 4px;
+      transform: rotate(-18deg);
+    }
+
+    .face::after {
+      right: 4px;
+      transform: rotate(18deg);
+    }
+
+    .eye {
+      position: absolute;
+      top: 43%;
+      width: 5px;
+      height: 7px;
+      border-radius: 999px;
+      background: #2f2924;
+    }
+
+    .eye.left { left: 30%; }
+    .eye.right { right: 30%; }
+
+    .nose {
+      position: absolute;
+      left: 50%;
+      top: 58%;
+      width: 7px;
+      height: 5px;
+      border-radius: 60% 60% 80% 80%;
+      background: #e97e8d;
+      transform: translateX(-50%);
+    }
+
+    .stripe {
+      position: absolute;
+      top: 18%;
+      width: 4px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--fur2);
+    }
+
+    .stripe.a { left: 38%; transform: rotate(-12deg); }
+    .stripe.b { left: 50%; transform: translateX(-50%); }
+    .stripe.c { right: 38%; transform: rotate(12deg); }
+
+    .mood {
+      position: absolute;
+      right: 0;
+      bottom: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--mood);
+      border: 2px solid rgba(255, 255, 255, .9);
+      font-size: 12px;
+      font-weight: 1000;
+      z-index: 4;
+    }
+
+    .pop {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      transform: translate(-50%, -50%);
+      min-width: 34px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(47, 41, 35, .9);
+      font-size: 13px;
+      font-weight: 1000;
+      z-index: 20;
+      animation: popText .8s ease forwards;
+      pointer-events: none;
+    }
+
+    .pop.good { background: var(--green); }
+    .pop.hot { background: var(--can); }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .action {
+      min-height: 42px;
+      border: 0;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 1000;
+      cursor: pointer;
+      box-shadow: 0 9px 18px rgba(57, 35, 18, .16);
+    }
+
+    .skip { background: var(--blue); }
+    .restart { background: var(--can); }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(34, 30, 25, .46);
+    }
+
+    .overlay.show { display: grid; }
+
+    .dialog {
+      width: min(340px, 100%);
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      text-align: center;
+      display: grid;
+      gap: 12px;
+    }
+
+    .dialog.auto .action {
+      display: none;
+    }
+
+    .dialog h2 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    .dialog p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    @keyframes pulse {
+      from { transform: translate(-50%, -50%) scale(.96); opacity: .78; }
+      to { transform: translate(-50%, -50%) scale(1.04); opacity: 1; }
+    }
+
+    @keyframes scentPulse {
+      from { transform: translate(-50%, -50%) scale(.94); opacity: .62; }
+      to { transform: translate(-50%, -50%) scale(1.05); opacity: .95; }
+    }
+
+    @keyframes caught {
+      to {
+        transform: translate(-50%, -50%) scale(.2) rotate(16deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes catLure {
+      from { transform: translateY(0) rotate(-1deg) scale(var(--cat-size, 1)); }
+      to { transform: translateY(-4px) rotate(2deg) scale(var(--cat-size, 1)); }
+    }
+
+    @keyframes tipPop {
+      50% { transform: translateY(-2px); }
+    }
+
+    @keyframes popText {
+      0% { opacity: 0; transform: translate(-50%, -20%); }
+      16% { opacity: 1; transform: translate(-50%, -50%); }
+      100% { opacity: 0; transform: translate(-50%, -120%); }
+    }
+
+    @media (max-width: 380px) {
+      body { padding: 10px 8px 14px; }
+      h1 { font-size: 25px; }
+      .yard {
+        height: min(540px, calc(100vh - 210px));
+        min-height: 410px;
+      }
+      .cat-token {
+        width: 58px;
+        height: 63px;
+      }
+      .cat {
+        width: 58px;
+        height: 63px;
+      }
+      .hud { gap: 6px; }
+      .stat { min-height: 52px; }
+      .stat strong { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <h1>开罐喵喵</h1>
+        <div class="sub">一罐开，猫猫来。</div>
+      </div>
+      <div class="score">
+        <span>分数</span>
+        <strong id="score">0</strong>
+      </div>
+    </header>
+
+    <section class="level-card">
+      <div class="level-head">
+        <div class="level-name">
+          <span id="levelStep">第 1 / 5 关</span>
+          <strong id="levelName">第一罐</strong>
+        </div>
+        <div class="goal-pill" id="goalPill">目标 18 只</div>
+      </div>
+      <div class="route" id="route"></div>
+      <div class="wave-row">
+        <div class="wave-track" id="waveTrack"></div>
+        <div class="fish-pill" id="fishPill">鱼干 0</div>
+      </div>
+    </section>
+
+    <section class="hud">
+      <div class="stat can-stat">
+        <span>罐头</span>
+        <strong id="cans">5</strong>
+      </div>
+      <div class="stat cat-stat">
+        <span>吸到</span>
+        <strong id="caught">0</strong>
+      </div>
+      <div class="stat tide-stat">
+        <span>最大猫潮</span>
+        <strong id="best">0</strong>
+      </div>
+    </section>
+
+    <div class="tip" id="tip">点这里开罐头</div>
+
+    <section class="yard level-sun" id="yard">
+      <div class="patio"></div>
+      <div class="bush a"></div>
+      <div class="bush b"></div>
+      <div class="bush c"></div>
+      <div class="rock a"></div>
+      <div class="rock b"></div>
+      <div class="hotspot" id="hotspot">放这里</div>
+      <div class="can-layer" id="canLayer"></div>
+      <div class="cats-layer" id="catsLayer"></div>
+      <div class="fx-layer" id="fxLayer"></div>
+    </section>
+
+    <section class="controls">
+      <button class="action skip" id="hintBtn">小提示</button>
+      <button class="action restart" id="restartBtn">重试</button>
+    </section>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="dialog">
+      <h2 id="resultTitle">猫猫都来了</h2>
+      <p id="resultText">这罐很成功。</p>
+      <button class="action restart" id="againBtn">再来一罐</button>
+    </div>
+  </div>
+
+  <script>
+    const traitInfo = {
+      calm: { label: "安", className: "calm", kinds: ["orangeCute", "tabbyStanding", "whiteSit", "ragdollLong", "cowLarge"], speed: 24 },
+      shy: { label: "怕", className: "shy", kinds: ["blackStar", "silverRound", "grayRound", "whiteStand"], speed: 21 },
+      rowdy: { label: "闹", className: "rowdy", kinds: ["orangeCute", "tabbyStanding", "mainecoonGray", "orangeSleek", "tabbyLarge"], speed: 38 },
+      clingy: { label: "黏", className: "clingy", kinds: ["calicoWink", "ragdollLong", "whiteSit", "blackStar", "orangeLarge"], speed: 28 }
+    };
+
+    const levels = [
+      {
+        name: "第一罐",
+        label: "上手",
+        theme: "sun",
+        goal: 18,
+        cans: 5,
+        minCatch: 0,
+        refundAt: 8,
+        showHotspot: true,
+        firstRadius: 158,
+        radius: 136,
+        hotspot: { x: 50, y: 48, text: "放这里" },
+        tip: "点发光处，先看猫猫聚过来。",
+        hint: "罐头放在猫群边缘，猫会连成一片。",
+        waves: [
+          {
+            name: "第一罐",
+            goal: 8,
+            hotspot: { x: 50, y: 48, text: "放这里" },
+            tip: "点这里，猫潮马上来。",
+            cats: [
+              ["clingy", 39, 38], ["calm", 45, 35], ["shy", 51, 41], ["rowdy", 56, 38],
+              ["calm", 61, 44], ["clingy", 42, 48], ["shy", 49, 52], ["rowdy", 56, 53],
+              ["calm", 45, 59], ["clingy", 35, 54]
+            ]
+          },
+          {
+            name: "边上再来",
+            goal: 6,
+            hotspot: { x: 26, y: 30, text: "边上" },
+            tip: "放边上，容易带起一片。",
+            cats: [
+              ["shy", 18, 20], ["calm", 25, 25], ["clingy", 17, 33], ["rowdy", 28, 36],
+              ["rowdy", 76, 22], ["shy", 84, 29], ["calm", 72, 34], ["clingy", 88, 40]
+            ]
+          },
+          {
+            name: "冲一波",
+            goal: 6,
+            hotspot: { x: 77, y: 76, text: "冲一波" },
+            tip: "最后一罐，尽量多带几只。",
+            cats: [
+              ["calm", 22, 72], ["shy", 31, 77], ["clingy", 39, 82],
+              ["rowdy", 70, 72], ["calm", 79, 77], ["shy", 86, 84]
+            ]
+          }
+        ],
+        cats: [
+          ["clingy", 39, 38], ["calm", 45, 35], ["shy", 51, 41], ["rowdy", 56, 38],
+          ["calm", 61, 44], ["clingy", 42, 48], ["shy", 49, 52], ["rowdy", 56, 53],
+          ["calm", 45, 59], ["clingy", 35, 54], ["shy", 18, 20], ["calm", 25, 25],
+          ["clingy", 17, 33], ["rowdy", 28, 36], ["rowdy", 76, 22], ["shy", 84, 29],
+          ["calm", 72, 34], ["clingy", 88, 40], ["calm", 22, 72], ["shy", 31, 77],
+          ["clingy", 39, 82], ["rowdy", 70, 72], ["calm", 79, 77], ["shy", 86, 84]
+        ]
+      },
+      {
+        name: "罐头好位置",
+        label: "找位置",
+        theme: "corner",
+        goal: 24,
+        cans: 3,
+        minCatch: 7,
+        refundAt: 99,
+        showHotspot: false,
+        firstRadius: 112,
+        radius: 104,
+        hotspot: { x: 23, y: 31, text: "入口" },
+        tip: "3 罐抓 24 只，别追单只猫。",
+        hint: "放在两群之间，让猫自己接力。",
+        waves: [
+          {
+            name: "左边试试",
+            goal: 8,
+            hotspot: { x: 23, y: 31, text: "入口" },
+            tip: "第一罐要够肥，至少带 7 只。",
+            cats: [
+              ["clingy", 12, 18], ["shy", 19, 21], ["calm", 26, 18], ["rowdy", 31, 26],
+              ["clingy", 18, 32], ["calm", 26, 36], ["shy", 36, 34], ["rowdy", 42, 42]
+            ]
+          },
+          {
+            name: "两群中间",
+            goal: 8,
+            hotspot: { x: 70, y: 45, text: "中间" },
+            tip: "别贴太近，放在两群中间。",
+            cats: [
+              ["clingy", 59, 12], ["calm", 68, 17], ["rowdy", 78, 23], ["shy", 88, 31],
+              ["calm", 91, 43], ["clingy", 80, 50], ["rowdy", 70, 58], ["shy", 60, 66]
+            ]
+          },
+          {
+            name: "最后一罐",
+            goal: 8,
+            hotspot: { x: 74, y: 84, text: "别浪费" },
+            tip: "最后一罐，要吸满。",
+            cats: [
+              ["calm", 14, 68], ["shy", 22, 76], ["clingy", 31, 84], ["rowdy", 42, 78],
+              ["calm", 66, 82], ["shy", 76, 90], ["clingy", 86, 82], ["rowdy", 92, 91],
+              ["calm", 55, 92], ["shy", 10, 92]
+            ]
+          }
+        ],
+        cats: [
+          ["clingy", 12, 18], ["shy", 19, 21], ["calm", 26, 18], ["rowdy", 31, 26],
+          ["clingy", 18, 32], ["calm", 26, 36], ["shy", 36, 34], ["rowdy", 42, 42],
+          ["clingy", 59, 12], ["calm", 68, 17], ["rowdy", 78, 23], ["shy", 88, 31],
+          ["calm", 91, 43], ["clingy", 80, 50], ["rowdy", 70, 58], ["shy", 60, 66],
+          ["calm", 14, 68], ["shy", 22, 76], ["clingy", 31, 84], ["rowdy", 42, 78],
+          ["calm", 66, 82], ["shy", 76, 90], ["clingy", 86, 82], ["rowdy", 92, 91],
+          ["calm", 55, 92], ["shy", 10, 92]
+        ]
+      },
+      {
+        name: "黏人猫登场",
+        label: "连起来",
+        theme: "alley",
+        goal: 22,
+        cans: 4,
+        minCatch: 6,
+        refundAt: 99,
+        showHotspot: false,
+        firstRadius: 136,
+        radius: 124,
+        hotspot: { x: 48, y: 54, text: "拉同伴" },
+        tip: "黏人猫会拉近同伴。",
+        hint: "贴着黏人猫开罐，远一点的猫也会跟上。",
+        cats: [
+          ["clingy", 42, 18], ["clingy", 47, 26], ["calm", 52, 34], ["clingy", 44, 42],
+          ["shy", 50, 50], ["rowdy", 55, 58], ["clingy", 46, 66], ["calm", 52, 74],
+          ["clingy", 18, 24], ["shy", 24, 34], ["calm", 29, 44], ["rowdy", 22, 56],
+          ["clingy", 30, 66], ["calm", 22, 78], ["rowdy", 76, 20], ["clingy", 82, 30],
+          ["shy", 74, 42], ["calm", 86, 53], ["clingy", 78, 65], ["rowdy", 86, 77],
+          ["shy", 62, 84], ["calm", 40, 86], ["clingy", 54, 88]
+        ]
+      },
+      {
+        name: "闹猫要来了",
+        label: "爆发",
+        theme: "rooftop",
+        goal: 21,
+        cans: 4,
+        minCatch: 6,
+        refundAt: 99,
+        showHotspot: false,
+        firstRadius: 130,
+        radius: 120,
+        hotspot: { x: 69, y: 32, text: "撞一下" },
+        tip: "闹猫会带起一波猫潮。",
+        hint: "把罐头放在闹猫旁边，让它先冲起来。",
+        cats: [
+          ["rowdy", 68, 28], ["shy", 78, 22], ["calm", 82, 34], ["clingy", 72, 42],
+          ["rowdy", 56, 38], ["calm", 48, 28], ["shy", 38, 22], ["clingy", 26, 34],
+          ["calm", 18, 48], ["rowdy", 30, 58], ["shy", 42, 66], ["clingy", 55, 72],
+          ["calm", 66, 64], ["rowdy", 78, 74], ["shy", 86, 84], ["calm", 20, 82],
+          ["clingy", 12, 70], ["rowdy", 88, 52], ["calm", 60, 14], ["shy", 50, 86],
+          ["clingy", 36, 44], ["calm", 72, 88]
+        ]
+      },
+      {
+        name: "胆小猫别跑",
+        label: "收官",
+        theme: "rain",
+        goal: 24,
+        cans: 5,
+        minCatch: 6,
+        refundAt: 99,
+        showHotspot: false,
+        firstRadius: 138,
+        radius: 124,
+        speedScale: .86,
+        hotspot: { x: 53, y: 60, text: "带胆小" },
+        tip: "胆小猫要靠安静猫带出来。",
+        hint: "开在安静猫和胆小猫之间，猫潮更稳。",
+        cats: [
+          ["calm", 46, 48], ["shy", 52, 55], ["shy", 58, 62], ["clingy", 42, 62],
+          ["rowdy", 64, 50], ["calm", 36, 54], ["shy", 30, 64], ["clingy", 24, 74],
+          ["rowdy", 18, 84], ["calm", 68, 70], ["shy", 76, 78], ["clingy", 84, 84],
+          ["calm", 20, 24], ["shy", 28, 18], ["clingy", 36, 28], ["rowdy", 44, 20],
+          ["calm", 60, 24], ["shy", 70, 18], ["clingy", 80, 28], ["rowdy", 88, 38],
+          ["calm", 14, 50], ["shy", 88, 58], ["clingy", 54, 86], ["calm", 44, 78],
+          ["rowdy", 34, 88], ["shy", 66, 88]
+        ]
+      }
+    ];
+
+    let cats = [];
+    let levelIndex = 0;
+    let currentLevel = levels[0];
+    let waveIndex = 0;
+    let currentWave = null;
+    let cans = currentLevel.cans;
+    let score = 0;
+    let caught = 0;
+    let levelCaught = 0;
+    let best = 0;
+    let levelBest = 0;
+    let fish = 0;
+    let activeCan = null;
+    let ended = false;
+    let raf = 0;
+    let lastTime = 0;
+    let firstCan = true;
+
+    const yardEl = document.getElementById("yard");
+    const catsLayerEl = document.getElementById("catsLayer");
+    const canLayerEl = document.getElementById("canLayer");
+    const fxLayerEl = document.getElementById("fxLayer");
+    const hotspotEl = document.getElementById("hotspot");
+    const levelStepEl = document.getElementById("levelStep");
+    const levelNameEl = document.getElementById("levelName");
+    const goalPillEl = document.getElementById("goalPill");
+    const routeEl = document.getElementById("route");
+    const waveTrackEl = document.getElementById("waveTrack");
+    const fishPillEl = document.getElementById("fishPill");
+    const scoreEl = document.getElementById("score");
+    const cansEl = document.getElementById("cans");
+    const caughtEl = document.getElementById("caught");
+    const bestEl = document.getElementById("best");
+    const tipEl = document.getElementById("tip");
+    const overlayEl = document.getElementById("overlay");
+    const resultTitleEl = document.getElementById("resultTitle");
+    const resultTextEl = document.getElementById("resultText");
+
+    function init(resetRun = true) {
+      if (resetRun) {
+        levelIndex = 0;
+        score = 0;
+        fish = 0;
+      }
+      currentLevel = levels[levelIndex];
+      currentLevel.waves = buildWaves(currentLevel);
+      waveIndex = 0;
+      currentWave = currentLevel.waves[waveIndex];
+      cats = currentWave.cats.map((cat, index) => createCat(cat, index));
+      cans = currentLevel.cans;
+      caught = 0;
+      levelCaught = 0;
+      best = 0;
+      levelBest = 0;
+      activeCan = null;
+      ended = false;
+      firstCan = true;
+      lastTime = 0;
+      canLayerEl.innerHTML = "";
+      fxLayerEl.innerHTML = "";
+      document.querySelector(".dialog").classList.remove("auto");
+      overlayEl.classList.remove("show");
+      setupWaveView();
+      yardEl.className = `yard level-${currentLevel.theme}`;
+      renderCats();
+      updateStats();
+      renderLevelHud();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(tick);
+    }
+
+    function buildWaves(level) {
+      if (level.waves) return level.waves;
+      const cats = level.cats;
+      const split = Math.ceil(cats.length / 3);
+      return [0, 1, 2].map(index => ({
+        name: `第 ${index + 1} 波`,
+        goal: Math.ceil(level.goal / 3),
+        hotspot: index === 0 ? level.hotspot : { x: 50 + (index - 1) * 24, y: 50 + index * 8, text: `第 ${index + 1} 波` },
+        tip: index === 0 ? level.tip : `第 ${index + 1} 波来了，找猫群边缘。`,
+        hint: level.hint,
+        cats: cats.slice(index * split, (index + 1) * split)
+      }));
+    }
+
+    function setupWaveView() {
+      const point = currentWave.hotspot || currentLevel.hotspot;
+      const show = currentLevel.showHotspot && waveIndex === 0;
+      hotspotEl.classList.toggle("hide", !show);
+      hotspotEl.textContent = point.text || `第 ${waveIndex + 1} 波`;
+      hotspotEl.style.left = `${point.x}%`;
+      hotspotEl.style.top = `${point.y}%`;
+      say(currentWave.tip || currentLevel.tip);
+      renderLevelHud();
+    }
+
+    function createCat(cat, index) {
+      const trait = Array.isArray(cat) ? cat[0] : cat.trait;
+      const x = Array.isArray(cat) ? cat[1] : cat.x;
+      const y = Array.isArray(cat) ? cat[2] : cat.y;
+      const jitterX = Array.isArray(cat) ? ((index % 3) - 1) * .35 : 0;
+      const jitterY = Array.isArray(cat) ? (((index + 1) % 3) - 1) * .28 : 0;
+      const kinds = traitInfo[trait].kinds;
+      return {
+        id: `cat-${index}`,
+        trait,
+        kind: kinds[index % kinds.length],
+        x: x + jitterX,
+        y: y + jitterY,
+        homeX: x,
+        homeY: y,
+        caught: false,
+        active: false,
+        burst: false,
+        helped: false,
+        element: null
+      };
+    }
+
+    function renderCats() {
+      catsLayerEl.innerHTML = "";
+      cats.forEach(cat => {
+        const token = document.createElement("div");
+        token.className = `cat-token trait-${cat.trait}`;
+        token.innerHTML = catMarkup(cat);
+        catsLayerEl.appendChild(token);
+        cat.element = token;
+        placeCatElement(cat);
+      });
+    }
+
+    function catMarkup(cat) {
+      const info = traitInfo[cat.trait];
+      return `
+        <div class="cat kind-${cat.kind} trait-${cat.trait}" style="--cat-size:${catScale(cat)}">
+          <img class="cat-portrait" src="${catImage(cat)}" alt="" draggable="false">
+          <span class="mood">${info.label}</span>
+        </div>
+      `;
+    }
+
+    function catImage(cat) {
+      const images = {
+        orangeCute: "assets/cats/game-normalized/cat-orange-cute.png",
+        calicoWink: "assets/cats/game-normalized/cat-calico-wink.png",
+        mainecoonGray: "assets/cats/game-normalized/cat-mainecoon-gray.png",
+        ragdollLong: "assets/cats/game-normalized/cat-ragdoll-long.png",
+        tabbyStanding: "assets/cats/game-normalized/cat-tabby-standing.png",
+        blackStar: "assets/cats/game-normalized/cat-black-star.png",
+        silverRound: "assets/cats/game-normalized/cat-silver-round.png",
+        grayRound: "assets/cats/game-normalized/cat-gray-round.png",
+        whiteSit: "assets/cats/game-normalized/cat-white-sit.png",
+        whiteStand: "assets/cats/game-normalized/cat-white-stand.png",
+        orangeLarge: "assets/cats/game-normalized/cat-orange-large-game.png",
+        orangeSleek: "assets/cats/game-normalized/cat-orange-sleek-game.png",
+        cowLarge: "assets/cats/game-normalized/cat-cow-game.png",
+        tabbyLarge: "assets/cats/game-normalized/cat-tabby-large-game.png"
+      };
+      return images[cat.kind] || images.orangeCute;
+    }
+
+    function catScale(cat) {
+      return 1;
+    }
+
+    function placeCan(event) {
+      if (ended) return;
+      if (activeCan) {
+        say("等猫潮停下，再开下一罐。");
+        return;
+      }
+      if (cans <= 0) {
+        checkEnd();
+        return;
+      }
+
+      const rect = yardEl.getBoundingClientRect();
+      const x = clamp(((event.clientX - rect.left) / rect.width) * 100, 8, 92);
+      const y = clamp(((event.clientY - rect.top) / rect.height) * 100, 8, 92);
+      cans -= 1;
+      activeCan = {
+        x,
+        y,
+        age: 0,
+        duration: firstCan ? 3600 : 3000,
+        radius: firstCan ? currentLevel.firstRadius : currentLevel.radius,
+        caught: 0,
+        finished: false
+      };
+      firstCan = false;
+      hotspotEl.classList.add("hide");
+      cats.forEach(cat => {
+        cat.active = false;
+        cat.burst = false;
+        cat.helped = false;
+      });
+      renderCan();
+      say("开罐！猫猫来了。", true);
+      updateStats();
+    }
+
+    function renderCan() {
+      if (!activeCan) {
+        canLayerEl.innerHTML = "";
+        return;
+      }
+      const diameter = activeCan.radius * 2;
+      canLayerEl.innerHTML = `
+        <div class="scent" style="--x:${activeCan.x}%;--y:${activeCan.y}%;--d:${diameter}px"></div>
+        <div class="can" style="--x:${activeCan.x}%;--y:${activeCan.y}%"></div>
+      `;
+    }
+
+    function tick(time) {
+      const dt = Math.min(0.032, lastTime ? (time - lastTime) / 1000 : 0.016);
+      lastTime = time;
+
+      if (activeCan && !ended) {
+        activeCan.age += dt * 1000;
+        spreadScent();
+        moveCats(dt);
+        if (activeCan.age >= activeCan.duration || shouldFinishCan()) {
+          finishCan();
+        }
+      } else {
+        idleCats(time);
+      }
+
+      cats.forEach(placeCatElement);
+      raf = requestAnimationFrame(tick);
+    }
+
+    function spreadScent() {
+      if (!activeCan) return;
+      let changed = true;
+      let loops = 0;
+
+      while (changed && loops < 5) {
+        changed = false;
+        loops += 1;
+
+        cats.forEach(cat => {
+          if (cat.caught || cat.active) return;
+          const d = distanceToCan(cat);
+          const direct = cat.trait === "shy" ? activeCan.radius * .62 : activeCan.radius;
+          if (d <= direct || (cat.trait === "rowdy" && d <= activeCan.radius * 1.12)) {
+            activate(cat);
+            changed = true;
+          }
+        });
+
+        cats.filter(cat => cat.active && !cat.caught).forEach(cat => {
+          if (cat.trait === "clingy") {
+            cats.forEach(other => {
+              if (other.caught || other.active) return;
+              if (catDistance(cat, other) <= 86) {
+                activate(other);
+                other.helped = true;
+                changed = true;
+              }
+            });
+          }
+
+          if (cat.trait === "rowdy" && !cat.burst) {
+            cat.burst = true;
+            popAt(cat.x, cat.y, "猫潮起！", "hot");
+            cats.forEach(other => {
+              if (other.caught || other.active) return;
+              if (catDistance(cat, other) <= 94) {
+                activate(other);
+                changed = true;
+              }
+            });
+          }
+
+          if (cat.trait === "calm") {
+            cats.forEach(other => {
+              if (other.caught || other.active || other.trait !== "shy") return;
+              if (catDistance(cat, other) <= 94) {
+                activate(other);
+                other.helped = true;
+                changed = true;
+              }
+            });
+          }
+        });
+      }
+    }
+
+    function activate(cat) {
+      cat.active = true;
+      cat.element?.classList.add("running");
+    }
+
+    function moveCats(dt) {
+      cats.forEach(cat => {
+        if (cat.caught || !cat.active || !activeCan) return;
+        const dx = activeCan.x - cat.x;
+        const dy = activeCan.y - cat.y;
+        const length = Math.max(.001, Math.hypot(dx, dy));
+        const speed = traitInfo[cat.trait].speed * (currentLevel.speedScale || 1) * (cat.helped ? 1.18 : 1);
+        cat.x += (dx / length) * speed * dt;
+        cat.y += (dy / length) * speed * dt;
+
+        if (distanceToCan(cat) <= 22) {
+          catchCat(cat);
+        }
+      });
+    }
+
+    function catchCat(cat) {
+      if (cat.caught || !activeCan) return;
+      cat.caught = true;
+      cat.active = false;
+      activeCan.caught += 1;
+      caught += 1;
+      levelCaught += 1;
+      score += 12 + Math.max(0, activeCan.caught - 3) * 3;
+      best = Math.max(best, activeCan.caught);
+      levelBest = Math.max(levelBest, activeCan.caught);
+      cat.element?.classList.remove("running");
+      cat.element?.classList.add("caught");
+      popAt(activeCan.x, activeCan.y, `+${activeCan.caught}`, activeCan.caught >= 6 ? "hot" : "good");
+      updateStats();
+    }
+
+    function shouldFinishCan() {
+      if (!activeCan || activeCan.age < 900) return false;
+      return !cats.some(cat => cat.active && !cat.caught);
+    }
+
+    function finishCan() {
+      if (!activeCan || activeCan.finished) return;
+      activeCan.finished = true;
+      const count = activeCan.caught;
+      if (count > 0 && count < (currentLevel.minCatch || 0)) {
+        cans = Math.max(0, cans - 1);
+        say(`只来 ${count} 只，换个位置。`, false);
+        popAt(activeCan.x, activeCan.y, `少了`, "hot");
+      } else if (count >= (currentLevel.refundAt || 99)) {
+        cans += 1;
+        say(`猫潮爆了！多送一罐。`, true);
+        popAt(activeCan.x, activeCan.y, `猫潮 ${count} 只`, "hot");
+      } else if (count >= 5) {
+        say(`这一罐不错，来了 ${count} 只。`, true);
+      } else if (count > 0) {
+        say(`来了 ${count} 只。下次靠近猫群边缘。`);
+      } else {
+        say("太远了，猫没闻到。");
+      }
+
+      activeCan = null;
+      renderCan();
+      updateStats();
+      checkEnd();
+    }
+
+    function idleCats(time) {
+      cats.forEach((cat, index) => {
+        if (cat.caught) return;
+        const sway = Math.sin(time / 900 + index * 1.7) * .04;
+        cat.x = clamp(cat.x + sway, 5, 95);
+      });
+    }
+
+    function placeCatElement(cat) {
+      if (!cat.element) return;
+      cat.element.style.setProperty("--x", `${cat.x}%`);
+      cat.element.style.setProperty("--y", `${cat.y}%`);
+      cat.element.style.setProperty("--s", cat.active ? "1.08" : "1");
+    }
+
+    function distanceToCan(cat) {
+      if (!activeCan) return Infinity;
+      return pixelDistance(cat.x, cat.y, activeCan.x, activeCan.y);
+    }
+
+    function catDistance(a, b) {
+      return pixelDistance(a.x, a.y, b.x, b.y);
+    }
+
+    function pixelDistance(ax, ay, bx, by) {
+      const rect = yardEl.getBoundingClientRect();
+      const dx = (ax - bx) * rect.width / 100;
+      const dy = (ay - by) * rect.height / 100;
+      return Math.hypot(dx, dy);
+    }
+
+    function popAt(x, y, text, type = "") {
+      const item = document.createElement("div");
+      item.className = `pop ${type}`;
+      item.style.setProperty("--x", `${x}%`);
+      item.style.setProperty("--y", `${y}%`);
+      item.textContent = text;
+      fxLayerEl.appendChild(item);
+      setTimeout(() => item.remove(), 850);
+    }
+
+    function updateStats() {
+      scoreEl.textContent = score;
+      cansEl.textContent = cans;
+      caughtEl.textContent = `${levelCaught}/${currentLevel.goal}`;
+      bestEl.textContent = levelBest;
+    }
+
+    function renderLevelHud() {
+      levelStepEl.textContent = `第 ${levelIndex + 1} / ${levels.length} 关 · ${currentLevel.label}`;
+      levelNameEl.textContent = `${currentLevel.name} · 第 ${waveIndex + 1} 波`;
+      const waveGoal = currentWave?.goal ? `｜本波 ${currentWave.goal}` : "";
+      goalPillEl.textContent = currentLevel.minCatch ? `目标 ${currentLevel.goal}${waveGoal}｜单罐≥${currentLevel.minCatch}` : `目标 ${currentLevel.goal}${waveGoal}`;
+      routeEl.innerHTML = levels.map((_, index) => {
+        const status = index < levelIndex ? "done" : index === levelIndex ? "now" : "";
+        return `<span class="dot ${status}"></span>`;
+      }).join("");
+      waveTrackEl.innerHTML = currentLevel.waves.map((_, index) => {
+        const status = index < waveIndex ? "done" : index === waveIndex ? "now" : "";
+        return `<span class="wave-dot ${status}"></span>`;
+      }).join("");
+      fishPillEl.textContent = `鱼干 ${fish}`;
+    }
+
+    function showStrategy() {
+      say(currentLevel.hint);
+    }
+
+    function checkEnd() {
+      if (levelCaught >= currentLevel.goal) {
+        levelComplete();
+        return;
+      }
+      if (cans <= 0 && !activeCan) {
+        end(false, `还差 ${currentLevel.goal - levelCaught} 只。${currentLevel.hint}`);
+        return;
+      }
+      if (!activeCan && caught >= (currentWave.goal || Infinity)) {
+        nextWave();
+        return;
+      }
+      if (!activeCan && !cats.some(cat => !cat.caught)) {
+        nextWave();
+        return;
+      }
+    }
+
+    function nextWave() {
+      if (waveIndex >= currentLevel.waves.length - 1) {
+        levelComplete();
+        return;
+      }
+      const summary = `来了 ${caught} 只，最大猫潮 ${best}。`;
+      waveIndex += 1;
+      currentWave = currentLevel.waves[waveIndex];
+      caught = 0;
+      best = 0;
+      activeCan = null;
+      firstCan = false;
+      showLevelToast(`${summary} 下一波来了。`);
+      setTimeout(() => {
+        cats = currentWave.cats.map((cat, index) => createCat(cat, waveIndex * 30 + index));
+        canLayerEl.innerHTML = "";
+        fxLayerEl.innerHTML = "";
+        setupWaveView();
+        renderCats();
+        updateStats();
+      }, 1050);
+    }
+
+    function levelComplete() {
+      const finishedLevel = currentLevel;
+      const stars = starCount();
+      const earned = 6 + stars * 3;
+      fish += earned;
+      const line = `${finishedLevel.name}：${starText(stars)} 来了 ${levelCaught} 只，鱼干 +${earned}。`;
+      if (levelIndex >= levels.length - 1) {
+        end(true, `${line} 5 关完成，鱼干 ${fish}。`);
+        return;
+      }
+      levelIndex += 1;
+      showLevelToast(line);
+      setTimeout(() => init(false), 1050);
+    }
+
+    function starCount() {
+      let count = 1;
+      if (levelBest >= (currentLevel.starBest || 9)) count += 1;
+      if (cans > 0) count += 1;
+      return count;
+    }
+
+    function starText(count) {
+      return "★".repeat(count) + "☆".repeat(3 - count);
+    }
+
+    function showLevelToast(text) {
+      resultTitleEl.textContent = "这罐很成功";
+      resultTextEl.textContent = text;
+      document.querySelector(".dialog").classList.add("auto");
+      overlayEl.classList.add("show");
+      setTimeout(() => {
+        overlayEl.classList.remove("show");
+        document.querySelector(".dialog").classList.remove("auto");
+      }, 950);
+    }
+
+    function end(win, text) {
+      ended = true;
+      resultTitleEl.textContent = win ? "猫猫都来了" : "猫还没聚齐";
+      resultTextEl.textContent = text;
+      document.querySelector(".dialog").classList.remove("auto");
+      overlayEl.classList.add("show");
+    }
+
+    function say(text, hot = false) {
+      tipEl.textContent = text;
+      tipEl.classList.toggle("hot", hot);
+      tipEl.classList.remove("tip-bump");
+      void tipEl.offsetWidth;
+      tipEl.classList.add("tip-bump");
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    yardEl.addEventListener("pointerdown", placeCan);
+    document.getElementById("hintBtn").addEventListener("click", showStrategy);
+    document.getElementById("restartBtn").addEventListener("click", init);
+    document.getElementById("againBtn").addEventListener("click", init);
+
+    init();
+  </script>
+</body>
+</html>
