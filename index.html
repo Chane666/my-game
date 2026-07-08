@@ -100,6 +100,125 @@
       line-height: 1;
     }
 
+    .career-card {
+      border-radius: 10px;
+      background: rgba(255, 253, 247, .92);
+      border: 1px solid rgba(234, 219, 196, .95);
+      box-shadow: 0 8px 18px rgba(70, 50, 25, .1);
+      padding: 8px 10px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .career-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .rank-block {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .rank-block span,
+    .xp-text {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .rank-block strong {
+      font-size: 16px;
+      line-height: 1.1;
+    }
+
+    .career-fish {
+      min-width: 82px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--yellow);
+      font-size: 12px;
+      font-weight: 1000;
+      text-align: center;
+      box-shadow: inset 0 -2px rgba(120, 80, 20, .12);
+    }
+
+    .xp-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .xp-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #dccdb7;
+      overflow: hidden;
+      box-shadow: inset 0 -2px rgba(80, 55, 30, .08);
+    }
+
+    .xp-fill {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width .24s ease;
+    }
+
+    .mission-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .mission {
+      min-height: 34px;
+      border-radius: 8px;
+      padding: 5px 6px;
+      background: rgba(244, 236, 222, .78);
+      border: 1px solid rgba(222, 204, 176, .9);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.18;
+      text-align: center;
+      display: grid;
+      place-items: center;
+    }
+
+    .mission.done {
+      color: #fff;
+      background: var(--green);
+      border-color: rgba(255, 255, 255, .85);
+    }
+
+    .career-foot {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .career-tag {
+      min-height: 26px;
+      border-radius: 8px;
+      background: rgba(255, 212, 95, .2);
+      border: 1px solid rgba(224, 183, 77, .46);
+      color: #6a5630;
+      display: grid;
+      place-items: center;
+      padding: 4px 6px;
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.15;
+      text-align: center;
+    }
+
     .hud {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -145,6 +264,7 @@
 
     .goal-pill {
       min-width: 82px;
+      max-width: 54%;
       padding: 6px 8px;
       border-radius: 999px;
       color: #fff;
@@ -152,6 +272,7 @@
       text-align: center;
       font-size: 12px;
       font-weight: 1000;
+      line-height: 1.15;
     }
 
     .wave-row {
@@ -296,8 +417,8 @@
     }
 
     .yard {
-      height: min(560px, calc(100vh - 218px));
-      min-height: 430px;
+      height: clamp(330px, calc(100svh - 334px), 510px);
+      min-height: 0;
       border-radius: 16px;
       background:
         radial-gradient(circle at 24% 22%, rgba(255, 212, 95, .28), transparent 15%),
@@ -724,6 +845,41 @@
       line-height: 1.5;
     }
 
+    .reward-grid {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .overlay.show .reward-grid {
+      display: grid;
+    }
+
+    .dialog.auto .reward-grid {
+      display: none;
+    }
+
+    .reward-chip {
+      min-height: 46px;
+      border-radius: 9px;
+      background: rgba(244, 236, 222, .86);
+      border: 1px solid rgba(222, 204, 176, .9);
+      display: grid;
+      place-items: center;
+      padding: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.15;
+    }
+
+    .reward-chip strong {
+      display: block;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1;
+    }
+
     @keyframes pulse {
       from { transform: translate(-50%, -50%) scale(.96); opacity: .78; }
       to { transform: translate(-50%, -50%) scale(1.04); opacity: 1; }
@@ -756,13 +912,69 @@
       100% { opacity: 0; transform: translate(-50%, -120%); }
     }
 
+    @media (max-width: 520px) {
+      body { padding: 8px 8px 10px; }
+      .app { gap: 7px; }
+      .top { gap: 8px; }
+      h1 { font-size: 26px; }
+      .sub { margin-top: 4px; font-size: 11px; }
+      .score {
+        min-width: 76px;
+        padding: 7px 8px;
+      }
+      .score strong { font-size: 21px; }
+      .career-card {
+        padding: 7px 8px;
+        gap: 5px;
+      }
+      .rank-block strong { font-size: 15px; }
+      .mission-row { gap: 5px; }
+      .mission {
+        min-height: 30px;
+        padding: 4px 5px;
+        font-size: 9px;
+      }
+      .career-tag {
+        min-height: 23px;
+        padding: 3px 5px;
+        font-size: 9px;
+      }
+      .level-card {
+        padding: 7px 8px;
+        gap: 6px;
+      }
+      .level-name strong { font-size: 15px; }
+      .goal-pill {
+        min-width: 72px;
+        padding: 5px 7px;
+        font-size: 10px;
+      }
+      .stat {
+        min-height: 50px;
+        padding: 5px;
+      }
+      .stat strong { font-size: 20px; }
+      .tip {
+        min-height: 29px;
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .yard {
+        height: min(390px, max(300px, calc(100svh - 488px)));
+        border-radius: 14px;
+      }
+      .controls { gap: 7px; }
+      .action { min-height: 40px; }
+    }
+
     @media (max-width: 380px) {
       body { padding: 10px 8px 14px; }
-      h1 { font-size: 25px; }
+      h1 { font-size: 24px; }
       .yard {
-        height: min(540px, calc(100vh - 210px));
-        min-height: 410px;
+        height: min(360px, max(286px, calc(100svh - 486px)));
       }
+      .mission-row { gap: 4px; }
+      .mission { font-size: 9px; padding: 4px; }
       .cat-token {
         width: 58px;
         height: 63px;
@@ -774,6 +986,50 @@
       .hud { gap: 6px; }
       .stat { min-height: 52px; }
       .stat strong { font-size: 20px; }
+    }
+
+    @media (max-width: 520px) and (max-height: 720px) {
+      body { padding: 6px 8px 8px; }
+      .app { gap: 5px; }
+      .top { gap: 6px; }
+      h1 { font-size: 23px; }
+      .sub { display: none; }
+      .score {
+        min-width: 68px;
+        padding: 5px 7px;
+      }
+      .score span,
+      .rank-block span,
+      .xp-text,
+      .level-name span,
+      .stat span {
+        font-size: 10px;
+      }
+      .score strong { font-size: 19px; }
+      .career-card {
+        padding: 6px 7px;
+        gap: 4px;
+      }
+      .career-fish {
+        min-width: 74px;
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+      .mission-row { display: none; }
+      .level-card {
+        padding: 6px 7px;
+        gap: 5px;
+      }
+      .hud { gap: 5px; }
+      .stat { min-height: 46px; }
+      .tip {
+        min-height: 27px;
+        padding: 5px 9px;
+      }
+      .yard {
+        height: min(250px, max(218px, calc(100svh - 410px)));
+      }
+      .action { min-height: 38px; }
     }
   </style>
 </head>
@@ -790,10 +1046,29 @@
       </div>
     </header>
 
+    <section class="career-card">
+      <div class="career-head">
+        <div class="rank-block">
+          <span>当前职位</span>
+          <strong id="rankName">见习吸猫官</strong>
+        </div>
+        <div class="career-fish" id="totalFish">总鱼干 0</div>
+      </div>
+      <div class="xp-row">
+        <div class="xp-bar"><span class="xp-fill" id="xpFill"></span></div>
+        <div class="xp-text" id="xpText">0/80</div>
+      </div>
+      <div class="mission-row" id="missionRow"></div>
+      <div class="career-foot">
+        <div class="career-tag" id="rankPerk">职位加成：新手引导</div>
+        <div class="career-tag" id="chestState">星级宝箱 0/6</div>
+      </div>
+    </section>
+
     <section class="level-card">
       <div class="level-head">
         <div class="level-name">
-          <span id="levelStep">第 1 / 5 关</span>
+          <span id="levelStep">第 1 / 8 关</span>
           <strong id="levelName">第一罐</strong>
         </div>
         <div class="goal-pill" id="goalPill">目标 18 只</div>
@@ -845,6 +1120,7 @@
     <div class="dialog">
       <h2 id="resultTitle">猫猫都来了</h2>
       <p id="resultText">这罐很成功。</p>
+      <div class="reward-grid" id="rewardGrid"></div>
       <button class="action restart" id="againBtn">再来一罐</button>
     </div>
   </div>
@@ -1041,8 +1317,109 @@
           ["calm", 14, 50], ["shy", 88, 58], ["clingy", 54, 86], ["calm", 44, 78],
           ["rowdy", 34, 88], ["shy", 66, 88]
         ]
+      },
+      {
+        name: "午休猫群",
+        label: "省罐",
+        theme: "sun",
+        goal: 30,
+        cans: 4,
+        minCatch: 7,
+        refundAt: 12,
+        showHotspot: false,
+        firstRadius: 128,
+        radius: 112,
+        speedScale: .92,
+        hotspot: { x: 50, y: 48, text: "午休" },
+        tip: "少用罐头，多带猫潮。",
+        hint: "先找密集边缘，触发黏人猫和闹猫，省下罐头拿高星。",
+        cats: [
+          ["calm", 18, 18], ["clingy", 25, 22], ["shy", 32, 18], ["rowdy", 38, 28],
+          ["calm", 47, 24], ["clingy", 54, 30], ["shy", 62, 24], ["rowdy", 70, 30],
+          ["calm", 80, 22], ["clingy", 88, 30], ["shy", 14, 50], ["rowdy", 22, 58],
+          ["calm", 30, 66], ["clingy", 38, 58], ["shy", 46, 66], ["rowdy", 54, 58],
+          ["calm", 62, 66], ["clingy", 70, 58], ["shy", 78, 66], ["rowdy", 86, 58],
+          ["calm", 18, 84], ["clingy", 28, 88], ["shy", 38, 82], ["rowdy", 48, 88],
+          ["calm", 58, 82], ["clingy", 68, 88], ["shy", 78, 82], ["rowdy", 88, 88],
+          ["clingy", 50, 46], ["rowdy", 56, 48], ["calm", 44, 48], ["shy", 62, 50]
+        ]
+      },
+      {
+        name: "猫咖考核",
+        label: "高压",
+        theme: "corner",
+        goal: 34,
+        cans: 4,
+        minCatch: 8,
+        refundAt: 13,
+        showHotspot: false,
+        firstRadius: 120,
+        radius: 106,
+        speedScale: .88,
+        hotspot: { x: 42, y: 50, text: "考核" },
+        tip: "每罐至少 8 只，别浪费。",
+        hint: "从两团猫之间下手，单罐太少会被扣罐。",
+        cats: [
+          ["clingy", 10, 16], ["shy", 17, 20], ["calm", 24, 16], ["rowdy", 31, 24],
+          ["clingy", 14, 34], ["calm", 24, 40], ["rowdy", 34, 36], ["shy", 42, 44],
+          ["calm", 52, 18], ["clingy", 60, 24], ["rowdy", 68, 18], ["shy", 76, 28],
+          ["calm", 84, 22], ["clingy", 90, 34], ["rowdy", 78, 42], ["shy", 66, 46],
+          ["calm", 16, 66], ["clingy", 26, 72], ["rowdy", 36, 68], ["shy", 46, 76],
+          ["calm", 56, 70], ["clingy", 66, 76], ["rowdy", 76, 70], ["shy", 86, 78],
+          ["calm", 12, 88], ["clingy", 24, 92], ["rowdy", 38, 90], ["shy", 52, 92],
+          ["calm", 64, 90], ["clingy", 76, 92], ["rowdy", 88, 88], ["shy", 94, 72],
+          ["clingy", 48, 54], ["rowdy", 58, 54], ["calm", 68, 58], ["shy", 38, 58]
+        ]
+      },
+      {
+        name: "首席终面",
+        label: "终局",
+        theme: "rain",
+        goal: 38,
+        cans: 5,
+        minCatch: 8,
+        refundAt: 14,
+        showHotspot: false,
+        firstRadius: 124,
+        radius: 108,
+        speedScale: .84,
+        hotspot: { x: 54, y: 56, text: "终面" },
+        tip: "终面来了，盯住最大猫潮。",
+        hint: "优先点闹猫和黏人猫交界处，胆小猫要靠安静猫带出来。",
+        cats: [
+          ["rowdy", 20, 16], ["clingy", 28, 20], ["shy", 36, 16], ["calm", 44, 24],
+          ["rowdy", 52, 18], ["clingy", 60, 24], ["shy", 68, 18], ["calm", 76, 26],
+          ["rowdy", 84, 20], ["clingy", 90, 32], ["calm", 12, 42], ["shy", 20, 50],
+          ["clingy", 28, 42], ["rowdy", 36, 52], ["calm", 44, 44], ["shy", 52, 54],
+          ["clingy", 60, 46], ["rowdy", 68, 56], ["calm", 76, 48], ["shy", 86, 58],
+          ["rowdy", 14, 72], ["clingy", 24, 80], ["shy", 34, 72], ["calm", 44, 82],
+          ["rowdy", 54, 74], ["clingy", 64, 84], ["shy", 74, 76], ["calm", 84, 86],
+          ["rowdy", 92, 76], ["clingy", 10, 90], ["calm", 22, 92], ["shy", 34, 90],
+          ["rowdy", 46, 92], ["clingy", 58, 90], ["calm", 70, 92], ["shy", 82, 90],
+          ["clingy", 48, 62], ["rowdy", 56, 64], ["calm", 64, 62], ["shy", 72, 64]
+        ]
       }
     ];
+
+    const ranks = [
+      { name: "见习吸猫官", xp: 0, perk: "新手引导", radiusBonus: 0, fishBonus: 0 },
+      { name: "助理吸猫官", xp: 80, perk: "香味范围 +4%", radiusBonus: .04, fishBonus: 0 },
+      { name: "资深吸猫官", xp: 190, perk: "开罐时长 +8%", radiusBonus: .06, durationBonus: .08, fishBonus: 1 },
+      { name: "金牌吸猫官", xp: 340, perk: "结算鱼干 +2", radiusBonus: .08, durationBonus: .1, fishBonus: 2 },
+      { name: "首席吸猫官", xp: 540, perk: "猫潮奖励翻倍", radiusBonus: .1, durationBonus: .12, fishBonus: 3 }
+    ];
+
+    const saveKey = "chief-cat-officer-v3";
+    const defaultProgress = {
+      xp: 0,
+      totalFish: 0,
+      bestStars: {},
+      bestTide: 0,
+      cleared: 0,
+      perfectLevels: 0,
+      missions: {},
+      chestClaims: 0
+    };
 
     let cats = [];
     let levelIndex = 0;
@@ -1059,8 +1436,12 @@
     let activeCan = null;
     let ended = false;
     let raf = 0;
+    let loopTimer = 0;
+    let rafHeartbeat = 0;
     let lastTime = 0;
     let firstCan = true;
+    let progress = loadProgress();
+    let runStats = null;
 
     const yardEl = document.getElementById("yard");
     const catsLayerEl = document.getElementById("catsLayer");
@@ -1081,12 +1462,27 @@
     const overlayEl = document.getElementById("overlay");
     const resultTitleEl = document.getElementById("resultTitle");
     const resultTextEl = document.getElementById("resultText");
+    const rewardGridEl = document.getElementById("rewardGrid");
+    const rankNameEl = document.getElementById("rankName");
+    const totalFishEl = document.getElementById("totalFish");
+    const xpFillEl = document.getElementById("xpFill");
+    const xpTextEl = document.getElementById("xpText");
+    const missionRowEl = document.getElementById("missionRow");
+    const rankPerkEl = document.getElementById("rankPerk");
+    const chestStateEl = document.getElementById("chestState");
 
     function init(resetRun = true) {
       if (resetRun) {
         levelIndex = 0;
         score = 0;
         fish = 0;
+        runStats = {
+          caught: 0,
+          bestTide: 0,
+          perfectLevels: 0,
+          stars: 0,
+          levelsCleared: 0
+        };
       }
       currentLevel = levels[levelIndex];
       currentLevel.waves = buildWaves(currentLevel);
@@ -1106,13 +1502,26 @@
       fxLayerEl.innerHTML = "";
       document.querySelector(".dialog").classList.remove("auto");
       overlayEl.classList.remove("show");
+      rewardGridEl.innerHTML = "";
       setupWaveView();
       yardEl.className = `yard level-${currentLevel.theme}`;
       renderCats();
       updateStats();
       renderLevelHud();
+      renderCareer();
+      startLoop();
+    }
+
+    function startLoop() {
       cancelAnimationFrame(raf);
+      clearInterval(loopTimer);
+      rafHeartbeat = Date.now();
       raf = requestAnimationFrame(tick);
+      loopTimer = setInterval(() => {
+        if (Date.now() - rafHeartbeat > 220) {
+          step(performance.now());
+        }
+      }, 120);
     }
 
     function buildWaves(level) {
@@ -1127,6 +1536,144 @@
         hint: level.hint,
         cats: cats.slice(index * split, (index + 1) * split)
       }));
+    }
+
+    function loadProgress() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(saveKey) || "{}");
+        return {
+          ...defaultProgress,
+          ...saved,
+          bestStars: { ...defaultProgress.bestStars, ...(saved.bestStars || {}) },
+          missions: { ...defaultProgress.missions, ...(saved.missions || {}) }
+        };
+      } catch {
+        return { ...defaultProgress, bestStars: {}, missions: {} };
+      }
+    }
+
+    function saveProgress() {
+      localStorage.setItem(saveKey, JSON.stringify(progress));
+    }
+
+    function totalStars() {
+      return Object.values(progress.bestStars || {}).reduce((sum, value) => sum + value, 0);
+    }
+
+    function rankState() {
+      let index = 0;
+      for (let i = 0; i < ranks.length; i += 1) {
+        if (progress.xp >= ranks[i].xp) index = i;
+      }
+      const current = ranks[index];
+      const next = ranks[index + 1] || null;
+      const base = current.xp;
+      const span = next ? next.xp - base : 1;
+      const gained = next ? progress.xp - base : span;
+      return {
+        current,
+        next,
+        ratio: next ? clamp(gained / span, 0, 1) : 1,
+        text: next ? `${gained}/${span}` : "满级"
+      };
+    }
+
+    function rankPerk() {
+      return rankState().current;
+    }
+
+    function missionList() {
+      return [
+        {
+          id: "firstClear",
+          text: "完成首轮考核",
+          done: progress.cleared >= 1,
+          fish: 8,
+          xp: 14
+        },
+        {
+          id: "tide12",
+          text: "单罐吸到 12 只",
+          done: progress.bestTide >= 12,
+          fish: 12,
+          xp: 18
+        },
+        {
+          id: "perfect3",
+          text: "拿到 3 次三星",
+          done: progress.perfectLevels >= 3,
+          fish: 18,
+          xp: 24
+        }
+      ];
+    }
+
+    function claimReadyRewards() {
+      const rewards = [];
+      missionList().forEach(mission => {
+        if (mission.done && !progress.missions[mission.id]) {
+          progress.missions[mission.id] = true;
+          progress.totalFish += mission.fish;
+          progress.xp += mission.xp;
+          rewards.push(`任务 +${mission.fish}鱼干`);
+        }
+      });
+
+      const claimableChests = Math.floor(totalStars() / 6);
+      while ((progress.chestClaims || 0) < claimableChests) {
+        progress.chestClaims = (progress.chestClaims || 0) + 1;
+        const fishReward = 14 + progress.chestClaims * 2;
+        progress.totalFish += fishReward;
+        progress.xp += 18;
+        rewards.push(`星级宝箱 +${fishReward}鱼干`);
+      }
+
+      return rewards;
+    }
+
+    function renderCareer() {
+      const rank = rankState();
+      const stars = totalStars();
+      const claimedStars = (progress.chestClaims || 0) * 6;
+      const nextChest = Math.min(6, stars - claimedStars);
+      rankNameEl.textContent = rank.current.name;
+      totalFishEl.textContent = `总鱼干 ${progress.totalFish}`;
+      xpFillEl.style.width = `${Math.round(rank.ratio * 100)}%`;
+      xpTextEl.textContent = rank.text;
+      missionRowEl.innerHTML = missionList().map(mission => (
+        `<div class="mission ${mission.done ? "done" : ""}">${progress.missions[mission.id] ? "已领奖" : mission.done ? "可领奖" : mission.text}</div>`
+      )).join("");
+      rankPerkEl.textContent = `职位加成：${rank.current.perk}`;
+      chestStateEl.textContent = `星级宝箱 ${nextChest}/6`;
+    }
+
+    function applyProgressReward(stars, earnedFish, levelId) {
+      const previousRank = rankState().current.name;
+      const oldStars = progress.bestStars[levelId] || 0;
+      const newStars = Math.max(oldStars, stars);
+      const starGain = Math.max(0, newStars - oldStars);
+      const xpGain = 18 + stars * 14 + Math.max(0, levelBest - 7) * 2 + starGain * 12;
+      progress.xp += xpGain;
+      progress.totalFish += earnedFish;
+      progress.bestStars[levelId] = newStars;
+      progress.bestTide = Math.max(progress.bestTide || 0, levelBest);
+      progress.cleared = Math.max(progress.cleared || 0, levelIndex + 1);
+      if (stars >= 3 && oldStars < 3) {
+        progress.perfectLevels = (progress.perfectLevels || 0) + 1;
+      }
+      const claimedRewards = claimReadyRewards();
+      saveProgress();
+      renderCareer();
+      if (claimedRewards.length) {
+        popAt(50, 14, "奖励到账", "hot");
+      }
+      return {
+        xpGain,
+        promoted: previousRank !== rankState().current.name,
+        rankName: rankState().current.name,
+        newRecord: stars > oldStars,
+        rewards: claimedRewards
+      };
     }
 
     function setupWaveView() {
@@ -1228,8 +1775,8 @@
         x,
         y,
         age: 0,
-        duration: firstCan ? 3600 : 3000,
-        radius: firstCan ? currentLevel.firstRadius : currentLevel.radius,
+        duration: Math.round((firstCan ? 3600 : 3000) * (1 + (rankPerk().durationBonus || 0))),
+        radius: Math.round((firstCan ? currentLevel.firstRadius : currentLevel.radius) * (1 + (rankPerk().radiusBonus || 0))),
         caught: 0,
         finished: false
       };
@@ -1258,6 +1805,12 @@
     }
 
     function tick(time) {
+      rafHeartbeat = Date.now();
+      step(time);
+      raf = requestAnimationFrame(tick);
+    }
+
+    function step(time) {
       const dt = Math.min(0.032, lastTime ? (time - lastTime) / 1000 : 0.016);
       lastTime = time;
 
@@ -1273,7 +1826,6 @@
       }
 
       cats.forEach(placeCatElement);
-      raf = requestAnimationFrame(tick);
     }
 
     function spreadScent() {
@@ -1364,6 +1916,10 @@
       score += 12 + Math.max(0, activeCan.caught - 3) * 3;
       best = Math.max(best, activeCan.caught);
       levelBest = Math.max(levelBest, activeCan.caught);
+      if (runStats) {
+        runStats.caught += 1;
+        runStats.bestTide = Math.max(runStats.bestTide, activeCan.caught);
+      }
       cat.element?.classList.remove("running");
       cat.element?.classList.add("caught");
       popAt(activeCan.x, activeCan.y, `+${activeCan.caught}`, activeCan.caught >= 6 ? "hot" : "good");
@@ -1387,6 +1943,10 @@
         cans += 1;
         say(`猫潮爆了！多送一罐。`, true);
         popAt(activeCan.x, activeCan.y, `猫潮 ${count} 只`, "hot");
+        if (rankPerk().name === "首席吸猫官") {
+          fish += 2;
+          renderLevelHud();
+        }
       } else if (count >= 5) {
         say(`这一罐不错，来了 ${count} 只。`, true);
       } else if (count > 0) {
@@ -1514,11 +2074,20 @@
     function levelComplete() {
       const finishedLevel = currentLevel;
       const stars = starCount();
-      const earned = 6 + stars * 3;
+      const earned = 6 + stars * 4 + Math.max(0, cans) + (rankPerk().fishBonus || 0);
       fish += earned;
-      const line = `${finishedLevel.name}：${starText(stars)} 来了 ${levelCaught} 只，鱼干 +${earned}。`;
+      const reward = applyProgressReward(stars, earned, finishedLevel.name);
+      if (runStats) {
+        runStats.stars += stars;
+        runStats.levelsCleared += 1;
+        if (stars >= 3) runStats.perfectLevels += 1;
+      }
+      const bonus = reward.newRecord ? " 新纪录！" : "";
+      const promote = reward.promoted ? ` 晋升为${reward.rankName}。` : "";
+      const extraRewards = reward.rewards.length ? ` ${reward.rewards.join("，")}。` : "";
+      const line = `${finishedLevel.name}：${starText(stars)} 来了 ${levelCaught} 只，最大猫潮 ${levelBest}，鱼干 +${earned}，经验 +${reward.xpGain}。${bonus}${promote}${extraRewards}`;
       if (levelIndex >= levels.length - 1) {
-        end(true, `${line} 5 关完成，鱼干 ${fish}。`);
+        end(true, `${line} ${levels.length} 关完成，本轮鱼干 ${fish}。`);
         return;
       }
       levelIndex += 1;
@@ -1528,7 +2097,7 @@
 
     function starCount() {
       let count = 1;
-      if (levelBest >= (currentLevel.starBest || 9)) count += 1;
+      if (levelBest >= (currentLevel.starBest || Math.max(8, currentLevel.minCatch + 2 || 9))) count += 1;
       if (cans > 0) count += 1;
       return count;
     }
@@ -1540,6 +2109,7 @@
     function showLevelToast(text) {
       resultTitleEl.textContent = "这罐很成功";
       resultTextEl.textContent = text;
+      rewardGridEl.innerHTML = "";
       document.querySelector(".dialog").classList.add("auto");
       overlayEl.classList.add("show");
       setTimeout(() => {
@@ -1552,8 +2122,23 @@
       ended = true;
       resultTitleEl.textContent = win ? "猫猫都来了" : "猫还没聚齐";
       resultTextEl.textContent = text;
+      rewardGridEl.innerHTML = resultChips(win);
       document.querySelector(".dialog").classList.remove("auto");
       overlayEl.classList.add("show");
+    }
+
+    function resultChips(win) {
+      const rank = rankState();
+      const stars = totalStars();
+      const chips = [
+        ["职位", rank.current.name],
+        ["累计鱼干", progress.totalFish],
+        ["总星级", `${stars}/${levels.length * 3}`]
+      ];
+      if (!win) {
+        chips[2] = ["还差", `${currentLevel.goal - levelCaught} 只`];
+      }
+      return chips.map(([label, value]) => `<div class="reward-chip">${label}<strong>${value}</strong></div>`).join("");
     }
 
     function say(text, hot = false) {
