@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>首席吸猫官 Demo</title>
+  <link rel="preload" as="image" href="assets/cats/game-normalized/cat-calico-wink.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/cats/game-normalized/cat-tabby-standing.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/cats/game-normalized/cat-gray-round.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/cats/game-normalized/cat-orange-sleek-game.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/cats/game-normalized/cat-cow-game.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/cats/game-normalized/cat-mainecoon-gray.webp" type="image/webp">
   <style>
     :root {
       --paper: #fffdf7;
@@ -1050,7 +1056,7 @@
       100% { opacity: 0; transform: translate(-50%, -120%); }
     }
 
-    body { padding: 6px 8px 8px; }
+    body { padding: 4px 8px 8px; }
     .app {
       width: min(390px, 100%);
       gap: 6px;
@@ -1058,16 +1064,20 @@
     .top { display: none; }
     .career-card { display: none; }
     .level-card {
-      padding: 7px 9px;
-      gap: 5px;
+      padding: 7px 10px 8px;
+      gap: 6px;
+      border-radius: 13px;
     }
     .level-head { gap: 6px; }
     .level-name span { font-size: 10px; }
-    .level-name strong { font-size: 18px; }
+    .level-name strong {
+      font-size: 18px;
+      max-width: 210px;
+    }
     .goal-pill {
-      min-width: 72px;
+      min-width: 68px;
       max-width: 46%;
-      padding: 5px 7px;
+      padding: 5px 8px;
       font-size: 11px;
     }
     .route { display: none; }
@@ -1084,41 +1094,46 @@
     .hud { display: none; }
     .tip { display: none; }
     .yard {
-      height: min(560px, max(468px, calc(100svh - 218px)));
+      height: min(574px, max(482px, calc(100svh - 190px)));
       border-radius: 14px;
     }
     .yard-hud {
       position: absolute;
-      left: 10px;
-      right: 10px;
-      top: 10px;
+      left: 8px;
+      right: 8px;
+      top: 8px;
       z-index: 12;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      gap: 5px;
       pointer-events: none;
     }
     .yard-pill {
-      min-height: 44px;
-      border-radius: 12px;
-      background: rgba(255, 253, 247, .9);
-      border: 1px solid rgba(255, 255, 255, .86);
-      box-shadow: 0 8px 18px rgba(44, 34, 20, .13);
-      display: grid;
-      place-items: center;
+      min-width: 0;
+      min-height: 38px;
+      border-radius: 11px;
+      background: rgba(255, 253, 247, .74);
+      border: 1px solid rgba(255, 255, 255, .72);
+      box-shadow: 0 6px 13px rgba(44, 34, 20, .1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       color: var(--muted);
       font-size: 10px;
       font-weight: 1000;
       line-height: 1.1;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
     .yard-pill strong {
       display: block;
       color: var(--ink);
-      margin-top: 2px;
-      font-size: 17px;
+      margin-top: 1px;
+      font-size: 16px;
       line-height: 1;
     }
-    .yard-pill.can strong { color: var(--can); }
+    .yard-pill.cans strong { color: var(--can); }
     .yard-pill.caught strong { color: var(--green); }
     .yard-pill.best strong { color: var(--pink); }
     .cat-token {
@@ -1299,7 +1314,7 @@
 
     <section class="yard level-sun" id="yard">
       <div class="yard-hud">
-        <div class="yard-pill can">罐头<strong id="yardCans">5</strong></div>
+        <div class="yard-pill cans">罐头<strong id="yardCans">5</strong></div>
         <div class="yard-pill caught">吸到<strong id="yardCaught">0/18</strong></div>
         <div class="yard-pill best">猫潮<strong id="yardBest">0</strong></div>
       </div>
@@ -1651,6 +1666,7 @@
     let progress = loadProgress();
     let runStats = null;
     let pendingNextLevel = false;
+    const preloadedCatImages = new Map();
 
     const yardEl = document.getElementById("yard");
     const catsLayerEl = document.getElementById("catsLayer");
@@ -1702,6 +1718,7 @@
       }
       currentLevel = levels[levelIndex];
       currentLevel.waves = buildWaves(currentLevel);
+      preloadCatImages();
       waveIndex = 0;
       currentWave = currentLevel.waves[waveIndex];
       cats = currentWave.cats.map((cat, index) => createCat(cat, index));
@@ -1943,7 +1960,7 @@
       const info = traitInfo[cat.trait];
       return `
         <div class="cat kind-${cat.kind} trait-${cat.trait}" style="--cat-size:${catScale(cat)}">
-          <img class="cat-portrait" src="${catImage(cat)}" alt="" draggable="false">
+          <img class="cat-portrait" src="${catImage(cat)}" alt="" draggable="false" width="192" height="192" loading="eager" decoding="async">
           <span class="mood">${info.label}</span>
         </div>
       `;
@@ -1951,22 +1968,38 @@
 
     function catImage(cat) {
       const images = {
-        orangeCute: "assets/cats/game-normalized/cat-orange-cute.png",
-        calicoWink: "assets/cats/game-normalized/cat-calico-wink.png",
-        mainecoonGray: "assets/cats/game-normalized/cat-mainecoon-gray.png",
-        ragdollLong: "assets/cats/game-normalized/cat-ragdoll-long.png",
-        tabbyStanding: "assets/cats/game-normalized/cat-tabby-standing.png",
-        blackStar: "assets/cats/game-normalized/cat-black-star.png",
-        silverRound: "assets/cats/game-normalized/cat-silver-round.png",
-        grayRound: "assets/cats/game-normalized/cat-gray-round.png",
-        whiteSit: "assets/cats/game-normalized/cat-white-sit.png",
-        whiteStand: "assets/cats/game-normalized/cat-white-stand.png",
-        orangeLarge: "assets/cats/game-normalized/cat-orange-large-game.png",
-        orangeSleek: "assets/cats/game-normalized/cat-orange-sleek-game.png",
-        cowLarge: "assets/cats/game-normalized/cat-cow-game.png",
-        tabbyLarge: "assets/cats/game-normalized/cat-tabby-large-game.png"
+        orangeCute: "assets/cats/game-normalized/cat-orange-cute.webp",
+        calicoWink: "assets/cats/game-normalized/cat-calico-wink.webp",
+        mainecoonGray: "assets/cats/game-normalized/cat-mainecoon-gray.webp",
+        ragdollLong: "assets/cats/game-normalized/cat-ragdoll-long.webp",
+        tabbyStanding: "assets/cats/game-normalized/cat-tabby-standing.webp",
+        blackStar: "assets/cats/game-normalized/cat-black-star.webp",
+        silverRound: "assets/cats/game-normalized/cat-silver-round.webp",
+        grayRound: "assets/cats/game-normalized/cat-gray-round.webp",
+        whiteSit: "assets/cats/game-normalized/cat-white-sit.webp",
+        whiteStand: "assets/cats/game-normalized/cat-white-stand.webp",
+        orangeLarge: "assets/cats/game-normalized/cat-orange-large-game.webp",
+        orangeSleek: "assets/cats/game-normalized/cat-orange-sleek-game.webp",
+        cowLarge: "assets/cats/game-normalized/cat-cow-game.webp",
+        tabbyLarge: "assets/cats/game-normalized/cat-tabby-large-game.webp"
       };
       return images[cat.kind] || images.orangeCute;
+    }
+
+    function preloadCatImages() {
+      const urls = new Set();
+      (currentLevel.waves || []).forEach(wave => {
+        (wave.cats || []).forEach((item, index) => {
+          urls.add(catImage(createCat(item, index)));
+        });
+      });
+      urls.forEach(url => {
+        if (preloadedCatImages.has(url)) return;
+        const img = new Image();
+        img.decoding = "async";
+        img.src = url;
+        preloadedCatImages.set(url, img);
+      });
     }
 
     function catScale(cat) {
