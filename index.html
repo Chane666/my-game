@@ -10,7 +10,10 @@
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-orange-sleek-game.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-cow-game.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-mainecoon-gray.webp" type="image/webp">
-  <link rel="preload" as="image" href="assets/backgrounds/yard-garden.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/backgrounds/yard-garden-lite.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/backgrounds/yard-garden.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/backgrounds/yard-alley.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/backgrounds/yard-rooftop.webp" type="image/webp">
   <style>
     :root {
       --paper: #fffaf1;
@@ -83,7 +86,7 @@
       color: #fff;
       background:
         linear-gradient(180deg, rgba(44, 32, 22, .08), rgba(44, 32, 22, .52)),
-        url("assets/backgrounds/yard-garden.webp"),
+        url("assets/backgrounds/yard-garden-lite.webp"),
         linear-gradient(145deg, #9bdc8d, #f3cb78);
       background-size: cover;
       background-position: center;
@@ -93,6 +96,15 @@
       gap: 12px;
       overflow: hidden;
       position: relative;
+    }
+
+    body.bg-ready .menu-hero {
+      background:
+        linear-gradient(180deg, rgba(44, 32, 22, .08), rgba(44, 32, 22, .52)),
+        url("assets/backgrounds/yard-garden.webp"),
+        linear-gradient(145deg, #9bdc8d, #f3cb78);
+      background-size: cover;
+      background-position: center;
     }
 
     .menu-hero::before {
@@ -750,7 +762,7 @@
     .yard.level-sun {
       background:
         linear-gradient(180deg, rgba(255, 246, 209, .08), rgba(255, 246, 209, .08)),
-        url("assets/backgrounds/yard-garden.webp"),
+        url("assets/backgrounds/yard-garden-lite.webp"),
         linear-gradient(145deg, #9bdc8d 0%, #75c97c 52%, #5ba96a 100%);
       background-size: cover, cover, auto;
       background-position: center, center, center;
@@ -759,7 +771,7 @@
     .yard.level-corner {
       background:
         linear-gradient(180deg, rgba(255, 239, 202, .06), rgba(255, 239, 202, .06)),
-        url("assets/backgrounds/yard-garden.webp"),
+        url("assets/backgrounds/yard-garden-lite.webp"),
         linear-gradient(145deg, #91d8a0 0%, #6fc47a 56%, #589e65 100%);
       background-size: cover, cover, auto;
       background-position: center, center, center;
@@ -768,7 +780,7 @@
     .yard.level-alley {
       background:
         linear-gradient(180deg, rgba(255, 238, 198, .05), rgba(255, 248, 224, .1)),
-        url("assets/backgrounds/yard-alley.webp"),
+        url("assets/backgrounds/yard-alley-lite.webp"),
         linear-gradient(145deg, #88ca8d 0%, #6cb879 58%, #559765 100%);
       background-size: cover, cover, auto;
       background-position: center, center, center;
@@ -777,7 +789,7 @@
     .yard.level-rooftop {
       background:
         linear-gradient(180deg, rgba(255, 243, 220, .06), rgba(255, 229, 178, .08)),
-        url("assets/backgrounds/yard-rooftop.webp"),
+        url("assets/backgrounds/yard-rooftop-lite.webp"),
         linear-gradient(145deg, #c39a68 0%, #9abd71 62%, #70a866 100%);
       background-size: cover, cover, auto;
       background-position: center, center, center;
@@ -786,8 +798,52 @@
     .yard.level-rain {
       background:
         linear-gradient(180deg, rgba(91, 125, 157, .13), rgba(255, 238, 198, .08)),
+        url("assets/backgrounds/yard-alley-lite.webp"),
+        linear-gradient(145deg, #8fb8aa 0%, #72a98d 58%, #567e69 100%);
+      background-size: cover, cover, auto;
+      background-position: center, center, center;
+    }
+
+    body.bg-ready .yard.level-sun {
+      background:
+        linear-gradient(180deg, rgba(255, 246, 209, .08), rgba(255, 246, 209, .08)),
+        url("assets/backgrounds/yard-garden.webp"),
+        linear-gradient(145deg, #9bdc8d 0%, #75c97c 52%, #5ba96a 100%);
+    }
+
+    body.bg-ready .yard.level-corner {
+      background:
+        linear-gradient(180deg, rgba(255, 239, 202, .06), rgba(255, 239, 202, .06)),
+        url("assets/backgrounds/yard-garden.webp"),
+        linear-gradient(145deg, #91d8a0 0%, #6fc47a 56%, #589e65 100%);
+    }
+
+    body.bg-ready .yard.level-alley {
+      background:
+        linear-gradient(180deg, rgba(255, 238, 198, .05), rgba(255, 248, 224, .1)),
+        url("assets/backgrounds/yard-alley.webp"),
+        linear-gradient(145deg, #88ca8d 0%, #6cb879 58%, #559765 100%);
+    }
+
+    body.bg-ready .yard.level-rooftop {
+      background:
+        linear-gradient(180deg, rgba(255, 243, 220, .06), rgba(255, 229, 178, .08)),
+        url("assets/backgrounds/yard-rooftop.webp"),
+        linear-gradient(145deg, #c39a68 0%, #9abd71 62%, #70a866 100%);
+    }
+
+    body.bg-ready .yard.level-rain {
+      background:
+        linear-gradient(180deg, rgba(91, 125, 157, .13), rgba(255, 238, 198, .08)),
         url("assets/backgrounds/yard-alley.webp"),
         linear-gradient(145deg, #8fb8aa 0%, #72a98d 58%, #567e69 100%);
+    }
+
+    body.bg-ready .yard.level-sun,
+    body.bg-ready .yard.level-corner,
+    body.bg-ready .yard.level-alley,
+    body.bg-ready .yard.level-rooftop,
+    body.bg-ready .yard.level-rain {
       background-size: cover, cover, auto;
       background-position: center, center, center;
     }
@@ -1898,7 +1954,7 @@
     <section class="menu-panel" id="menuPanel"></section>
   </main>
 
-  <main class="app hidden" id="gameApp">
+  <main class="app" id="gameApp" style="display: none;">
     <header class="top">
       <div>
         <h1>首席吸猫官</h1>
@@ -2661,6 +2717,7 @@
       cancelAnimationFrame(raf);
       clearInterval(loopTimer);
       overlayEl.classList.remove("show");
+      gameAppEl.style.display = "none";
       gameAppEl.classList.add("hidden");
       menuScreenEl.classList.remove("hidden");
       renderMenu();
@@ -2670,6 +2727,7 @@
       const unlocked = index <= (progress.cleared || 0);
       if (!unlocked) return;
       menuScreenEl.classList.add("hidden");
+      gameAppEl.style.display = "";
       gameAppEl.classList.remove("hidden");
       init(true, index);
     }
@@ -2908,6 +2966,27 @@
         img.decoding = "async";
         img.src = url;
         preloadedCatImages.set(url, img);
+      });
+    }
+
+    function preloadBackgrounds() {
+      const urls = [
+        "assets/backgrounds/yard-garden.webp",
+        "assets/backgrounds/yard-alley.webp",
+        "assets/backgrounds/yard-rooftop.webp"
+      ];
+      let loaded = 0;
+      const done = () => {
+        loaded += 1;
+        if (loaded >= urls.length) {
+          document.body.classList.add("bg-ready");
+        }
+      };
+      urls.forEach(url => {
+        const img = new Image();
+        img.onload = done;
+        img.onerror = done;
+        img.src = url;
       });
     }
 
@@ -3618,7 +3697,10 @@
     document.getElementById("restartBtn").addEventListener("click", init);
     document.getElementById("againBtn").addEventListener("click", handleAgain);
 
-    if (new URLSearchParams(location.search).has("preview")) {
+    preloadBackgrounds();
+    const previewMode = new URLSearchParams(location.search).get("preview");
+    if (previewMode === "win" || previewMode === "lose") {
+      gameAppEl.style.display = "";
       gameAppEl.classList.remove("hidden");
       menuScreenEl.classList.add("hidden");
       init();
