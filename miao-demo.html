@@ -18,6 +18,8 @@
   <link rel="preload" as="image" href="assets/ui/icon-wand-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/icon-levels-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/icon-share-small.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/ui/icon-fish.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/ui/icon-mint.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/menu-bg.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/patio-bg.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/settlement-win.webp" type="image/webp">
@@ -131,48 +133,61 @@
     }
 
     .menu-topbar {
-      display: grid;
-      grid-template-columns: 1fr repeat(3, auto);
+      display: flex;
       align-items: center;
-      gap: 6px;
-      min-height: 38px;
+      justify-content: space-between;
+      gap: 5px;
+      min-height: 40px;
+      padding: 0 1px;
     }
 
     .menu-profile {
-      min-width: 0;
-      min-height: 36px;
-      padding: 4px 9px;
-      border-radius: 999px;
+      flex: 0 0 auto;
+      min-width: 86px;
+      max-width: 112px;
+      min-height: 38px;
+      padding: 4px 10px 4px 5px;
+      border-radius: 18px;
       display: flex;
       align-items: center;
-      gap: 7px;
-      color: #fff;
+      gap: 6px;
+      color: #714220;
       background:
-        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .28), transparent 26%),
-        rgba(72, 47, 29, .68);
-      border: 1px solid rgba(255, 255, 255, .48);
-      box-shadow: 0 9px 18px rgba(56, 34, 16, .16);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+        radial-gradient(circle at 22% 18%, rgba(255, 255, 255, .82), transparent 28%),
+        linear-gradient(180deg, rgba(255, 249, 218, .98), rgba(255, 210, 99, .94));
+      border: 2px solid rgba(255, 255, 255, .82);
+      box-shadow:
+        0 5px 0 rgba(178, 103, 47, .9),
+        0 10px 16px rgba(74, 42, 18, .16);
       font-size: 12px;
       font-weight: 1000;
     }
 
+    .menu-profile #menuRank {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: 0 1px rgba(255, 255, 255, .55);
+    }
+
     .menu-avatar {
-      width: 27px;
-      height: 27px;
+      width: 29px;
+      height: 29px;
       border-radius: 50%;
       display: grid;
       place-items: center;
-      background: linear-gradient(145deg, #fff6da, #ffd36f);
-      box-shadow: inset 0 -2px rgba(135, 84, 28, .13);
+      background: linear-gradient(145deg, #fffdfa, #ffe185);
+      border: 2px solid rgba(120, 72, 25, .18);
+      box-shadow: inset 0 -2px rgba(135, 84, 28, .12);
       font-size: 17px;
     }
 
     .menu-resource {
-      min-width: 50px;
-      min-height: 32px;
-      padding: 4px 8px;
+      flex: 0 0 auto;
+      min-width: 57px;
+      min-height: 36px;
+      padding: 4px 9px;
       border: 0;
       border-radius: 999px;
       display: grid;
@@ -181,38 +196,44 @@
       justify-content: center;
       gap: 3px;
       color: #694726;
-      background: linear-gradient(180deg, rgba(255, 252, 238, .96), rgba(255, 226, 145, .92));
-      box-shadow: 0 8px 16px rgba(74, 45, 18, .14), inset 0 -2px rgba(151, 98, 27, .09);
+      background:
+        radial-gradient(circle at 24% 18%, rgba(255, 255, 255, .76), transparent 28%),
+        linear-gradient(180deg, rgba(255, 248, 218, .98), rgba(255, 220, 126, .94));
+      border: 2px solid rgba(255, 255, 255, .78);
+      box-shadow:
+        0 5px 0 rgba(184, 112, 42, .78),
+        0 9px 15px rgba(74, 45, 18, .13);
       font-size: 12px;
       font-weight: 1000;
     }
 
     .menu-stage {
-      min-height: 512px;
+      min-height: 500px;
       display: grid;
       grid-template-rows: auto 1fr auto;
       align-items: center;
-      gap: 8px;
-      padding: 8px 8px 0;
+      gap: 6px;
+      padding: 4px 8px 0;
       position: relative;
     }
 
     .menu-logo {
       justify-self: center;
-      min-width: 286px;
-      padding: 12px 18px 10px;
-      border-radius: 26px;
+      width: min(312px, 90%);
+      min-width: 0;
+      padding: 10px 15px 9px;
+      border-radius: 24px;
       color: #7a3d25;
       background:
         radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .78), transparent 24%),
         linear-gradient(180deg, #fff9d9, #ffd36b 74%, #ffb24d);
       border: 3px solid rgba(255, 255, 255, .72);
       box-shadow:
-        0 12px 0 #bd6b38,
-        0 20px 28px rgba(79, 42, 16, .25),
+        0 8px 0 #bd6b38,
+        0 15px 22px rgba(79, 42, 16, .22),
         inset 0 -4px rgba(177, 92, 34, .12);
       text-align: center;
-      transform: rotate(-1.4deg);
+      transform: rotate(-.6deg);
       position: relative;
     }
 
@@ -220,9 +241,9 @@
     .menu-logo::after {
       content: "";
       position: absolute;
-      top: -15px;
-      width: 34px;
-      height: 34px;
+      top: -12px;
+      width: 30px;
+      height: 30px;
       border-radius: 10px 10px 6px 6px;
       background: linear-gradient(145deg, #fff3bd, #ffbd5d);
       border: 3px solid rgba(255,255,255,.72);
@@ -230,19 +251,19 @@
     }
 
     .menu-logo::before {
-      left: 26px;
+      left: 30px;
       transform: rotate(-35deg);
     }
 
     .menu-logo::after {
-      right: 26px;
+      right: 30px;
       transform: rotate(35deg);
     }
 
     .menu-kicker {
       width: fit-content;
-      margin: 0 auto 4px;
-      padding: 4px 9px;
+      margin: 0 auto 3px;
+      padding: 3px 8px;
       border-radius: 999px;
       color: #fff;
       background: linear-gradient(145deg, #ff8d6b, #ef5d4d);
@@ -253,7 +274,7 @@
 
     .menu-title {
       margin: 0;
-      font-size: 38px;
+      font-size: 34px;
       line-height: .96;
       letter-spacing: 0;
       text-shadow:
@@ -262,9 +283,9 @@
     }
 
     .menu-subtitle {
-      margin: 7px 0 0;
+      margin: 5px 0 0;
       color: #8b5530;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1.2;
       font-weight: 1000;
     }
@@ -2187,11 +2208,24 @@
 
     @media (max-width: 380px) {
       body { padding: 6px 8px 8px; }
+      .menu-topbar {
+        gap: 4px;
+      }
+      .menu-profile {
+        min-width: 78px;
+        max-width: 96px;
+        padding-right: 7px;
+      }
+      .menu-resource {
+        min-width: 51px;
+        padding: 4px 7px;
+        font-size: 11px;
+      }
       .menu-logo {
-        min-width: 262px;
+        width: min(292px, 90%);
       }
       .menu-title {
-        font-size: 34px;
+        font-size: 31px;
       }
       .menu-cat-hero {
         width: 226px;
@@ -2238,24 +2272,24 @@
         padding-top: 5px;
       }
       .menu-topbar {
-        min-height: 34px;
+        min-height: 36px;
       }
       .menu-profile,
       .menu-resource {
-        min-height: 30px;
+        min-height: 32px;
       }
       .menu-stage {
-        min-height: 420px;
+        min-height: 410px;
         gap: 4px;
         padding-top: 4px;
       }
       .menu-logo {
-        min-width: 246px;
-        padding: 9px 14px 8px;
+        width: min(276px, 88%);
+        padding: 8px 13px 7px;
         border-radius: 22px;
       }
       .menu-title {
-        font-size: 31px;
+        font-size: 29px;
       }
       .menu-subtitle {
         margin-top: 5px;
@@ -3225,8 +3259,8 @@
       const suffix = small ? "-small" : "";
       const icons = {
         wand: `assets/ui/icon-wand${suffix}.webp`,
-        fish: `assets/ui/icon-can${suffix}.webp`,
-        mint: `assets/ui/icon-wand${suffix}.webp`,
+        fish: `assets/ui/icon-fish${suffix}.webp`,
+        mint: `assets/ui/icon-mint${suffix}.webp`,
         can: `assets/ui/icon-can${suffix}.webp`
       };
       return icons[id] || icons.can;
