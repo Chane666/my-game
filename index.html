@@ -10,7 +10,16 @@
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-orange-sleek-game.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-cow-game.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-mainecoon-gray.webp" type="image/webp">
-  <link rel="preload" as="image" href="assets/backgrounds/yard-garden-lite.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/menu-bg-lite.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/patio-bg-lite.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/main-cat.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/icon-book-small.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/icon-wand-small.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/icon-levels-small.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/icon-share-small.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/ui/menu-bg.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/ui/patio-bg.webp" type="image/webp">
+  <link rel="prefetch" as="image" href="assets/ui/settlement-win.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/backgrounds/yard-garden.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/backgrounds/yard-alley.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/backgrounds/yard-rooftop.webp" type="image/webp">
@@ -88,8 +97,8 @@
       inset: 0;
       border-radius: 22px;
       background:
-        linear-gradient(180deg, rgba(255, 252, 235, .12), rgba(255, 224, 168, .28)),
-        url("assets/backgrounds/yard-garden-lite.webp"),
+        linear-gradient(180deg, rgba(255, 252, 235, .02), rgba(255, 224, 168, .18)),
+        url("assets/ui/menu-bg-lite.webp"),
         linear-gradient(160deg, #9be39a 0%, #f7cf7c 58%, #8fd8e9 100%);
       background-size: cover;
       background-position: center;
@@ -100,8 +109,8 @@
 
     body.bg-ready .menu-screen::before {
       background:
-        linear-gradient(180deg, rgba(255, 252, 235, .12), rgba(255, 224, 168, .28)),
-        url("assets/backgrounds/yard-garden.webp"),
+        linear-gradient(180deg, rgba(255, 252, 235, .02), rgba(255, 224, 168, .18)),
+        url("assets/ui/menu-bg.webp"),
         linear-gradient(160deg, #9be39a 0%, #f7cf7c 58%, #8fd8e9 100%);
       background-size: cover;
       background-position: center;
@@ -115,7 +124,7 @@
         radial-gradient(circle at 18% 14%, rgba(255, 255, 255, .68) 0 7px, transparent 8px),
         radial-gradient(circle at 85% 20%, rgba(255, 255, 255, .5) 0 5px, transparent 6px),
         radial-gradient(circle at 12% 78%, rgba(255, 255, 255, .44) 0 6px, transparent 7px),
-        linear-gradient(180deg, rgba(70, 42, 22, .08), rgba(70, 42, 22, .34));
+        linear-gradient(180deg, rgba(70, 42, 22, .02), rgba(70, 42, 22, .18));
       pointer-events: none;
       z-index: -1;
     }
@@ -270,11 +279,8 @@
     .menu-cat-hero {
       width: min(255px, 74vw);
       height: min(255px, 74vw);
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 50% 58%, rgba(255, 255, 255, .7), transparent 0 42%, rgba(255, 213, 116, .72) 43% 56%, transparent 57%),
-        radial-gradient(circle at 50% 56%, rgba(255, 255, 255, .36), transparent 58%),
-        linear-gradient(180deg, rgba(255, 239, 169, .7), rgba(255, 170, 91, .5));
+      border-radius: 30px;
+      background: transparent;
       display: grid;
       place-items: center;
       filter: drop-shadow(0 20px 20px rgba(70, 42, 18, .24));
@@ -283,35 +289,10 @@
     }
 
     .menu-cat-hero img {
-      width: 88%;
-      height: 88%;
+      width: 108%;
+      height: 108%;
       object-fit: contain;
-      filter: drop-shadow(0 10px 10px rgba(55, 35, 15, .14));
-    }
-
-    .menu-cat-hero::before,
-    .menu-cat-hero::after {
-      content: "";
-      position: absolute;
-      border-radius: 999px;
-      background:
-        radial-gradient(circle at 30% 26%, rgba(255,255,255,.72), transparent 18%),
-        linear-gradient(145deg, #fff6cf, #ffb85c);
-      box-shadow: 0 8px 16px rgba(78, 44, 16, .14);
-    }
-
-    .menu-cat-hero::before {
-      width: 54px;
-      height: 54px;
-      left: -16px;
-      bottom: 32px;
-    }
-
-    .menu-cat-hero::after {
-      width: 38px;
-      height: 38px;
-      right: -6px;
-      top: 26px;
+      filter: drop-shadow(0 12px 12px rgba(55, 35, 15, .16));
     }
 
     .menu-speech {
@@ -412,21 +393,24 @@
     }
 
     .dock-icon {
-      width: 34px;
-      height: 34px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       display: grid;
       place-items: center;
       color: #fff;
-      background: linear-gradient(145deg, #62a8ff, #3d7fdd);
-      box-shadow: inset 0 -3px rgba(37, 74, 129, .16);
-      font-size: 20px;
+      background: transparent;
+      box-shadow: none;
+      font-size: 0;
       line-height: 1;
     }
 
-    .menu-dock-btn:nth-child(2) .dock-icon { background: linear-gradient(145deg, #ff9f68, #ef5d4d); }
-    .menu-dock-btn:nth-child(3) .dock-icon { background: linear-gradient(145deg, #74d588, #3fa85a); }
-    .menu-dock-btn:nth-child(4) .dock-icon { background: linear-gradient(145deg, #e890ca, #c856ac); }
+    .dock-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 5px 4px rgba(90, 48, 18, .16));
+    }
 
     .dock-badge {
       position: absolute;
@@ -466,10 +450,11 @@
       max-height: min(620px, calc(100svh - 28px));
       overflow: auto;
       border-radius: 24px;
-      padding: 14px;
+      padding: 12px 14px 14px;
       background:
-        radial-gradient(circle at 50% -10%, rgba(255, 217, 98, .4), transparent 28%),
-        linear-gradient(180deg, #fff9e7, #ffe5b7);
+        radial-gradient(circle at 50% -8%, rgba(255, 222, 106, .48), transparent 32%),
+        radial-gradient(circle at 10% 96%, rgba(255, 151, 105, .24), transparent 25%),
+        linear-gradient(180deg, #fffbed, #ffe4b2 76%, #ffd28c);
       border: 3px solid rgba(255,255,255,.76);
       box-shadow: 0 20px 40px rgba(49, 30, 16, .28), inset 0 -5px rgba(164, 92, 36, .1);
       display: grid;
@@ -487,6 +472,16 @@
       grid-template-columns: 1fr auto;
       align-items: center;
       gap: 10px;
+      min-height: 56px;
+      margin: -2px -2px 0;
+      padding: 11px 10px 9px 18px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 250, 222, .72), rgba(255, 217, 124, .28)),
+        url("assets/ui/panel-frame.webp");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      filter: drop-shadow(0 8px 8px rgba(120, 64, 22, .1));
     }
 
     .menu-close {
@@ -599,8 +594,9 @@
       gap: 8px;
       min-height: 28px;
       color: #7a3d25;
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 1000;
+      text-shadow: 0 1px rgba(255, 255, 255, .72);
     }
 
     .menu-panel-title span {
@@ -628,6 +624,40 @@
     .menu-card.primary small,
     .menu-card.primary .menu-meta {
       color: rgba(255, 255, 255, .88);
+    }
+
+    .menu-art-card {
+      min-height: 112px;
+      border-radius: 20px;
+      padding: 10px;
+      background:
+        radial-gradient(circle at 50% 10%, rgba(255,255,255,.72), transparent 28%),
+        linear-gradient(180deg, rgba(255, 246, 206, .9), rgba(255, 213, 118, .72));
+      border: 2px solid rgba(255,255,255,.78);
+      box-shadow: 0 8px 0 rgba(190, 113, 49, .42), 0 14px 18px rgba(68, 40, 16, .12);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .menu-art-card img {
+      width: 100%;
+      max-height: 150px;
+      object-fit: contain;
+      filter: drop-shadow(0 9px 8px rgba(83, 43, 14, .15));
+    }
+
+    .tool-art {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      justify-self: center;
+      filter: drop-shadow(0 7px 6px rgba(83, 43, 14, .16));
+    }
+
+    .tool-card {
+      text-align: center;
+      justify-items: center;
     }
 
     .menu-meta {
@@ -1042,8 +1072,8 @@
 
     .yard.level-sun {
       background:
-        linear-gradient(180deg, rgba(255, 246, 209, .08), rgba(255, 246, 209, .08)),
-        url("assets/backgrounds/yard-garden-lite.webp"),
+        linear-gradient(180deg, rgba(255, 246, 209, .04), rgba(255, 246, 209, .12)),
+        url("assets/ui/patio-bg-lite.webp"),
         linear-gradient(145deg, #9bdc8d 0%, #75c97c 52%, #5ba96a 100%);
       background-size: cover, cover, auto;
       background-position: center, center, center;
@@ -1051,8 +1081,8 @@
 
     .yard.level-corner {
       background:
-        linear-gradient(180deg, rgba(255, 239, 202, .06), rgba(255, 239, 202, .06)),
-        url("assets/backgrounds/yard-garden-lite.webp"),
+        linear-gradient(180deg, rgba(255, 239, 202, .04), rgba(255, 239, 202, .1)),
+        url("assets/ui/patio-bg-lite.webp"),
         linear-gradient(145deg, #91d8a0 0%, #6fc47a 56%, #589e65 100%);
       background-size: cover, cover, auto;
       background-position: center, center, center;
@@ -1087,15 +1117,15 @@
 
     body.bg-ready .yard.level-sun {
       background:
-        linear-gradient(180deg, rgba(255, 246, 209, .08), rgba(255, 246, 209, .08)),
-        url("assets/backgrounds/yard-garden.webp"),
+        linear-gradient(180deg, rgba(255, 246, 209, .04), rgba(255, 246, 209, .12)),
+        url("assets/ui/patio-bg.webp"),
         linear-gradient(145deg, #9bdc8d 0%, #75c97c 52%, #5ba96a 100%);
     }
 
     body.bg-ready .yard.level-corner {
       background:
-        linear-gradient(180deg, rgba(255, 239, 202, .06), rgba(255, 239, 202, .06)),
-        url("assets/backgrounds/yard-garden.webp"),
+        linear-gradient(180deg, rgba(255, 239, 202, .04), rgba(255, 239, 202, .1)),
+        url("assets/ui/patio-bg.webp"),
         linear-gradient(145deg, #91d8a0 0%, #6fc47a 56%, #589e65 100%);
     }
 
@@ -1551,7 +1581,7 @@
         linear-gradient(180deg, rgba(255, 252, 242, .96), rgba(255, 224, 163, .9));
       box-shadow: 0 8px 16px rgba(70, 43, 20, .13);
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 4px;
       padding: 6px 7px;
@@ -1583,6 +1613,13 @@
     .tool-btn strong {
       display: block;
       line-height: 1;
+    }
+
+    .tool-btn img {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 3px rgba(75, 44, 18, .14));
     }
 
     .tool-btn strong {
@@ -1672,6 +1709,7 @@
     }
 
     .result-badge,
+    .result-art,
     .dialog h2,
     .dialog p,
     .reward-grid,
@@ -1708,6 +1746,24 @@
         linear-gradient(145deg, #62a8ff, #55b96c);
     }
 
+    .result-art {
+      display: none;
+      width: min(220px, 70%);
+      height: 132px;
+      margin: -2px auto -6px;
+      object-fit: contain;
+      filter: drop-shadow(0 12px 12px rgba(82, 45, 16, .16));
+      animation: badgePop .34s ease both;
+    }
+
+    .dialog.win .result-art {
+      display: block;
+    }
+
+    .dialog.win .result-badge {
+      display: none;
+    }
+
     .star-row {
       height: 21px;
       display: flex;
@@ -1739,6 +1795,7 @@
 
     .dialog.auto::before,
     .dialog.auto .result-badge,
+    .dialog.auto .result-art,
     .dialog.auto .star-row,
     .dialog.auto .next-goal {
       display: none;
@@ -1910,11 +1967,11 @@
     body { padding: 4px 8px 8px; }
     .menu-screen {
       width: min(390px, 100%);
-      min-height: calc(100svh - 8px);
+      min-height: calc(100svh - 12px);
     }
     .app {
       width: min(390px, 100%);
-      gap: 6px;
+      gap: 5px;
     }
     .top { display: none; }
     .career-card { display: none; }
@@ -2315,7 +2372,7 @@
       <div class="menu-mascot">
         <div class="menu-speech">开罐位置对了，猫潮会爆！</div>
         <div class="menu-cat-hero">
-          <img src="assets/cats/game-normalized/cat-calico-wink.webp" alt="" width="192" height="192" decoding="async">
+          <img src="assets/ui/main-cat.webp" alt="" width="520" height="520" decoding="async">
         </div>
       </div>
 
@@ -2326,10 +2383,10 @@
     </section>
 
     <section class="menu-dock" aria-label="功能入口">
-      <button class="menu-dock-btn" data-menu-tab="book" type="button"><span class="dock-badge" id="bookBadge">0</span><span class="dock-icon">📖</span>图鉴</button>
-      <button class="menu-dock-btn" data-menu-tab="tools" type="button"><span class="dock-icon">🪄</span>道具</button>
-      <button class="menu-dock-btn" data-menu-tab="levels" type="button"><span class="dock-icon">⭐</span>关卡</button>
-      <button class="menu-dock-btn" data-menu-tab="share" type="button"><span class="dock-icon">🎁</span>分享</button>
+      <button class="menu-dock-btn" data-menu-tab="book" type="button"><span class="dock-badge" id="bookBadge">0</span><span class="dock-icon"><img src="assets/ui/icon-book-small.webp" alt="" width="96" height="96" decoding="async"></span>图鉴</button>
+      <button class="menu-dock-btn" data-menu-tab="tools" type="button"><span class="dock-icon"><img src="assets/ui/icon-wand-small.webp" alt="" width="96" height="96" decoding="async"></span>道具</button>
+      <button class="menu-dock-btn" data-menu-tab="levels" type="button"><span class="dock-icon"><img src="assets/ui/icon-levels-small.webp" alt="" width="96" height="96" decoding="async"></span>关卡</button>
+      <button class="menu-dock-btn" data-menu-tab="share" type="button"><span class="dock-icon"><img src="assets/ui/icon-share-small.webp" alt="" width="96" height="96" decoding="async"></span>分享</button>
     </section>
   </main>
 
@@ -2437,6 +2494,7 @@
   <div class="overlay" id="overlay">
     <div class="dialog">
       <div class="result-badge" id="resultBadge">★</div>
+      <img class="result-art" id="resultArt" data-src="assets/ui/settlement-win.webp" alt="" width="520" height="640" loading="lazy" decoding="async">
       <div class="star-row" id="starRow">★★★</div>
       <h2 id="resultTitle">猫猫都来了</h2>
       <p id="resultText">这罐很成功。</p>
@@ -2814,6 +2872,7 @@
     const overlayEl = document.getElementById("overlay");
     const dialogEl = document.querySelector(".dialog");
     const resultBadgeEl = document.getElementById("resultBadge");
+    const resultArtEl = document.getElementById("resultArt");
     const starRowEl = document.getElementById("starRow");
     const resultTitleEl = document.getElementById("resultTitle");
     const resultTextEl = document.getElementById("resultText");
@@ -3070,7 +3129,8 @@
         ${panelHead("道具库", "关键时刻翻盘")}
         <div class="menu-grid">
           ${toolDefs.map(tool => `
-            <div class="menu-card">
+            <div class="menu-card tool-card">
+              <img class="tool-art" src="${toolIcon(tool.id)}" alt="" width="220" height="220" loading="lazy" decoding="async">
               <div class="menu-tool-head">
                 <strong>${tool.label}</strong>
                 <span class="menu-tool-count">${progress.tools?.[tool.id] || 0}</span>
@@ -3086,6 +3146,7 @@
     function renderLevelsPanel() {
       menuPanelEl.innerHTML = `
         ${panelHead("关卡", `已解锁 ${Math.min(levels.length, (progress.cleared || 0) + 1)}/${levels.length}`)}
+        <div class="menu-art-card"><img src="assets/ui/icon-levels.webp" alt="" width="220" height="220" loading="lazy" decoding="async"></div>
         <div class="menu-grid">
           ${levels.map((level, index) => {
             const unlocked = index <= (progress.cleared || 0);
@@ -3108,6 +3169,7 @@
       menuPanelEl.innerHTML = `
         ${panelHead("分享", "晒职位和猫潮")}
         <div class="share-box">
+          <div class="menu-art-card"><img src="assets/ui/icon-share.webp" alt="" width="220" height="220" loading="lazy" decoding="async"></div>
           <div class="menu-card primary">
             <strong>${rankState().current.name}</strong>
             <small>收集 ${collectionCount}/${Object.keys(catBook).length} 只猫，最高猫潮 ${progress.bestTide || 0}。</small>
@@ -3156,6 +3218,17 @@
       } catch {
         if (stateEl) stateEl.textContent = "分享取消，战绩已保留。";
       }
+    }
+
+    function toolIcon(id, small = false) {
+      const suffix = small ? "-small" : "";
+      const icons = {
+        wand: `assets/ui/icon-wand${suffix}.webp`,
+        fish: `assets/ui/icon-can${suffix}.webp`,
+        mint: `assets/ui/icon-wand${suffix}.webp`,
+        can: `assets/ui/icon-can${suffix}.webp`
+      };
+      return icons[id] || icons.can;
     }
 
     function missionList() {
@@ -3236,7 +3309,11 @@
         const count = progress.tools?.[tool.id] || 0;
         const selected = selectedTool === tool.id ? "selected" : "";
         const empty = count <= 0 ? "empty" : "";
-        return `<button class="tool-btn ${selected} ${empty}" data-tool="${tool.id}" type="button"><span>${tool.label}</span><strong>${count}</strong></button>`;
+        return `<button class="tool-btn ${selected} ${empty}" data-tool="${tool.id}" type="button">
+          <img src="${toolIcon(tool.id, true)}" alt="" width="96" height="96" loading="lazy" decoding="async">
+          <span>${tool.label}</span>
+          <strong>${count}</strong>
+        </button>`;
       }).join("");
     }
 
@@ -3376,7 +3453,12 @@
     }
 
     function preloadBackgrounds() {
-      const urls = [
+      const heroUrls = [
+        "assets/ui/menu-bg.webp",
+        "assets/ui/patio-bg.webp"
+      ];
+      const followupUrls = [
+        "assets/ui/settlement-win.webp",
         "assets/backgrounds/yard-garden.webp",
         "assets/backgrounds/yard-alley.webp",
         "assets/backgrounds/yard-rooftop.webp"
@@ -3384,15 +3466,23 @@
       let loaded = 0;
       const done = () => {
         loaded += 1;
-        if (loaded >= urls.length) {
+        if (loaded >= heroUrls.length) {
           document.body.classList.add("bg-ready");
         }
       };
-      urls.forEach(url => {
+      heroUrls.forEach(url => {
         const img = new Image();
         img.onload = done;
         img.onerror = done;
         img.src = url;
+      });
+      const idle = window.requestIdleCallback || ((callback) => setTimeout(callback, 900));
+      idle(() => {
+        followupUrls.forEach(url => {
+          const img = new Image();
+          img.decoding = "async";
+          img.src = url;
+        });
       });
     }
 
@@ -3988,6 +4078,9 @@
       const data = typeof result === "string" ? legacyResult(win, result) : result;
       dialogEl.classList.remove("auto", "win", "lose");
       dialogEl.classList.add(win ? "win" : "lose");
+      if (win && resultArtEl && !resultArtEl.src) {
+        resultArtEl.src = resultArtEl.dataset.src;
+      }
       resultBadgeEl.textContent = data.badge;
       starRowEl.innerHTML = starMarkup(data.stars);
       resultTitleEl.textContent = data.title;
