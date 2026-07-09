@@ -227,6 +227,27 @@
       text-align: center;
     }
 
+    .progress-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .mini-pill {
+      min-height: 28px;
+      border-radius: 8px;
+      padding: 5px 6px;
+      display: grid;
+      place-items: center;
+      color: #6d5539;
+      background: rgba(255, 255, 255, .58);
+      border: 1px solid rgba(224, 198, 160, .72);
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.1;
+      text-align: center;
+    }
+
     .hud {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -840,6 +861,68 @@
       gap: 8px;
     }
 
+    .toolbelt {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+    }
+
+    .tool-btn {
+      min-width: 0;
+      min-height: 46px;
+      border: 0;
+      border-radius: 10px;
+      color: #563f2a;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .58), transparent 28%),
+        linear-gradient(180deg, rgba(255, 252, 242, .96), rgba(255, 224, 163, .9));
+      box-shadow: 0 8px 16px rgba(70, 43, 20, .13);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 7px;
+      font-size: 12px;
+      font-weight: 1000;
+      cursor: pointer;
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+    }
+
+    .tool-btn:active,
+    .tool-btn.selected {
+      transform: translateY(1px) scale(.98);
+      filter: brightness(.98);
+      box-shadow: inset 0 2px 8px rgba(120, 76, 28, .12);
+    }
+
+    .tool-btn.selected {
+      color: #fff;
+      background: linear-gradient(145deg, #ffad59, var(--can));
+    }
+
+    .tool-btn.empty {
+      color: rgba(86, 63, 42, .48);
+      filter: grayscale(.2);
+      opacity: .66;
+    }
+
+    .tool-btn span,
+    .tool-btn strong {
+      display: block;
+      line-height: 1;
+    }
+
+    .tool-btn strong {
+      min-width: 18px;
+      min-height: 18px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: rgba(47, 37, 30, .82);
+      font-size: 11px;
+    }
+
     .action {
       min-height: 42px;
       border: 0;
@@ -1016,7 +1099,7 @@
     }
 
     .reward-chip {
-      min-height: 49px;
+      min-height: 45px;
       border-radius: 10px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, .84), rgba(255, 248, 236, .78));
@@ -1034,7 +1117,7 @@
       display: block;
       color: var(--ink);
       margin-top: 2px;
-      font-size: 17px;
+      font-size: 16px;
       line-height: 1;
     }
 
@@ -1170,10 +1253,18 @@
       padding: 4px 6px;
       font-size: 11px;
     }
+    .progress-row {
+      gap: 5px;
+    }
+    .mini-pill {
+      min-height: 25px;
+      padding: 4px 5px;
+      font-size: 10px;
+    }
     .hud { display: none; }
     .tip { display: none; }
     .yard {
-      height: min(586px, max(492px, calc(100svh - 176px)));
+      height: min(548px, max(448px, calc(100svh - 226px)));
       border-radius: 14px;
     }
     .yard-hud {
@@ -1295,6 +1386,15 @@
       box-shadow: none;
       font-size: 13px;
     }
+    .toolbelt {
+      gap: 5px;
+    }
+    .tool-btn {
+      min-height: 42px;
+      padding: 5px 6px;
+      border-radius: 9px;
+      font-size: 11px;
+    }
     .can {
       animation: canDrop .22s ease both;
     }
@@ -1318,11 +1418,11 @@
     }
     .reward-grid { gap: 6px; }
     .reward-chip {
-      min-height: 46px;
+      min-height: 41px;
       padding: 5px;
       font-size: 9px;
     }
-    .reward-chip strong { font-size: 16px; }
+    .reward-chip strong { font-size: 15px; }
     .next-goal {
       min-height: 32px;
       padding: 7px 9px;
@@ -1337,7 +1437,7 @@
       body { padding: 6px 8px 8px; }
       h1 { font-size: 24px; }
       .yard {
-        height: min(548px, max(456px, calc(100svh - 184px)));
+        height: min(508px, max(416px, calc(100svh - 232px)));
       }
       .cat-token {
         width: 66px;
@@ -1388,7 +1488,7 @@
         gap: 4px;
       }
       .yard {
-        height: min(466px, max(408px, calc(100svh - 176px)));
+        height: min(430px, max(374px, calc(100svh - 226px)));
       }
       .controls .action {
         min-height: 44px;
@@ -1476,6 +1576,11 @@
         <div class="wave-track" id="waveTrack"></div>
         <div class="fish-pill" id="fishPill">鱼干 0</div>
       </div>
+      <div class="progress-row">
+        <div class="mini-pill" id="mobileRank">见习吸猫官</div>
+        <div class="mini-pill" id="collectionState">图鉴 0/8</div>
+        <div class="mini-pill" id="mobileChest">宝箱 0/6</div>
+      </div>
     </section>
 
     <section class="hud">
@@ -1519,6 +1624,8 @@
       <button class="action skip" id="hintBtn">小提示</button>
       <button class="action restart" id="restartBtn">重试</button>
     </section>
+
+    <section class="toolbelt" id="toolbelt"></section>
   </main>
 
   <div class="overlay" id="overlay">
@@ -1540,6 +1647,24 @@
       rowdy: { label: "闹", className: "rowdy", kinds: ["orangeCute", "tabbyStanding", "mainecoonGray", "orangeSleek", "tabbyLarge"], speed: 38 },
       clingy: { label: "黏", className: "clingy", kinds: ["calicoWink", "ragdollLong", "whiteSit", "blackStar", "orangeLarge"], speed: 28 }
     };
+
+    const catBook = {
+      orangeCute: { name: "橘座", rarity: "普通" },
+      calicoWink: { name: "三花眨眨", rarity: "普通" },
+      mainecoonGray: { name: "灰森老板", rarity: "稀有" },
+      ragdollLong: { name: "奶油布偶", rarity: "稀有" },
+      tabbyStanding: { name: "狸花巡逻员", rarity: "普通" },
+      blackStar: { name: "黑星警长", rarity: "稀有" },
+      grayRound: { name: "银灰团子", rarity: "普通" },
+      cowLarge: { name: "奶牛大哥", rarity: "隐藏" }
+    };
+
+    const toolDefs = [
+      { id: "hint", label: "猫眼", cost: 0, count: 3, desc: "显示最佳落点" },
+      { id: "fish", label: "鱼干", cost: 8, count: 2, desc: "下一罐范围+24%" },
+      { id: "mint", label: "猫薄荷", cost: 12, count: 1, desc: "附近猫直接躁动" },
+      { id: "can", label: "加罐", cost: 16, count: 1, desc: "立刻多一罐" }
+    ];
 
     const levels = [
       {
@@ -1827,7 +1952,9 @@
       cleared: 0,
       perfectLevels: 0,
       missions: {},
-      chestClaims: 0
+      chestClaims: 0,
+      collection: {},
+      tools: Object.fromEntries(toolDefs.map(tool => [tool.id, tool.count]))
     };
 
     let cats = [];
@@ -1853,6 +1980,9 @@
     let runStats = null;
     let pendingNextLevel = false;
     let toastTimer = 0;
+    let selectedTool = null;
+    let canBoost = 1;
+    let lastUnlocks = [];
     const preloadedCatImages = new Map();
 
     const yardEl = document.getElementById("yard");
@@ -1890,6 +2020,10 @@
     const missionRowEl = document.getElementById("missionRow");
     const rankPerkEl = document.getElementById("rankPerk");
     const chestStateEl = document.getElementById("chestState");
+    const mobileRankEl = document.getElementById("mobileRank");
+    const collectionStateEl = document.getElementById("collectionState");
+    const mobileChestEl = document.getElementById("mobileChest");
+    const toolbeltEl = document.getElementById("toolbelt");
 
     function init(resetRun = true) {
       if (resetRun) {
@@ -1919,6 +2053,9 @@
       ended = false;
       firstCan = true;
       pendingNextLevel = false;
+      selectedTool = null;
+      canBoost = 1;
+      lastUnlocks = [];
       lastTime = 0;
       canLayerEl.innerHTML = "";
       fxLayerEl.innerHTML = "";
@@ -1967,10 +2104,12 @@
           ...defaultProgress,
           ...saved,
           bestStars: { ...defaultProgress.bestStars, ...(saved.bestStars || {}) },
-          missions: { ...defaultProgress.missions, ...(saved.missions || {}) }
+          missions: { ...defaultProgress.missions, ...(saved.missions || {}) },
+          collection: { ...defaultProgress.collection, ...(saved.collection || {}) },
+          tools: { ...defaultProgress.tools, ...(saved.tools || {}) }
         };
       } catch {
-        return { ...defaultProgress, bestStars: {}, missions: {} };
+        return { ...defaultProgress, bestStars: {}, missions: {}, collection: {}, tools: { ...defaultProgress.tools } };
       }
     }
 
@@ -2045,9 +2184,12 @@
       while ((progress.chestClaims || 0) < claimableChests) {
         progress.chestClaims = (progress.chestClaims || 0) + 1;
         const fishReward = 14 + progress.chestClaims * 2;
+        const toolId = progress.chestClaims % 3 === 0 ? "can" : progress.chestClaims % 2 === 0 ? "mint" : "fish";
+        const toolName = toolDefs.find(tool => tool.id === toolId)?.label || "道具";
         progress.totalFish += fishReward;
         progress.xp += 18;
-        rewards.push(`星级宝箱 +${fishReward}鱼干`);
+        grantTool(toolId, 1);
+        rewards.push(`星级宝箱 +${fishReward}鱼干 +${toolName}`);
       }
 
       return rewards;
@@ -2058,6 +2200,7 @@
       const stars = totalStars();
       const claimedStars = (progress.chestClaims || 0) * 6;
       const nextChest = Math.min(6, stars - claimedStars);
+      const collectionCount = Object.keys(progress.collection || {}).length;
       rankNameEl.textContent = rank.current.name;
       totalFishEl.textContent = `鱼干 ${progress.totalFish}`;
       xpFillEl.style.width = `${Math.round(rank.ratio * 100)}%`;
@@ -2067,6 +2210,19 @@
       )).join("");
       rankPerkEl.textContent = `${rank.current.perk}`;
       chestStateEl.textContent = `宝箱 ${nextChest}/6`;
+      mobileRankEl.textContent = rank.current.name;
+      collectionStateEl.textContent = `图鉴 ${collectionCount}/${Object.keys(catBook).length}`;
+      mobileChestEl.textContent = `宝箱 ${nextChest}/6`;
+      renderToolbelt();
+    }
+
+    function renderToolbelt() {
+      toolbeltEl.innerHTML = toolDefs.map(tool => {
+        const count = progress.tools?.[tool.id] || 0;
+        const selected = selectedTool === tool.id ? "selected" : "";
+        const empty = count <= 0 ? "empty" : "";
+        return `<button class="tool-btn ${selected} ${empty}" data-tool="${tool.id}" type="button"><span>${tool.label}</span><strong>${count}</strong></button>`;
+      }).join("");
     }
 
     function applyProgressReward(stars, earnedFish, levelId) {
@@ -2075,6 +2231,7 @@
       const newStars = Math.max(oldStars, stars);
       const starGain = Math.max(0, newStars - oldStars);
       const xpGain = 18 + stars * 14 + Math.max(0, levelBest - 7) * 2 + starGain * 12;
+      const toolRewards = [];
       progress.xp += xpGain;
       progress.totalFish += earnedFish;
       progress.bestStars[levelId] = newStars;
@@ -2082,6 +2239,14 @@
       progress.cleared = Math.max(progress.cleared || 0, levelIndex + 1);
       if (stars >= 3 && oldStars < 3) {
         progress.perfectLevels = (progress.perfectLevels || 0) + 1;
+      }
+      if (stars >= 2) {
+        grantTool("hint", 1);
+        toolRewards.push("猫眼 +1");
+      }
+      if (stars >= 3) {
+        grantTool(levelIndex % 2 ? "mint" : "fish", 1);
+        toolRewards.push(`${levelIndex % 2 ? "猫薄荷" : "鱼干"} +1`);
       }
       const claimedRewards = claimReadyRewards();
       saveProgress();
@@ -2094,7 +2259,8 @@
         promoted: previousRank !== rankState().current.name,
         rankName: rankState().current.name,
         newRecord: stars > oldStars,
-        rewards: claimedRewards
+        rewards: [...toolRewards, ...claimedRewards],
+        unlocks: [...lastUnlocks]
       };
     }
 
@@ -2220,6 +2386,7 @@
 
     function placeCan(event) {
       if (ended) return;
+      if (event.target.closest?.(".tool-btn")) return;
       if (activeCan) {
         say("等猫潮停下，再开下一罐。");
         popAt(activeCan.x, activeCan.y, "等一下", "hot");
@@ -2241,11 +2408,12 @@
         y,
         age: 0,
         duration: Math.round((firstCan ? 3600 : 3000) * (1 + (rankPerk().durationBonus || 0))),
-        radius: Math.round((firstCan ? currentLevel.firstRadius : currentLevel.radius) * (1 + (rankPerk().radiusBonus || 0))),
+        radius: Math.round((firstCan ? currentLevel.firstRadius : currentLevel.radius) * (1 + (rankPerk().radiusBonus || 0)) * canBoost),
         caught: 0,
         chain: { clingy: 0, rowdy: 0, calm: 0 },
         finished: false
       };
+      canBoost = 1;
       firstCan = false;
       hotspotEl.classList.add("hide");
       cats.forEach(cat => {
@@ -2256,6 +2424,7 @@
       renderCan();
       say("开罐！猫猫来了。", true);
       updateStats();
+      renderCareer();
     }
 
     function renderCan() {
@@ -2391,8 +2560,19 @@
       }
       cat.element?.classList.remove("running");
       cat.element?.classList.add("caught");
+      unlockCat(cat);
       popAt(activeCan.x, activeCan.y, `+${activeCan.caught}`, activeCan.caught >= 6 ? "hot" : "good");
       updateStats();
+    }
+
+    function unlockCat(cat) {
+      if (!catBook[cat.kind] || progress.collection?.[cat.kind]) return;
+      progress.collection[cat.kind] = Date.now();
+      const info = catBook[cat.kind];
+      lastUnlocks.push(info.name);
+      progress.xp += info.rarity === "隐藏" ? 18 : info.rarity === "稀有" ? 12 : 8;
+      saveProgress();
+      popAt(cat.x, cat.y, `新猫 ${info.name}`, "hot");
     }
 
     function shouldFinishCan() {
@@ -2526,6 +2706,85 @@
       }, 1600);
     }
 
+    function useTool(id) {
+      if (ended) return;
+      const tool = toolDefs.find(item => item.id === id);
+      if (!tool) return;
+      const count = progress.tools?.[id] || 0;
+      if (count <= 0) {
+        if ((progress.totalFish || 0) >= tool.cost && tool.cost > 0) {
+          progress.totalFish -= tool.cost;
+          progress.tools[id] = 1;
+          saveProgress();
+          say(`花 ${tool.cost} 鱼干补了 ${tool.label}。`, true);
+        } else {
+          say(`${tool.label}不够，通关开宝箱会补。`);
+          renderCareer();
+          return;
+        }
+      }
+
+      if (id === "hint") {
+        spendTool(id);
+        showStrategy();
+        say("猫眼打开，最佳落点亮了。", true);
+        return;
+      }
+
+      if (id === "fish") {
+        if (activeCan) {
+          say("下一罐前再撒鱼干。");
+          return;
+        }
+        spendTool(id);
+        canBoost = 1.24;
+        selectedTool = id;
+        say("鱼干撒好了，下一罐范围更大。", true);
+        renderCareer();
+        return;
+      }
+
+      if (id === "mint") {
+        if (!activeCan) {
+          say("先开罐，再放猫薄荷。");
+          return;
+        }
+        spendTool(id);
+        let stirred = 0;
+        cats.forEach(cat => {
+          if (cat.caught || cat.active) return;
+          if (distanceToCan(cat) <= activeCan.radius * 1.34) {
+            activate(cat);
+            cat.helped = true;
+            stirred += 1;
+          }
+        });
+        popAt(activeCan.x, activeCan.y, `薄荷 +${stirred}`, "hot");
+        say(stirred ? `猫薄荷起效，带动 ${stirred} 只。` : "薄荷放早了，附近猫不多。", stirred > 0);
+        renderCareer();
+        return;
+      }
+
+      if (id === "can") {
+        spendTool(id);
+        cans += 1;
+        updateStats();
+        say("补到一罐，继续翻盘。", true);
+        renderCareer();
+      }
+    }
+
+    function spendTool(id) {
+      progress.tools[id] = Math.max(0, (progress.tools[id] || 0) - 1);
+      if (selectedTool === id) selectedTool = null;
+      saveProgress();
+      renderToolbelt();
+    }
+
+    function grantTool(id, count = 1) {
+      progress.tools[id] = (progress.tools[id] || 0) + count;
+    }
+
     function checkEnd() {
       if (levelCaught >= currentLevel.goal) {
         levelComplete();
@@ -2608,18 +2867,23 @@
       const total = totalStars();
       const nextRank = rankState().next;
       const nextLine = nextRank ? `再拿 ${Math.max(1, nextRank.xp - progress.xp)} 经验，冲 ${nextRank.name}` : "已到首席段位，继续刷满星纪录";
+      const collectionCount = Object.keys(progress.collection || {}).length;
+      const unlockLine = reward.unlocks?.length ? `新猫：${reward.unlocks.slice(0, 2).join("、")}` : `图鉴 ${collectionCount}/${Object.keys(catBook).length}`;
       return {
         title: stars >= 3 ? "三星收编！" : "猫猫到岗！",
-        text: reward.promoted ? `晋升为${reward.rankName}！` : reward.newRecord ? "刷新本关纪录！" : "奖励已到账。",
+        text: reward.promoted ? `晋升为${reward.rankName}！` : reward.newRecord ? "刷新纪录，奖励翻倍到账。" : "奖励已到账。",
         badge: stars >= 3 ? "★" : "猫",
         stars,
         chips: [
           ["吸到", `${levelCaught}/${finishedLevel.goal}`, true],
           ["猫潮", `${levelBest}`, false],
-          ["鱼干", `+${earned}`, false]
+          ["经验", `+${reward.xpGain}`, false],
+          ["鱼干", `+${earned}`, false],
+          ["图鉴", `${collectionCount}/${Object.keys(catBook).length}`, false],
+          ["道具", reward.rewards.length ? `+${reward.rewards.length}` : "已备好", false]
         ],
         extra: reward.rewards,
-        next: reward.rewards.length ? `${reward.rewards.join("，")}。${nextLine}` : `总星 ${total}/${levels.length * 3}｜${nextLine}`,
+        next: `${unlockLine}｜${reward.rewards.length ? reward.rewards.join("，") : `总星 ${total}/${levels.length * 3}`}｜${nextLine}`,
         button: levelIndex >= levels.length - 1 ? "再开一轮" : "进入下一关"
       };
     }
@@ -2628,20 +2892,24 @@
       const missing = Math.max(0, currentLevel.goal - levelCaught);
       const keepFish = Math.max(1, Math.floor(levelCaught / 5));
       progress.totalFish += keepFish;
+      if ((progress.tools.can || 0) <= 0 && levelCaught >= Math.floor(currentLevel.goal * .62)) {
+        grantTool("can", 1);
+      }
       saveProgress();
       renderCareer();
       return {
         title: `差 ${missing} 只`,
-        text: `保底 +${keepFish} 鱼干。换个位置就能过。`,
+        text: `保底 +${keepFish} 鱼干。送你一次翻盘机会。`,
         badge: "↻",
         stars: 0,
         chips: [
           ["吸到", `${levelCaught}/${currentLevel.goal}`, true],
           ["猫潮", `${levelBest}`, false],
-          ["鱼干", `+${keepFish}`, false]
+          ["鱼干", `+${keepFish}`, false],
+          ["加罐", `${progress.tools.can || 0}`, false]
         ],
         extra: [],
-        next: currentLevel.hint,
+        next: `${currentLevel.hint}｜失败也保留图鉴和鱼干。`,
         button: "再试一罐"
       };
     }
@@ -2753,6 +3021,12 @@
     }
 
     yardEl.addEventListener("pointerdown", placeCan);
+    toolbeltEl.addEventListener("click", event => {
+      const button = event.target.closest(".tool-btn");
+      if (!button) return;
+      event.stopPropagation();
+      useTool(button.dataset.tool);
+    });
     document.getElementById("hintBtn").addEventListener("click", showStrategy);
     document.getElementById("restartBtn").addEventListener("click", init);
     document.getElementById("againBtn").addEventListener("click", handleAgain);
