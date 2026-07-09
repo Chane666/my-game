@@ -1960,7 +1960,7 @@
       const info = traitInfo[cat.trait];
       return `
         <div class="cat kind-${cat.kind} trait-${cat.trait}" style="--cat-size:${catScale(cat)}">
-          <img class="cat-portrait" src="${catImage(cat)}" alt="" draggable="false" width="192" height="192" loading="eager" decoding="async">
+          <img class="cat-portrait" src="${catImage(cat)}" data-fallback="${catFallbackImage(cat)}" alt="" draggable="false" width="192" height="192" loading="eager" decoding="async" onerror="this.onerror=null;this.src=this.dataset.fallback;">
           <span class="mood">${info.label}</span>
         </div>
       `;
@@ -1984,6 +1984,10 @@
         tabbyLarge: "assets/cats/game-normalized/cat-tabby-large-game.webp"
       };
       return images[cat.kind] || images.orangeCute;
+    }
+
+    function catFallbackImage(cat) {
+      return catImage(cat).replace(".webp", ".png");
     }
 
     function preloadCatImages() {
