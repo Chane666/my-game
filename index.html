@@ -10,6 +10,7 @@
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-orange-sleek-game.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-cow-game.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/cats/game-normalized/cat-mainecoon-gray.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/backgrounds/yard-garden.webp" type="image/webp">
   <style>
     :root {
       --paper: #fffaf1;
@@ -391,42 +392,47 @@
 
     .yard.level-sun {
       background:
-        radial-gradient(ellipse at 20% 9%, rgba(255, 239, 172, .58), transparent 22%),
-        radial-gradient(ellipse at 82% 66%, rgba(109, 188, 225, .18), transparent 28%),
-        linear-gradient(180deg, rgba(255, 224, 153, .28) 0 20%, transparent 20%),
+        linear-gradient(180deg, rgba(255, 246, 209, .08), rgba(255, 246, 209, .08)),
+        url("assets/backgrounds/yard-garden.webp"),
         linear-gradient(145deg, #9bdc8d 0%, #75c97c 52%, #5ba96a 100%);
+      background-size: cover, cover, auto;
+      background-position: center, center, center;
     }
 
     .yard.level-corner {
       background:
-        radial-gradient(ellipse at 18% 12%, rgba(255, 228, 152, .5), transparent 24%),
-        radial-gradient(ellipse at 76% 74%, rgba(255, 156, 124, .14), transparent 24%),
-        linear-gradient(90deg, rgba(151, 105, 64, .2) 0 18%, transparent 18%),
+        linear-gradient(180deg, rgba(255, 239, 202, .06), rgba(255, 239, 202, .06)),
+        url("assets/backgrounds/yard-garden.webp"),
         linear-gradient(145deg, #91d8a0 0%, #6fc47a 56%, #589e65 100%);
+      background-size: cover, cover, auto;
+      background-position: center, center, center;
     }
 
     .yard.level-alley {
       background:
-        radial-gradient(ellipse at 45% 45%, rgba(255, 229, 142, .26), transparent 22%),
-        radial-gradient(ellipse at 80% 20%, rgba(83, 155, 237, .13), transparent 24%),
-        linear-gradient(90deg, rgba(117, 91, 64, .24) 0 17%, transparent 17% 83%, rgba(117, 91, 64, .24) 83%),
+        linear-gradient(180deg, rgba(255, 238, 198, .05), rgba(255, 248, 224, .1)),
+        url("assets/backgrounds/yard-alley.webp"),
         linear-gradient(145deg, #88ca8d 0%, #6cb879 58%, #559765 100%);
+      background-size: cover, cover, auto;
+      background-position: center, center, center;
     }
 
     .yard.level-rooftop {
       background:
-        radial-gradient(ellipse at 20% 10%, rgba(255, 232, 166, .34), transparent 22%),
-        linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(255,255,255,.15) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 243, 220, .06), rgba(255, 229, 178, .08)),
+        url("assets/backgrounds/yard-rooftop.webp"),
         linear-gradient(145deg, #c39a68 0%, #9abd71 62%, #70a866 100%);
-      background-size: 28px 28px, 28px 28px, auto;
+      background-size: cover, cover, auto;
+      background-position: center, center, center;
     }
 
     .yard.level-rain {
       background:
-        radial-gradient(ellipse at 80% 12%, rgba(255, 255, 255, .18), transparent 22%),
-        repeating-linear-gradient(115deg, rgba(255,255,255,.18) 0 2px, transparent 2px 20px),
+        linear-gradient(180deg, rgba(91, 125, 157, .13), rgba(255, 238, 198, .08)),
+        url("assets/backgrounds/yard-alley.webp"),
         linear-gradient(145deg, #8fb8aa 0%, #72a98d 58%, #567e69 100%);
+      background-size: cover, cover, auto;
+      background-position: center, center, center;
     }
 
     .yard {
@@ -452,13 +458,8 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(180deg, rgba(136, 95, 56, .5) 0 40px, rgba(172, 130, 78, .28) 41px 56px, transparent 57px),
-        repeating-linear-gradient(90deg, rgba(89, 58, 34, .32) 0 2px, transparent 2px 43px),
-        radial-gradient(ellipse at 51% 106%, rgba(224, 183, 118, .86) 0 22%, rgba(190, 143, 86, .44) 23%, transparent 45%),
-        radial-gradient(ellipse at 34% 70%, rgba(255, 231, 153, .18), transparent 23%),
-        radial-gradient(circle at 12% 81%, rgba(52, 101, 57, .36), transparent 12%),
-        radial-gradient(circle at 88% 24%, rgba(52, 105, 62, .25), transparent 13%),
-        repeating-linear-gradient(36deg, rgba(255, 255, 255, .08) 0 2px, transparent 2px 31px);
+        radial-gradient(ellipse at 50% 42%, rgba(255, 245, 188, .16), transparent 32%),
+        linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(55, 78, 35, .08));
       pointer-events: none;
     }
 
@@ -475,7 +476,7 @@
         radial-gradient(ellipse at 52% 76%, rgba(44, 122, 68, .54) 0 19px, transparent 20px),
         radial-gradient(ellipse at 74% 71%, rgba(70, 151, 76, .52) 0 23px, transparent 24px),
         radial-gradient(ellipse at 88% 76%, rgba(35, 105, 59, .58) 0 19px, transparent 20px);
-      opacity: .72;
+      opacity: .18;
       pointer-events: none;
       z-index: 3;
     }
@@ -496,7 +497,7 @@
       box-shadow:
         inset 10px 12px rgba(255, 235, 190, .18),
         -18px -10px 30px rgba(63, 92, 45, .13);
-      opacity: .92;
+      opacity: 0;
       pointer-events: none;
     }
 
@@ -510,6 +511,7 @@
         radial-gradient(circle at 52% 33%, #5cab62 0 27px, transparent 28px),
         radial-gradient(circle at 76% 48%, #438f4f 0 23px, transparent 24px);
       pointer-events: none;
+      opacity: 0;
     }
 
     .bush.a { left: -18px; top: 18px; }
@@ -523,7 +525,7 @@
       border-radius: 55% 45% 46% 54%;
       background: linear-gradient(145deg, #9c927f, #6f685c);
       box-shadow: inset -8px -8px rgba(50, 45, 40, .12);
-      opacity: .82;
+      opacity: 0;
       pointer-events: none;
     }
 
