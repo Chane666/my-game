@@ -64,6 +64,342 @@
       gap: 10px;
     }
 
+    .hidden {
+      display: none !important;
+    }
+
+    .menu-screen {
+      width: min(390px, 100%);
+      min-height: calc(100svh - 12px);
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .menu-hero {
+      min-height: 258px;
+      border-radius: 16px;
+      padding: 18px 16px 16px;
+      color: #fff;
+      background:
+        linear-gradient(180deg, rgba(44, 32, 22, .08), rgba(44, 32, 22, .52)),
+        url("assets/backgrounds/yard-garden.webp"),
+        linear-gradient(145deg, #9bdc8d, #f3cb78);
+      background-size: cover;
+      background-position: center;
+      box-shadow: var(--shadow);
+      display: grid;
+      align-content: end;
+      gap: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .menu-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 14%, rgba(255, 255, 255, .2), transparent 24%),
+        linear-gradient(180deg, transparent 0 45%, rgba(47, 37, 30, .42));
+      pointer-events: none;
+    }
+
+    .menu-hero > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .menu-kicker {
+      width: fit-content;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: #6a4a27;
+      background: rgba(255, 246, 222, .9);
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .menu-title {
+      margin: 8px 0 0;
+      font-size: 36px;
+      line-height: 1;
+      text-shadow: 0 3px 12px rgba(44, 28, 18, .28);
+    }
+
+    .menu-subtitle {
+      margin: 7px 0 0;
+      max-width: 280px;
+      font-size: 13px;
+      line-height: 1.32;
+      font-weight: 900;
+      text-shadow: 0 2px 8px rgba(44, 28, 18, .25);
+    }
+
+    .start-btn {
+      min-height: 52px;
+      border: 0;
+      border-radius: 12px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 22% 20%, rgba(255, 255, 255, .24), transparent 24%),
+        linear-gradient(145deg, #ff846f, #f05b4e);
+      box-shadow: 0 14px 24px rgba(120, 44, 34, .25);
+      font-size: 18px;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+
+    .menu-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .menu-stat {
+      min-height: 46px;
+      border-radius: 10px;
+      background: rgba(255, 253, 247, .94);
+      border: 1px solid rgba(236, 214, 185, .98);
+      box-shadow: 0 8px 16px rgba(70, 43, 20, .1);
+      display: grid;
+      place-items: center;
+      padding: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.12;
+      text-align: center;
+    }
+
+    .menu-stat strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .menu-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+
+    .menu-tab {
+      min-height: 38px;
+      border: 0;
+      border-radius: 10px;
+      color: #684e35;
+      background: rgba(255, 253, 247, .82);
+      box-shadow: 0 7px 14px rgba(70, 43, 20, .08);
+      font-size: 12px;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+
+    .menu-tab.active {
+      color: #fff;
+      background: linear-gradient(145deg, #62a8ff, #3d7fdd);
+    }
+
+    .menu-panel {
+      min-height: 220px;
+      border-radius: 14px;
+      padding: 10px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 244, .97), rgba(255, 241, 218, .95));
+      border: 1px solid rgba(236, 214, 185, .98);
+      box-shadow: 0 10px 22px rgba(70, 43, 20, .12);
+      display: grid;
+      gap: 8px;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .menu-card {
+      min-height: 72px;
+      border-radius: 10px;
+      padding: 9px;
+      color: #5d4834;
+      background: rgba(255, 255, 255, .66);
+      border: 1px solid rgba(226, 203, 171, .78);
+      display: grid;
+      gap: 5px;
+      align-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-align: left;
+    }
+
+    .menu-card strong {
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.1;
+    }
+
+    .menu-card.locked {
+      opacity: .52;
+      filter: grayscale(.32);
+    }
+
+    .menu-cat {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      align-items: center;
+      gap: 8px;
+      min-height: 62px;
+    }
+
+    .menu-cat img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      filter: drop-shadow(0 5px 5px rgba(55, 40, 20, .14));
+    }
+
+    .menu-card.locked img {
+      opacity: .42;
+      filter: grayscale(1);
+    }
+
+    .level-select {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .share-box {
+      display: grid;
+      gap: 8px;
+      text-align: center;
+      align-content: center;
+      min-height: 190px;
+    }
+
+    .share-copy {
+      min-height: 46px;
+      border: 0;
+      border-radius: 10px;
+      color: #fff;
+      background: linear-gradient(145deg, #ffad59, var(--can));
+      font-size: 15px;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+
+    .share-state {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .menu-panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 28px;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 1000;
+    }
+
+    .menu-panel-title span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .menu-card small {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .menu-card.primary {
+      color: #fff;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .24), transparent 26%),
+        linear-gradient(145deg, #ff9a67, #ef5d4d);
+      border-color: rgba(255, 255, 255, .62);
+      box-shadow: 0 10px 18px rgba(151, 70, 34, .18);
+    }
+
+    .menu-card.primary small,
+    .menu-card.primary .menu-meta {
+      color: rgba(255, 255, 255, .88);
+    }
+
+    .menu-meta {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.2;
+    }
+
+    .menu-level-stars {
+      color: #f0a830;
+      font-size: 13px;
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    .level-select:disabled {
+      cursor: not-allowed;
+    }
+
+    .menu-badge {
+      width: fit-content;
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(47, 37, 30, .78);
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .menu-tool-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .menu-tool-count {
+      min-width: 22px;
+      min-height: 22px;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(145deg, #62a8ff, #3d7fdd);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .menu-empty {
+      min-height: 104px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .52);
+      border: 1px dashed rgba(191, 154, 105, .58);
+      font-size: 12px;
+      font-weight: 1000;
+      text-align: center;
+      line-height: 1.35;
+    }
+
     .top {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -941,6 +1277,7 @@
     }
 
     .skip { background: linear-gradient(145deg, #62a8ff, #3d7fdd); }
+    .home { background: linear-gradient(145deg, #68c57a, #3e9f59); }
     .restart { background: linear-gradient(145deg, #ff7768, #ee5548); }
 
     .overlay {
@@ -1367,7 +1704,7 @@
       height: 76px;
     }
     .controls {
-      grid-template-columns: 1fr auto;
+      grid-template-columns: 1fr auto auto;
       align-items: center;
       align-content: center;
       gap: 7px;
@@ -1378,6 +1715,7 @@
       height: 42px;
       font-size: 15px;
     }
+    .controls .home,
     .controls .restart {
       min-width: 62px;
       padding: 0 10px;
@@ -1532,7 +1870,35 @@
   </style>
 </head>
 <body>
-  <main class="app">
+  <main class="menu-screen" id="menuScreen">
+    <section class="menu-hero">
+      <div>
+        <div class="menu-kicker">策略休闲 · 猫潮收编</div>
+        <h1 class="menu-title">首席吸猫官</h1>
+        <p class="menu-subtitle">找准一罐的位置，让猫潮自己滚起来。</p>
+      </div>
+      <button class="start-btn" id="startGameBtn" type="button">开始吸猫</button>
+    </section>
+
+    <section class="menu-stats" aria-label="成长状态">
+      <div class="menu-stat">职位<strong id="menuRank">见习</strong></div>
+      <div class="menu-stat">图鉴<strong id="menuCollection">0/8</strong></div>
+      <div class="menu-stat">星级<strong id="menuStars">0/24</strong></div>
+      <div class="menu-stat">鱼干<strong id="menuFish">0</strong></div>
+    </section>
+
+    <section class="menu-tabs" aria-label="主菜单">
+      <button class="menu-tab active" data-menu-tab="play" type="button">玩法</button>
+      <button class="menu-tab" data-menu-tab="book" type="button">图鉴</button>
+      <button class="menu-tab" data-menu-tab="tools" type="button">道具</button>
+      <button class="menu-tab" data-menu-tab="levels" type="button">关卡</button>
+      <button class="menu-tab" data-menu-tab="share" type="button">分享</button>
+    </section>
+
+    <section class="menu-panel" id="menuPanel"></section>
+  </main>
+
+  <main class="app hidden" id="gameApp">
     <header class="top">
       <div>
         <h1>首席吸猫官</h1>
@@ -1622,6 +1988,7 @@
 
     <section class="controls">
       <button class="action skip" id="hintBtn">小提示</button>
+      <button class="action home" id="homeBtn">主页</button>
       <button class="action restart" id="restartBtn">重试</button>
     </section>
 
@@ -1660,7 +2027,7 @@
     };
 
     const toolDefs = [
-      { id: "hint", label: "猫眼", cost: 0, count: 3, desc: "显示最佳落点" },
+      { id: "wand", label: "逗猫棒", cost: 10, count: 3, desc: "把附近猫往罐头方向拉一波" },
       { id: "fish", label: "鱼干", cost: 8, count: 2, desc: "下一罐范围+24%" },
       { id: "mint", label: "猫薄荷", cost: 12, count: 1, desc: "附近猫直接躁动" },
       { id: "can", label: "加罐", cost: 16, count: 1, desc: "立刻多一罐" }
@@ -2024,10 +2391,21 @@
     const collectionStateEl = document.getElementById("collectionState");
     const mobileChestEl = document.getElementById("mobileChest");
     const toolbeltEl = document.getElementById("toolbelt");
+    const menuScreenEl = document.getElementById("menuScreen");
+    const gameAppEl = document.getElementById("gameApp");
+    const menuPanelEl = document.getElementById("menuPanel");
+    const startGameBtn = document.getElementById("startGameBtn");
+    const menuRankEl = document.getElementById("menuRank");
+    const menuCollectionEl = document.getElementById("menuCollection");
+    const menuStarsEl = document.getElementById("menuStars");
+    const menuFishEl = document.getElementById("menuFish");
+    const menuTabs = [...document.querySelectorAll(".menu-tab")];
 
-    function init(resetRun = true) {
+    let menuTab = "play";
+
+    function init(resetRun = true, startLevel = null) {
       if (resetRun) {
-        levelIndex = 0;
+        levelIndex = startLevel ?? 0;
         score = 0;
         fish = 0;
         runStats = {
@@ -2100,13 +2478,18 @@
     function loadProgress() {
       try {
         const saved = JSON.parse(localStorage.getItem(saveKey) || "{}");
+        const savedTools = { ...(saved.tools || {}) };
+        if (savedTools.hint && !savedTools.wand) {
+          savedTools.wand = savedTools.hint;
+        }
+        delete savedTools.hint;
         return {
           ...defaultProgress,
           ...saved,
           bestStars: { ...defaultProgress.bestStars, ...(saved.bestStars || {}) },
           missions: { ...defaultProgress.missions, ...(saved.missions || {}) },
           collection: { ...defaultProgress.collection, ...(saved.collection || {}) },
-          tools: { ...defaultProgress.tools, ...(saved.tools || {}) }
+          tools: { ...defaultProgress.tools, ...savedTools }
         };
       } catch {
         return { ...defaultProgress, bestStars: {}, missions: {}, collection: {}, tools: { ...defaultProgress.tools } };
@@ -2141,6 +2524,174 @@
 
     function rankPerk() {
       return rankState().current;
+    }
+
+    function renderMenu() {
+      if (!menuScreenEl || !menuPanelEl) return;
+      const rank = rankState();
+      const collectionCount = Object.keys(progress.collection || {}).length;
+      menuRankEl.textContent = rank.current.name.replace("吸猫官", "");
+      menuCollectionEl.textContent = `${collectionCount}/${Object.keys(catBook).length}`;
+      menuStarsEl.textContent = `${totalStars()}/${levels.length * 3}`;
+      menuFishEl.textContent = progress.totalFish || 0;
+      menuTabs.forEach(tab => tab.classList.toggle("active", tab.dataset.menuTab === menuTab));
+      renderMenuPanel();
+    }
+
+    function renderMenuPanel() {
+      if (menuTab === "book") {
+        renderBookPanel();
+        return;
+      }
+      if (menuTab === "tools") {
+        renderToolsPanel();
+        return;
+      }
+      if (menuTab === "levels") {
+        renderLevelsPanel();
+        return;
+      }
+      if (menuTab === "share") {
+        renderSharePanel();
+        return;
+      }
+      renderPlayPanel();
+    }
+
+    function renderPlayPanel() {
+      menuPanelEl.innerHTML = `
+        <div class="menu-panel-title">玩法 <span>一眼懂，靠位置赢</span></div>
+        <div class="menu-grid">
+          <button class="menu-card primary level-select" data-start-level="0" type="button">
+            <strong>开一罐</strong>
+            <small>点场地，猫会自己闻味聚过来。</small>
+          </button>
+          <div class="menu-card">
+            <strong>滚猫潮</strong>
+            <small>连到黏人猫、闹猫，猫潮会突然爆起来。</small>
+          </div>
+          <div class="menu-card">
+            <strong>省罐头</strong>
+            <small>单罐越肥，越容易三星和返罐。</small>
+          </div>
+          <div class="menu-card">
+            <strong>养职位</strong>
+            <small>收图鉴、拿星级，解锁更强职位加成。</small>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBookPanel() {
+      const entries = Object.entries(catBook);
+      menuPanelEl.innerHTML = `
+        <div class="menu-panel-title">猫图鉴 <span>${Object.keys(progress.collection || {}).length}/${entries.length}</span></div>
+        <div class="menu-grid">
+          ${entries.map(([kind, info]) => {
+            const unlocked = !!progress.collection?.[kind];
+            return `
+              <div class="menu-card menu-cat ${unlocked ? "" : "locked"}">
+                <img src="${catImage({ kind })}" alt="" loading="lazy" decoding="async">
+                <div>
+                  <strong>${unlocked ? info.name : "未发现"}</strong>
+                  <div class="menu-meta">${unlocked ? info.rarity : "继续闯关解锁"}</div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderToolsPanel() {
+      menuPanelEl.innerHTML = `
+        <div class="menu-panel-title">道具库 <span>关键时刻翻盘</span></div>
+        <div class="menu-grid">
+          ${toolDefs.map(tool => `
+            <div class="menu-card">
+              <div class="menu-tool-head">
+                <strong>${tool.label}</strong>
+                <span class="menu-tool-count">${progress.tools?.[tool.id] || 0}</span>
+              </div>
+              <small>${tool.desc}</small>
+              <div class="menu-meta">${tool.cost ? `${tool.cost}鱼干可补` : "通关奖励"}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderLevelsPanel() {
+      menuPanelEl.innerHTML = `
+        <div class="menu-panel-title">关卡 <span>已解锁 ${Math.min(levels.length, (progress.cleared || 0) + 1)}/${levels.length}</span></div>
+        <div class="menu-grid">
+          ${levels.map((level, index) => {
+            const unlocked = index <= (progress.cleared || 0);
+            const stars = progress.bestStars?.[level.name] || 0;
+            return `
+              <button class="menu-card level-select ${unlocked ? "" : "locked"}" data-start-level="${index}" type="button" ${unlocked ? "" : "disabled"}>
+                <span class="menu-badge">第${index + 1}关</span>
+                <strong>${level.name}</strong>
+                <small>${level.label} · 目标${level.goal}只</small>
+                <div class="menu-level-stars">${starText(stars)}</div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderSharePanel() {
+      const collectionCount = Object.keys(progress.collection || {}).length;
+      menuPanelEl.innerHTML = `
+        <div class="menu-panel-title">分享 <span>晒职位和猫潮</span></div>
+        <div class="share-box">
+          <div class="menu-card primary">
+            <strong>${rankState().current.name}</strong>
+            <small>收集 ${collectionCount}/${Object.keys(catBook).length} 只猫，最高猫潮 ${progress.bestTide || 0}。</small>
+          </div>
+          <button class="share-copy" id="shareBtn" type="button">分享战绩</button>
+          <div class="share-state" id="shareState">复制链接或调起系统分享。</div>
+        </div>
+      `;
+    }
+
+    function showMenu() {
+      ended = true;
+      cancelAnimationFrame(raf);
+      clearInterval(loopTimer);
+      overlayEl.classList.remove("show");
+      gameAppEl.classList.add("hidden");
+      menuScreenEl.classList.remove("hidden");
+      renderMenu();
+    }
+
+    function startGame(index = 0) {
+      const unlocked = index <= (progress.cleared || 0);
+      if (!unlocked) return;
+      menuScreenEl.classList.add("hidden");
+      gameAppEl.classList.remove("hidden");
+      init(true, index);
+    }
+
+    async function shareGame() {
+      const stateEl = document.getElementById("shareState");
+      const collectionCount = Object.keys(progress.collection || {}).length;
+      const text = `我在《首席吸猫官》做到${rankState().current.name}，收集${collectionCount}只猫，最高猫潮${progress.bestTide || 0}！`;
+      const url = location.href.split("?")[0];
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: "首席吸猫官", text, url });
+          if (stateEl) stateEl.textContent = "已打开分享。";
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(`${text} ${url}`);
+          if (stateEl) stateEl.textContent = "已复制分享文案。";
+        } else {
+          if (stateEl) stateEl.textContent = text;
+        }
+      } catch {
+        if (stateEl) stateEl.textContent = "分享取消，战绩已保留。";
+      }
     }
 
     function missionList() {
@@ -2241,8 +2792,8 @@
         progress.perfectLevels = (progress.perfectLevels || 0) + 1;
       }
       if (stars >= 2) {
-        grantTool("hint", 1);
-        toolRewards.push("猫眼 +1");
+        grantTool("wand", 1);
+        toolRewards.push("逗猫棒 +1");
       }
       if (stars >= 3) {
         grantTool(levelIndex % 2 ? "mint" : "fish", 1);
@@ -2724,10 +3275,28 @@
         }
       }
 
-      if (id === "hint") {
+      if (id === "wand") {
+        if (!activeCan) {
+          say("先开罐，再挥逗猫棒。");
+          return;
+        }
         spendTool(id);
-        showStrategy();
-        say("猫眼打开，最佳落点亮了。", true);
+        let pulled = 0;
+        cats.forEach(cat => {
+          if (cat.caught) return;
+          if (distanceToCan(cat) <= activeCan.radius * 1.56) {
+            activate(cat);
+            cat.helped = true;
+            cat.x += (activeCan.x - cat.x) * .18;
+            cat.y += (activeCan.y - cat.y) * .18;
+            pulled += 1;
+          }
+        });
+        activeCan.chain.clingy += Math.max(0, pulled - 1);
+        popAt(activeCan.x, activeCan.y, `逗猫 +${pulled}`, "hot");
+        say(pulled ? `逗猫棒挥动，拉来 ${pulled} 只。` : "附近猫太远，逗猫棒没够到。", pulled > 0);
+        updateStats();
+        renderCareer();
         return;
       }
 
@@ -3021,6 +3590,23 @@
     }
 
     yardEl.addEventListener("pointerdown", placeCan);
+    startGameBtn.addEventListener("click", () => startGame(0));
+    menuTabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        menuTab = tab.dataset.menuTab;
+        renderMenu();
+      });
+    });
+    menuPanelEl.addEventListener("click", event => {
+      const levelButton = event.target.closest("[data-start-level]");
+      if (levelButton && !levelButton.disabled) {
+        startGame(Number(levelButton.dataset.startLevel || 0));
+        return;
+      }
+      if (event.target.closest("#shareBtn")) {
+        shareGame();
+      }
+    });
     toolbeltEl.addEventListener("click", event => {
       const button = event.target.closest(".tool-btn");
       if (!button) return;
@@ -3028,11 +3614,18 @@
       useTool(button.dataset.tool);
     });
     document.getElementById("hintBtn").addEventListener("click", showStrategy);
+    document.getElementById("homeBtn").addEventListener("click", showMenu);
     document.getElementById("restartBtn").addEventListener("click", init);
     document.getElementById("againBtn").addEventListener("click", handleAgain);
 
-    init();
-    previewSettlement();
+    if (new URLSearchParams(location.search).has("preview")) {
+      gameAppEl.classList.remove("hidden");
+      menuScreenEl.classList.add("hidden");
+      init();
+      previewSettlement();
+    } else {
+      showMenu();
+    }
   </script>
 </body>
 </html>
