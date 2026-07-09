@@ -1050,150 +1050,135 @@
       100% { opacity: 0; transform: translate(-50%, -120%); }
     }
 
-    @media (max-width: 520px) {
-      body { padding: 6px 8px 8px; }
-      .app { gap: 6px; }
-      .top { display: none; }
-      h1 { font-size: 25px; }
-      .sub { display: none; }
-      .score {
-        min-width: 68px;
-        padding: 5px 7px;
-      }
-      .score span { font-size: 10px; }
-      .score strong { font-size: 20px; }
-      .career-card { display: none; }
-      .level-card {
-        padding: 7px 9px;
-        gap: 5px;
-      }
-      .level-head { gap: 6px; }
-      .level-name span { font-size: 10px; }
-      .level-name strong { font-size: 18px; }
-      .goal-pill {
-        min-width: 72px;
-        max-width: 46%;
-        padding: 5px 7px;
-        font-size: 11px;
-      }
-      .route { display: none; }
-      .wave-row {
-        grid-template-columns: 1fr auto;
-        gap: 6px;
-      }
-      .wave-dot { height: 6px; }
-      .fish-pill {
-        min-width: 58px;
-        padding: 4px 6px;
-        font-size: 11px;
-      }
-      .hud { display: none; }
-      .stat {
-        min-height: 46px;
-        padding: 5px;
-      }
-      .stat span { font-size: 10px; }
-      .stat strong { font-size: 22px; }
-      .tip {
-        display: none;
-      }
-      .yard {
-        height: min(560px, max(468px, calc(100svh - 218px)));
-        border-radius: 14px;
-      }
-      .yard-hud {
-        position: absolute;
-        left: 10px;
-        right: 10px;
-        top: 10px;
-        z-index: 12;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
-        pointer-events: none;
-      }
-      .yard-pill {
-        min-height: 44px;
-        border-radius: 12px;
-        background: rgba(255, 253, 247, .9);
-        border: 1px solid rgba(255, 255, 255, .86);
-        box-shadow: 0 8px 18px rgba(44, 34, 20, .13);
-        display: grid;
-        place-items: center;
-        color: var(--muted);
-        font-size: 10px;
-        font-weight: 1000;
-        line-height: 1.1;
-      }
-      .yard-pill strong {
-        display: block;
-        color: var(--ink);
-        margin-top: 2px;
-        font-size: 17px;
-        line-height: 1;
-      }
-      .yard-pill.can strong { color: var(--can); }
-      .yard-pill.caught strong { color: var(--green); }
-      .yard-pill.best strong { color: var(--pink); }
-      .cat-token {
-        width: 70px;
-        height: 76px;
-      }
-      .cat {
-        width: 70px;
-        height: 76px;
-      }
-      .controls { gap: 7px; }
-      .controls {
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        align-content: center;
-        height: 42px;
-      }
-      .controls .action {
-        min-height: 42px;
-        height: 42px;
-        font-size: 15px;
-      }
-      .controls .restart {
-        min-width: 62px;
-        padding: 0 10px;
-        color: var(--muted);
-        background: transparent;
-        box-shadow: none;
-        font-size: 13px;
-      }
-      .dialog {
-        width: min(354px, 100%);
-        padding: 16px 14px 14px;
-        gap: 9px;
-      }
-      .result-badge {
-        width: 76px;
-        height: 76px;
-        font-size: 36px;
-      }
-      .dialog h2 { font-size: 25px; }
-      .dialog p {
-        font-size: 13px;
-        line-height: 1.38;
-      }
-      .reward-grid { gap: 6px; }
-      .reward-chip {
-        min-height: 48px;
-        padding: 5px;
-        font-size: 9px;
-      }
-      .reward-chip strong { font-size: 16px; }
-      .next-goal {
-        min-height: 32px;
-        padding: 7px 9px;
-        font-size: 11px;
-      }
-      .dialog .action {
-        min-height: 52px;
-        font-size: 18px;
-      }
+    body { padding: 6px 8px 8px; }
+    .app {
+      width: min(390px, 100%);
+      gap: 6px;
+    }
+    .top { display: none; }
+    .career-card { display: none; }
+    .level-card {
+      padding: 7px 9px;
+      gap: 5px;
+    }
+    .level-head { gap: 6px; }
+    .level-name span { font-size: 10px; }
+    .level-name strong { font-size: 18px; }
+    .goal-pill {
+      min-width: 72px;
+      max-width: 46%;
+      padding: 5px 7px;
+      font-size: 11px;
+    }
+    .route { display: none; }
+    .wave-row {
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+    }
+    .wave-dot { height: 6px; }
+    .fish-pill {
+      min-width: 58px;
+      padding: 4px 6px;
+      font-size: 11px;
+    }
+    .hud { display: none; }
+    .tip { display: none; }
+    .yard {
+      height: min(560px, max(468px, calc(100svh - 218px)));
+      border-radius: 14px;
+    }
+    .yard-hud {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: 10px;
+      z-index: 12;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      pointer-events: none;
+    }
+    .yard-pill {
+      min-height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 253, 247, .9);
+      border: 1px solid rgba(255, 255, 255, .86);
+      box-shadow: 0 8px 18px rgba(44, 34, 20, .13);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.1;
+    }
+    .yard-pill strong {
+      display: block;
+      color: var(--ink);
+      margin-top: 2px;
+      font-size: 17px;
+      line-height: 1;
+    }
+    .yard-pill.can strong { color: var(--can); }
+    .yard-pill.caught strong { color: var(--green); }
+    .yard-pill.best strong { color: var(--pink); }
+    .cat-token {
+      width: 70px;
+      height: 76px;
+    }
+    .cat {
+      width: 70px;
+      height: 76px;
+    }
+    .controls {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      align-content: center;
+      gap: 7px;
+      height: 42px;
+    }
+    .controls .action {
+      min-height: 42px;
+      height: 42px;
+      font-size: 15px;
+    }
+    .controls .restart {
+      min-width: 62px;
+      padding: 0 10px;
+      color: var(--muted);
+      background: transparent;
+      box-shadow: none;
+      font-size: 13px;
+    }
+    .dialog {
+      width: min(354px, 100%);
+      padding: 16px 14px 14px;
+      gap: 9px;
+    }
+    .result-badge {
+      width: 76px;
+      height: 76px;
+      font-size: 36px;
+    }
+    .dialog h2 { font-size: 25px; }
+    .dialog p {
+      font-size: 13px;
+      line-height: 1.38;
+    }
+    .reward-grid { gap: 6px; }
+    .reward-chip {
+      min-height: 48px;
+      padding: 5px;
+      font-size: 9px;
+    }
+    .reward-chip strong { font-size: 16px; }
+    .next-goal {
+      min-height: 32px;
+      padding: 7px 9px;
+      font-size: 11px;
+    }
+    .dialog .action {
+      min-height: 52px;
+      font-size: 18px;
     }
 
     @media (max-width: 380px) {
