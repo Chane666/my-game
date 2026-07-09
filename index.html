@@ -75,156 +75,431 @@
       width: min(390px, 100%);
       min-height: calc(100svh - 12px);
       display: grid;
-      align-content: start;
-      gap: 10px;
+      grid-template-rows: auto 1fr auto;
+      gap: 8px;
+      padding: 8px 4px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .menu-hero {
-      min-height: 258px;
-      border-radius: 16px;
-      padding: 18px 16px 16px;
-      color: #fff;
+    .menu-screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 22px;
       background:
-        linear-gradient(180deg, rgba(44, 32, 22, .08), rgba(44, 32, 22, .52)),
+        linear-gradient(180deg, rgba(255, 252, 235, .12), rgba(255, 224, 168, .28)),
         url("assets/backgrounds/yard-garden-lite.webp"),
-        linear-gradient(145deg, #9bdc8d, #f3cb78);
+        linear-gradient(160deg, #9be39a 0%, #f7cf7c 58%, #8fd8e9 100%);
       background-size: cover;
       background-position: center;
       box-shadow: var(--shadow);
-      display: grid;
-      align-content: end;
-      gap: 12px;
-      overflow: hidden;
-      position: relative;
+      pointer-events: none;
+      z-index: -2;
     }
 
-    body.bg-ready .menu-hero {
+    body.bg-ready .menu-screen::before {
       background:
-        linear-gradient(180deg, rgba(44, 32, 22, .08), rgba(44, 32, 22, .52)),
+        linear-gradient(180deg, rgba(255, 252, 235, .12), rgba(255, 224, 168, .28)),
         url("assets/backgrounds/yard-garden.webp"),
-        linear-gradient(145deg, #9bdc8d, #f3cb78);
+        linear-gradient(160deg, #9be39a 0%, #f7cf7c 58%, #8fd8e9 100%);
       background-size: cover;
       background-position: center;
     }
 
-    .menu-hero::before {
+    .menu-screen::after {
       content: "";
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(circle at 20% 14%, rgba(255, 255, 255, .2), transparent 24%),
-        linear-gradient(180deg, transparent 0 45%, rgba(47, 37, 30, .42));
+        radial-gradient(circle at 18% 14%, rgba(255, 255, 255, .68) 0 7px, transparent 8px),
+        radial-gradient(circle at 85% 20%, rgba(255, 255, 255, .5) 0 5px, transparent 6px),
+        radial-gradient(circle at 12% 78%, rgba(255, 255, 255, .44) 0 6px, transparent 7px),
+        linear-gradient(180deg, rgba(70, 42, 22, .08), rgba(70, 42, 22, .34));
       pointer-events: none;
+      z-index: -1;
     }
 
-    .menu-hero > * {
+    .menu-topbar {
+      display: grid;
+      grid-template-columns: 1fr repeat(3, auto);
+      align-items: center;
+      gap: 6px;
+      min-height: 38px;
+    }
+
+    .menu-profile {
+      min-width: 0;
+      min-height: 36px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .28), transparent 26%),
+        rgba(72, 47, 29, .68);
+      border: 1px solid rgba(255, 255, 255, .48);
+      box-shadow: 0 9px 18px rgba(56, 34, 16, .16);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .menu-avatar {
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #fff6da, #ffd36f);
+      box-shadow: inset 0 -2px rgba(135, 84, 28, .13);
+      font-size: 17px;
+    }
+
+    .menu-resource {
+      min-width: 50px;
+      min-height: 32px;
+      padding: 4px 8px;
+      border: 0;
+      border-radius: 999px;
+      display: grid;
+      grid-template-columns: auto auto;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: #694726;
+      background: linear-gradient(180deg, rgba(255, 252, 238, .96), rgba(255, 226, 145, .92));
+      box-shadow: 0 8px 16px rgba(74, 45, 18, .14), inset 0 -2px rgba(151, 98, 27, .09);
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .menu-stage {
+      min-height: 512px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 8px 0;
       position: relative;
-      z-index: 1;
+    }
+
+    .menu-logo {
+      justify-self: center;
+      min-width: 286px;
+      padding: 12px 18px 10px;
+      border-radius: 26px;
+      color: #7a3d25;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .78), transparent 24%),
+        linear-gradient(180deg, #fff9d9, #ffd36b 74%, #ffb24d);
+      border: 3px solid rgba(255, 255, 255, .72);
+      box-shadow:
+        0 12px 0 #bd6b38,
+        0 20px 28px rgba(79, 42, 16, .25),
+        inset 0 -4px rgba(177, 92, 34, .12);
+      text-align: center;
+      transform: rotate(-1.4deg);
+      position: relative;
+    }
+
+    .menu-logo::before,
+    .menu-logo::after {
+      content: "";
+      position: absolute;
+      top: -15px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px 10px 6px 6px;
+      background: linear-gradient(145deg, #fff3bd, #ffbd5d);
+      border: 3px solid rgba(255,255,255,.72);
+      z-index: -1;
+    }
+
+    .menu-logo::before {
+      left: 26px;
+      transform: rotate(-35deg);
+    }
+
+    .menu-logo::after {
+      right: 26px;
+      transform: rotate(35deg);
     }
 
     .menu-kicker {
       width: fit-content;
-      padding: 5px 9px;
+      margin: 0 auto 4px;
+      padding: 4px 9px;
       border-radius: 999px;
-      color: #6a4a27;
-      background: rgba(255, 246, 222, .9);
-      font-size: 11px;
+      color: #fff;
+      background: linear-gradient(145deg, #ff8d6b, #ef5d4d);
+      font-size: 10px;
       font-weight: 1000;
+      box-shadow: 0 5px 10px rgba(122, 54, 28, .18);
     }
 
     .menu-title {
-      margin: 8px 0 0;
-      font-size: 36px;
-      line-height: 1;
-      text-shadow: 0 3px 12px rgba(44, 28, 18, .28);
+      margin: 0;
+      font-size: 38px;
+      line-height: .96;
+      letter-spacing: 0;
+      text-shadow:
+        0 2px rgba(255, 255, 255, .72),
+        0 5px 10px rgba(125, 64, 24, .18);
     }
 
     .menu-subtitle {
       margin: 7px 0 0;
-      max-width: 280px;
-      font-size: 13px;
-      line-height: 1.32;
-      font-weight: 900;
-      text-shadow: 0 2px 8px rgba(44, 28, 18, .25);
+      color: #8b5530;
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 1000;
+    }
+
+    .menu-mascot {
+      align-self: stretch;
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 246px;
+    }
+
+    .menu-cat-hero {
+      width: min(255px, 74vw);
+      height: min(255px, 74vw);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 58%, rgba(255, 255, 255, .7), transparent 0 42%, rgba(255, 213, 116, .72) 43% 56%, transparent 57%),
+        radial-gradient(circle at 50% 56%, rgba(255, 255, 255, .36), transparent 58%),
+        linear-gradient(180deg, rgba(255, 239, 169, .7), rgba(255, 170, 91, .5));
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 20px 20px rgba(70, 42, 18, .24));
+      animation: mascotFloat 1.9s ease-in-out infinite alternate;
+      position: relative;
+    }
+
+    .menu-cat-hero img {
+      width: 88%;
+      height: 88%;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 10px rgba(55, 35, 15, .14));
+    }
+
+    .menu-cat-hero::before,
+    .menu-cat-hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 30% 26%, rgba(255,255,255,.72), transparent 18%),
+        linear-gradient(145deg, #fff6cf, #ffb85c);
+      box-shadow: 0 8px 16px rgba(78, 44, 16, .14);
+    }
+
+    .menu-cat-hero::before {
+      width: 54px;
+      height: 54px;
+      left: -16px;
+      bottom: 32px;
+    }
+
+    .menu-cat-hero::after {
+      width: 38px;
+      height: 38px;
+      right: -6px;
+      top: 26px;
+    }
+
+    .menu-speech {
+      position: absolute;
+      right: 2px;
+      top: 18px;
+      max-width: 122px;
+      padding: 8px 10px;
+      border-radius: 16px 16px 16px 5px;
+      color: #744322;
+      background: rgba(255, 252, 235, .94);
+      border: 2px solid rgba(255,255,255,.8);
+      box-shadow: 0 10px 18px rgba(61, 35, 13, .14);
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1.2;
+    }
+
+    .start-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
     }
 
     .start-btn {
-      min-height: 52px;
+      width: min(280px, 86%);
+      min-height: 66px;
       border: 0;
-      border-radius: 12px;
+      border-radius: 999px;
       color: #fff;
       background:
-        radial-gradient(circle at 22% 20%, rgba(255, 255, 255, .24), transparent 24%),
-        linear-gradient(145deg, #ff846f, #f05b4e);
-      box-shadow: 0 14px 24px rgba(120, 44, 34, .25);
-      font-size: 18px;
+        radial-gradient(circle at 24% 20%, rgba(255, 255, 255, .34), transparent 22%),
+        linear-gradient(180deg, #ff9a65, #f25645 72%, #cf372e);
+      border: 4px solid rgba(255, 245, 204, .9);
+      box-shadow:
+        0 9px 0 #a42f2a,
+        0 18px 26px rgba(90, 36, 22, .28),
+        inset 0 -4px rgba(118, 33, 28, .15);
+      font-size: 24px;
       font-weight: 1000;
       cursor: pointer;
+      text-shadow: 0 2px rgba(120, 45, 32, .32);
+      animation: startPulse 1.2s ease-in-out infinite alternate;
     }
 
-    .menu-stats {
+    .start-btn:active {
+      transform: translateY(5px);
+      box-shadow:
+        0 4px 0 #a42f2a,
+        0 12px 18px rgba(90, 36, 22, .24),
+        inset 0 -3px rgba(118, 33, 28, .15);
+    }
+
+    .menu-tagline {
+      padding: 5px 12px;
+      border-radius: 999px;
+      color: #fff8dc;
+      background: rgba(79, 47, 25, .5);
+      border: 1px solid rgba(255,255,255,.28);
+      font-size: 11px;
+      font-weight: 1000;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+
+    .menu-dock {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
+      gap: 7px;
+      padding: 0 4px 6px;
     }
 
-    .menu-stat {
-      min-height: 46px;
-      border-radius: 10px;
-      background: rgba(255, 253, 247, .94);
-      border: 1px solid rgba(236, 214, 185, .98);
-      box-shadow: 0 8px 16px rgba(70, 43, 20, .1);
+    .menu-dock-btn {
+      min-width: 0;
+      min-height: 76px;
+      border: 0;
+      border-radius: 18px;
+      color: #704526;
+      background:
+        radial-gradient(circle at 28% 18%, rgba(255,255,255,.7), transparent 24%),
+        linear-gradient(180deg, #fff7dc, #ffd56e 76%, #f6aa49);
+      border: 2px solid rgba(255, 255, 255, .72);
+      box-shadow: 0 8px 0 #b86836, 0 14px 18px rgba(69, 39, 17, .18);
       display: grid;
       place-items: center;
-      padding: 5px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 1000;
-      line-height: 1.12;
-      text-align: center;
-    }
-
-    .menu-stat strong {
-      display: block;
-      margin-top: 2px;
-      color: var(--ink);
-      font-size: 15px;
-      line-height: 1;
-    }
-
-    .menu-tabs {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
-    }
-
-    .menu-tab {
-      min-height: 38px;
-      border: 0;
-      border-radius: 10px;
-      color: #684e35;
-      background: rgba(255, 253, 247, .82);
-      box-shadow: 0 7px 14px rgba(70, 43, 20, .08);
+      align-content: center;
+      gap: 3px;
+      padding: 6px 4px 8px;
       font-size: 12px;
       font-weight: 1000;
       cursor: pointer;
+      position: relative;
     }
 
-    .menu-tab.active {
+    .menu-dock-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 4px 0 #b86836, 0 10px 14px rgba(69, 39, 17, .16);
+    }
+
+    .dock-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
       color: #fff;
       background: linear-gradient(145deg, #62a8ff, #3d7fdd);
+      box-shadow: inset 0 -3px rgba(37, 74, 129, .16);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .menu-dock-btn:nth-child(2) .dock-icon { background: linear-gradient(145deg, #ff9f68, #ef5d4d); }
+    .menu-dock-btn:nth-child(3) .dock-icon { background: linear-gradient(145deg, #74d588, #3fa85a); }
+    .menu-dock-btn:nth-child(4) .dock-icon { background: linear-gradient(145deg, #e890ca, #c856ac); }
+
+    .dock-badge {
+      position: absolute;
+      right: 7px;
+      top: 5px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      color: #fff;
+      background: #f35e4f;
+      border: 2px solid rgba(255,255,255,.9);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 1000;
+    }
+
+    .menu-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 36;
+      display: none;
+      place-items: end center;
+      padding: 14px 12px;
+      background: rgba(48, 34, 24, .44);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .menu-modal.show {
+      display: grid;
     }
 
     .menu-panel {
-      min-height: 220px;
-      border-radius: 14px;
-      padding: 10px;
+      width: min(370px, 100%);
+      max-height: min(620px, calc(100svh - 28px));
+      overflow: auto;
+      border-radius: 24px;
+      padding: 14px;
       background:
-        linear-gradient(180deg, rgba(255, 252, 244, .97), rgba(255, 241, 218, .95));
-      border: 1px solid rgba(236, 214, 185, .98);
-      box-shadow: 0 10px 22px rgba(70, 43, 20, .12);
+        radial-gradient(circle at 50% -10%, rgba(255, 217, 98, .4), transparent 28%),
+        linear-gradient(180deg, #fff9e7, #ffe5b7);
+      border: 3px solid rgba(255,255,255,.76);
+      box-shadow: 0 20px 40px rgba(49, 30, 16, .28), inset 0 -5px rgba(164, 92, 36, .1);
       display: grid;
-      gap: 8px;
+      gap: 10px;
+      animation: modalPop .18s ease both;
+    }
+
+    .menu-panel:empty,
+    .menu-panel:not(.active-panel) {
+      display: none;
+    }
+
+    .menu-panel-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .menu-close {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 50%;
+      color: #fff;
+      background: linear-gradient(145deg, #ff7a6c, #e94d45);
+      box-shadow: 0 5px 0 #b3312d;
+      font-size: 18px;
+      font-weight: 1000;
+      cursor: pointer;
     }
 
     .menu-grid {
@@ -234,12 +509,15 @@
     }
 
     .menu-card {
-      min-height: 72px;
-      border-radius: 10px;
-      padding: 9px;
+      min-height: 78px;
+      border-radius: 16px;
+      padding: 10px;
       color: #5d4834;
-      background: rgba(255, 255, 255, .66);
-      border: 1px solid rgba(226, 203, 171, .78);
+      background:
+        radial-gradient(circle at 18% 16%, rgba(255,255,255,.7), transparent 24%),
+        linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,235,183,.72));
+      border: 2px solid rgba(255,255,255,.76);
+      box-shadow: 0 7px 0 rgba(190, 113, 49, .48), 0 12px 16px rgba(68, 40, 16, .12);
       display: grid;
       gap: 5px;
       align-content: center;
@@ -251,7 +529,7 @@
 
     .menu-card strong {
       color: var(--ink);
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.1;
     }
 
@@ -294,12 +572,15 @@
     }
 
     .share-copy {
-      min-height: 46px;
+      min-height: 52px;
       border: 0;
-      border-radius: 10px;
+      border-radius: 999px;
       color: #fff;
-      background: linear-gradient(145deg, #ffad59, var(--can));
-      font-size: 15px;
+      background:
+        radial-gradient(circle at 22% 20%, rgba(255,255,255,.26), transparent 24%),
+        linear-gradient(180deg, #ffb35f, var(--can));
+      box-shadow: 0 7px 0 #b94134, 0 13px 18px rgba(96, 42, 24, .18);
+      font-size: 17px;
       font-weight: 1000;
       cursor: pointer;
     }
@@ -317,8 +598,8 @@
       justify-content: space-between;
       gap: 8px;
       min-height: 28px;
-      color: var(--ink);
-      font-size: 15px;
+      color: #7a3d25;
+      font-size: 20px;
       font-weight: 1000;
     }
 
@@ -341,7 +622,7 @@
         radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .24), transparent 26%),
         linear-gradient(145deg, #ff9a67, #ef5d4d);
       border-color: rgba(255, 255, 255, .62);
-      box-shadow: 0 10px 18px rgba(151, 70, 34, .18);
+      box-shadow: 0 7px 0 #b84236, 0 12px 18px rgba(151, 70, 34, .2);
     }
 
     .menu-card.primary small,
@@ -1563,6 +1844,21 @@
       100% { transform: scale(1); }
     }
 
+    @keyframes mascotFloat {
+      from { transform: translateY(0) rotate(-1deg); }
+      to { transform: translateY(-8px) rotate(1deg); }
+    }
+
+    @keyframes startPulse {
+      from { filter: brightness(1); transform: scale(1); }
+      to { filter: brightness(1.05); transform: scale(1.025); }
+    }
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: translateY(22px) scale(.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     @keyframes pulse {
       from { transform: translate(-50%, -50%) scale(.96); opacity: .78; }
       to { transform: translate(-50%, -50%) scale(1.04); opacity: 1; }
@@ -1612,6 +1908,10 @@
     }
 
     body { padding: 4px 8px 8px; }
+    .menu-screen {
+      width: min(390px, 100%);
+      min-height: calc(100svh - 8px);
+    }
     .app {
       width: min(390px, 100%);
       gap: 6px;
@@ -1829,6 +2129,19 @@
 
     @media (max-width: 380px) {
       body { padding: 6px 8px 8px; }
+      .menu-logo {
+        min-width: 262px;
+      }
+      .menu-title {
+        font-size: 34px;
+      }
+      .menu-cat-hero {
+        width: 226px;
+        height: 226px;
+      }
+      .menu-dock-btn {
+        min-height: 72px;
+      }
       h1 { font-size: 24px; }
       .yard {
         height: min(508px, max(416px, calc(100svh - 232px)));
@@ -1862,6 +2175,61 @@
     }
 
     @media (max-width: 520px) and (max-height: 720px) {
+      .menu-screen {
+        gap: 5px;
+        padding-top: 5px;
+      }
+      .menu-topbar {
+        min-height: 34px;
+      }
+      .menu-profile,
+      .menu-resource {
+        min-height: 30px;
+      }
+      .menu-stage {
+        min-height: 420px;
+        gap: 4px;
+        padding-top: 4px;
+      }
+      .menu-logo {
+        min-width: 246px;
+        padding: 9px 14px 8px;
+        border-radius: 22px;
+      }
+      .menu-title {
+        font-size: 31px;
+      }
+      .menu-subtitle {
+        margin-top: 5px;
+        font-size: 11px;
+      }
+      .menu-mascot {
+        min-height: 196px;
+      }
+      .menu-cat-hero {
+        width: 194px;
+        height: 194px;
+      }
+      .menu-speech {
+        top: 4px;
+        right: -2px;
+        max-width: 112px;
+        font-size: 11px;
+      }
+      .start-btn {
+        min-height: 58px;
+        font-size: 21px;
+      }
+      .menu-dock-btn {
+        min-height: 64px;
+        border-radius: 15px;
+        font-size: 11px;
+      }
+      .dock-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+      }
       .app { gap: 4px; }
       .top { gap: 6px; }
       h1 { font-size: 23px; }
@@ -1927,32 +2295,47 @@
 </head>
 <body>
   <main class="menu-screen" id="menuScreen">
-    <section class="menu-hero">
-      <div>
+    <section class="menu-topbar" aria-label="玩家状态">
+      <div class="menu-profile">
+        <span class="menu-avatar">🐱</span>
+        <span id="menuRank">见习</span>
+      </div>
+      <button class="menu-resource" data-menu-tab="book" type="button">📖 <span id="menuCollection">0/8</span></button>
+      <button class="menu-resource" data-menu-tab="levels" type="button">⭐ <span id="menuStars">0/24</span></button>
+      <button class="menu-resource" data-menu-tab="tools" type="button">🐟 <span id="menuFish">0</span></button>
+    </section>
+
+    <section class="menu-stage">
+      <div class="menu-logo">
         <div class="menu-kicker">策略休闲 · 猫潮收编</div>
         <h1 class="menu-title">首席吸猫官</h1>
         <p class="menu-subtitle">找准一罐的位置，让猫潮自己滚起来。</p>
       </div>
-      <button class="start-btn" id="startGameBtn" type="button">开始吸猫</button>
+
+      <div class="menu-mascot">
+        <div class="menu-speech">开罐位置对了，猫潮会爆！</div>
+        <div class="menu-cat-hero">
+          <img src="assets/cats/game-normalized/cat-calico-wink.webp" alt="" width="192" height="192" decoding="async">
+        </div>
+      </div>
+
+      <div class="start-wrap">
+        <button class="start-btn" id="startGameBtn" type="button">开始吸猫</button>
+        <div class="menu-tagline">一罐开局，连锁猫潮</div>
+      </div>
     </section>
 
-    <section class="menu-stats" aria-label="成长状态">
-      <div class="menu-stat">职位<strong id="menuRank">见习</strong></div>
-      <div class="menu-stat">图鉴<strong id="menuCollection">0/8</strong></div>
-      <div class="menu-stat">星级<strong id="menuStars">0/24</strong></div>
-      <div class="menu-stat">鱼干<strong id="menuFish">0</strong></div>
+    <section class="menu-dock" aria-label="功能入口">
+      <button class="menu-dock-btn" data-menu-tab="book" type="button"><span class="dock-badge" id="bookBadge">0</span><span class="dock-icon">📖</span>图鉴</button>
+      <button class="menu-dock-btn" data-menu-tab="tools" type="button"><span class="dock-icon">🪄</span>道具</button>
+      <button class="menu-dock-btn" data-menu-tab="levels" type="button"><span class="dock-icon">⭐</span>关卡</button>
+      <button class="menu-dock-btn" data-menu-tab="share" type="button"><span class="dock-icon">🎁</span>分享</button>
     </section>
-
-    <section class="menu-tabs" aria-label="主菜单">
-      <button class="menu-tab active" data-menu-tab="play" type="button">玩法</button>
-      <button class="menu-tab" data-menu-tab="book" type="button">图鉴</button>
-      <button class="menu-tab" data-menu-tab="tools" type="button">道具</button>
-      <button class="menu-tab" data-menu-tab="levels" type="button">关卡</button>
-      <button class="menu-tab" data-menu-tab="share" type="button">分享</button>
-    </section>
-
-    <section class="menu-panel" id="menuPanel"></section>
   </main>
+
+  <div class="menu-modal" id="menuModal">
+    <section class="menu-panel" id="menuPanel"></section>
+  </div>
 
   <main class="app" id="gameApp" style="display: none;">
     <header class="top">
@@ -2448,6 +2831,7 @@
     const mobileChestEl = document.getElementById("mobileChest");
     const toolbeltEl = document.getElementById("toolbelt");
     const menuScreenEl = document.getElementById("menuScreen");
+    const menuModalEl = document.getElementById("menuModal");
     const gameAppEl = document.getElementById("gameApp");
     const menuPanelEl = document.getElementById("menuPanel");
     const startGameBtn = document.getElementById("startGameBtn");
@@ -2455,7 +2839,8 @@
     const menuCollectionEl = document.getElementById("menuCollection");
     const menuStarsEl = document.getElementById("menuStars");
     const menuFishEl = document.getElementById("menuFish");
-    const menuTabs = [...document.querySelectorAll(".menu-tab")];
+    const bookBadgeEl = document.getElementById("bookBadge");
+    const menuButtons = [...document.querySelectorAll("[data-menu-tab]")];
 
     let menuTab = "play";
 
@@ -2590,11 +2975,32 @@
       menuCollectionEl.textContent = `${collectionCount}/${Object.keys(catBook).length}`;
       menuStarsEl.textContent = `${totalStars()}/${levels.length * 3}`;
       menuFishEl.textContent = progress.totalFish || 0;
-      menuTabs.forEach(tab => tab.classList.toggle("active", tab.dataset.menuTab === menuTab));
+      bookBadgeEl.textContent = collectionCount;
+    }
+
+    function openMenuPanel(tab = "book") {
+      menuTab = tab;
       renderMenuPanel();
+      menuModalEl.classList.add("show");
+    }
+
+    function closeMenuPanel() {
+      menuModalEl.classList.remove("show");
+      menuPanelEl.classList.remove("active-panel");
+      menuPanelEl.innerHTML = "";
+    }
+
+    function panelHead(title, subtitle = "") {
+      return `
+        <div class="menu-panel-head">
+          <div class="menu-panel-title">${title}${subtitle ? `<span>${subtitle}</span>` : ""}</div>
+          <button class="menu-close" type="button" data-menu-close="1">×</button>
+        </div>
+      `;
     }
 
     function renderMenuPanel() {
+      menuPanelEl.classList.add("active-panel");
       if (menuTab === "book") {
         renderBookPanel();
         return;
@@ -2616,7 +3022,7 @@
 
     function renderPlayPanel() {
       menuPanelEl.innerHTML = `
-        <div class="menu-panel-title">玩法 <span>一眼懂，靠位置赢</span></div>
+        ${panelHead("玩法", "一眼懂，靠位置赢")}
         <div class="menu-grid">
           <button class="menu-card primary level-select" data-start-level="0" type="button">
             <strong>开一罐</strong>
@@ -2641,7 +3047,7 @@
     function renderBookPanel() {
       const entries = Object.entries(catBook);
       menuPanelEl.innerHTML = `
-        <div class="menu-panel-title">猫图鉴 <span>${Object.keys(progress.collection || {}).length}/${entries.length}</span></div>
+        ${panelHead("猫图鉴", `${Object.keys(progress.collection || {}).length}/${entries.length}`)}
         <div class="menu-grid">
           ${entries.map(([kind, info]) => {
             const unlocked = !!progress.collection?.[kind];
@@ -2661,7 +3067,7 @@
 
     function renderToolsPanel() {
       menuPanelEl.innerHTML = `
-        <div class="menu-panel-title">道具库 <span>关键时刻翻盘</span></div>
+        ${panelHead("道具库", "关键时刻翻盘")}
         <div class="menu-grid">
           ${toolDefs.map(tool => `
             <div class="menu-card">
@@ -2679,7 +3085,7 @@
 
     function renderLevelsPanel() {
       menuPanelEl.innerHTML = `
-        <div class="menu-panel-title">关卡 <span>已解锁 ${Math.min(levels.length, (progress.cleared || 0) + 1)}/${levels.length}</span></div>
+        ${panelHead("关卡", `已解锁 ${Math.min(levels.length, (progress.cleared || 0) + 1)}/${levels.length}`)}
         <div class="menu-grid">
           ${levels.map((level, index) => {
             const unlocked = index <= (progress.cleared || 0);
@@ -2700,7 +3106,7 @@
     function renderSharePanel() {
       const collectionCount = Object.keys(progress.collection || {}).length;
       menuPanelEl.innerHTML = `
-        <div class="menu-panel-title">分享 <span>晒职位和猫潮</span></div>
+        ${panelHead("分享", "晒职位和猫潮")}
         <div class="share-box">
           <div class="menu-card primary">
             <strong>${rankState().current.name}</strong>
@@ -3670,15 +4076,21 @@
 
     yardEl.addEventListener("pointerdown", placeCan);
     startGameBtn.addEventListener("click", () => startGame(0));
-    menuTabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        menuTab = tab.dataset.menuTab;
-        renderMenu();
+    menuButtons.forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        openMenuPanel(button.dataset.menuTab);
       });
+    });
+    menuModalEl.addEventListener("click", event => {
+      if (event.target === menuModalEl || event.target.closest("[data-menu-close]")) {
+        closeMenuPanel();
+      }
     });
     menuPanelEl.addEventListener("click", event => {
       const levelButton = event.target.closest("[data-start-level]");
       if (levelButton && !levelButton.disabled) {
+        closeMenuPanel();
         startGame(Number(levelButton.dataset.startLevel || 0));
         return;
       }
