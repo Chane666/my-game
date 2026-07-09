@@ -540,6 +540,16 @@
 
     .hotspot.hide { display: none; }
 
+    .hotspot.hint {
+      display: grid;
+      border-color: rgba(255, 255, 255, .95);
+      background: rgba(255, 212, 95, .28);
+      box-shadow:
+        0 0 0 10px rgba(255, 212, 95, .12),
+        0 0 28px rgba(255, 212, 95, .55);
+      animation: hintFlash .48s ease-in-out infinite alternate;
+    }
+
     .yard-hud {
       display: none;
     }
@@ -643,7 +653,11 @@
       background: transparent;
       pointer-events: none;
       user-select: none;
+      opacity: 0;
+      transition: opacity .18s ease;
     }
+
+    .cat-portrait.ready { opacity: 1; }
 
     .cat::after {
       content: "";
@@ -1056,6 +1070,11 @@
       100% { opacity: 0; transform: translate(-50%, -120%); }
     }
 
+    @keyframes hintFlash {
+      from { transform: translate(-50%, -50%) scale(.94); }
+      to { transform: translate(-50%, -50%) scale(1.08); }
+    }
+
     body { padding: 4px 8px 8px; }
     .app {
       width: min(390px, 100%);
@@ -1108,6 +1127,51 @@
       gap: 5px;
       pointer-events: none;
     }
+
+    .play-safe-zone {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 54px;
+      height: 1px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.34), transparent);
+      opacity: .55;
+      pointer-events: none;
+      z-index: 11;
+    }
+
+    .field-toast {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 55px;
+      z-index: 18;
+      min-height: 32px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: rgba(47, 41, 35, .88);
+      border: 1px solid rgba(255, 255, 255, .24);
+      box-shadow: 0 8px 18px rgba(34, 24, 14, .16);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1.2;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: opacity .16s ease, transform .16s ease;
+      pointer-events: none;
+    }
+
+    .field-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .field-toast.hot { background: rgba(239, 96, 79, .92); }
     .yard-pill {
       min-width: 0;
       min-height: 38px;
@@ -1239,11 +1303,11 @@
         height: min(454px, max(410px, calc(100svh - 202px)));
       }
       .controls .action {
-        min-height: 38px;
-        height: 38px;
+        min-height: 44px;
+        height: 44px;
       }
       .controls {
-        height: 38px;
+        height: 44px;
       }
     }
   </style>
@@ -1318,6 +1382,8 @@
         <div class="yard-pill caught">吸到<strong id="yardCaught">0/18</strong></div>
         <div class="yard-pill best">猫潮<strong id="yardBest">0</strong></div>
       </div>
+      <div class="play-safe-zone"></div>
+      <div class="field-toast" id="fieldToast"></div>
       <div class="patio"></div>
       <div class="bush a"></div>
       <div class="bush b"></div>
@@ -1417,15 +1483,16 @@
         name: "罐头好位置",
         label: "找位置",
         theme: "corner",
-        goal: 24,
-        cans: 3,
-        minCatch: 7,
+        goal: 22,
+        cans: 4,
+        minCatch: 6,
         refundAt: 99,
         showHotspot: false,
         firstRadius: 112,
         radius: 104,
         hotspot: { x: 23, y: 31, text: "入口" },
-        tip: "3 罐抓 24 只，别追单只猫。",
+        starBest: 8,
+        tip: "4 罐抓 22 只，别追单只猫。",
         hint: "放在两群之间，让猫自己接力。",
         waves: [
           {
@@ -1666,6 +1733,7 @@
     let progress = loadProgress();
     let runStats = null;
     let pendingNextLevel = false;
+    let toastTimer = 0;
     const preloadedCatImages = new Map();
 
     const yardEl = document.getElementById("yard");
@@ -1673,6 +1741,7 @@
     const canLayerEl = document.getElementById("canLayer");
     const fxLayerEl = document.getElementById("fxLayer");
     const hotspotEl = document.getElementById("hotspot");
+    const fieldToastEl = document.getElementById("fieldToast");
     const levelStepEl = document.getElementById("levelStep");
     const levelNameEl = document.getElementById("levelName");
     const goalPillEl = document.getElementById("goalPill");
@@ -1915,8 +1984,8 @@
       const show = currentLevel.showHotspot && waveIndex === 0;
       hotspotEl.classList.toggle("hide", !show);
       hotspotEl.textContent = waveIndex === 0 ? (point.text || "开罐") : "找边缘";
-      hotspotEl.style.left = `${point.x}%`;
-      hotspotEl.style.top = `${point.y}%`;
+      hotspotEl.style.left = `${displayX(point.x)}%`;
+      hotspotEl.style.top = `${displayY(point.y)}%`;
       say(currentWave.tip || currentLevel.tip);
       renderLevelHud();
     }
@@ -1960,7 +2029,7 @@
       const info = traitInfo[cat.trait];
       return `
         <div class="cat kind-${cat.kind} trait-${cat.trait}" style="--cat-size:${catScale(cat)}">
-          <img class="cat-portrait" src="${catImage(cat)}" data-fallback="${catFallbackImage(cat)}" alt="" draggable="false" width="192" height="192" loading="eager" decoding="async" onerror="this.onerror=null;this.src=this.dataset.fallback;">
+          <img class="cat-portrait" src="${catImage(cat)}" data-fallback="${catFallbackImage(cat)}" alt="" draggable="false" width="192" height="192" loading="eager" decoding="async" onload="this.classList.add('ready')" onerror="this.onerror=null;this.src=this.dataset.fallback;">
           <span class="mood">${info.label}</span>
         </div>
       `;
@@ -2010,10 +2079,31 @@
       return 1;
     }
 
+    function displayX(x) {
+      return 7 + x * .86;
+    }
+
+    function worldX(displayXValue) {
+      return clamp((displayXValue - 7) / .86, 0, 100);
+    }
+
+    function displayY(y) {
+      return 18 + y * .78;
+    }
+
+    function worldY(displayYValue) {
+      return clamp((displayYValue - 18) / .78, 0, 100);
+    }
+
+    function displayScale() {
+      return .82;
+    }
+
     function placeCan(event) {
       if (ended) return;
       if (activeCan) {
         say("等猫潮停下，再开下一罐。");
+        popAt(activeCan.x, activeCan.y, "等一下", "hot");
         return;
       }
       if (cans <= 0) {
@@ -2022,8 +2112,10 @@
       }
 
       const rect = yardEl.getBoundingClientRect();
-      const x = clamp(((event.clientX - rect.left) / rect.width) * 100, 8, 92);
-      const y = clamp(((event.clientY - rect.top) / rect.height) * 100, 8, 92);
+      const visualX = clamp(((event.clientX - rect.left) / rect.width) * 100, 12, 88);
+      const x = clamp(worldX(visualX), 8, 92);
+      const visualY = clamp(((event.clientY - rect.top) / rect.height) * 100, 22, 90);
+      const y = clamp(worldY(visualY), 8, 92);
       cans -= 1;
       activeCan = {
         x,
@@ -2032,6 +2124,7 @@
         duration: Math.round((firstCan ? 3600 : 3000) * (1 + (rankPerk().durationBonus || 0))),
         radius: Math.round((firstCan ? currentLevel.firstRadius : currentLevel.radius) * (1 + (rankPerk().radiusBonus || 0))),
         caught: 0,
+        chain: { clingy: 0, rowdy: 0, calm: 0 },
         finished: false
       };
       firstCan = false;
@@ -2051,10 +2144,10 @@
         canLayerEl.innerHTML = "";
         return;
       }
-      const diameter = activeCan.radius * 2;
+      const diameter = activeCan.radius * 2 * displayScale();
       canLayerEl.innerHTML = `
-        <div class="scent" style="--x:${activeCan.x}%;--y:${activeCan.y}%;--d:${diameter}px"></div>
-        <div class="can" style="--x:${activeCan.x}%;--y:${activeCan.y}%"></div>
+        <div class="scent" style="--x:${displayX(activeCan.x)}%;--y:${displayY(activeCan.y)}%;--d:${diameter}px"></div>
+        <div class="can" style="--x:${displayX(activeCan.x)}%;--y:${displayY(activeCan.y)}%"></div>
       `;
     }
 
@@ -2108,6 +2201,7 @@
               if (catDistance(cat, other) <= 86) {
                 activate(other);
                 other.helped = true;
+                activeCan.chain.clingy += 1;
                 changed = true;
               }
             });
@@ -2120,6 +2214,7 @@
               if (other.caught || other.active) return;
               if (catDistance(cat, other) <= 94) {
                 activate(other);
+                activeCan.chain.rowdy += 1;
                 changed = true;
               }
             });
@@ -2131,6 +2226,7 @@
               if (catDistance(cat, other) <= 94) {
                 activate(other);
                 other.helped = true;
+                activeCan.chain.calm += 1;
                 changed = true;
               }
             });
@@ -2189,22 +2285,23 @@
       if (!activeCan || activeCan.finished) return;
       activeCan.finished = true;
       const count = activeCan.caught;
+      const insight = canInsight(activeCan);
       if (count > 0 && count < (currentLevel.minCatch || 0)) {
         cans = Math.max(0, cans - 1);
-        say(`只来 ${count} 只，换个位置。`, false);
+        say(`${insight || `只来 ${count} 只`}，换个位置。`, false);
         popAt(activeCan.x, activeCan.y, `少了`, "hot");
       } else if (count >= (currentLevel.refundAt || 99)) {
         cans += 1;
-        say(`猫潮爆了！多送一罐。`, true);
+        say(`${insight || "猫潮爆了"}！多送一罐。`, true);
         popAt(activeCan.x, activeCan.y, `猫潮 ${count} 只`, "hot");
         if (rankPerk().name === "首席吸猫官") {
           fish += 2;
           renderLevelHud();
         }
       } else if (count >= 5) {
-        say(`这一罐不错，来了 ${count} 只。`, true);
+        say(insight || `这一罐不错，来了 ${count} 只。`, true);
       } else if (count > 0) {
-        say(`来了 ${count} 只。下次靠近猫群边缘。`);
+        say(`${insight || `来了 ${count} 只`}。下次靠近猫群边缘。`);
       } else {
         say("太远了，猫没闻到。");
       }
@@ -2213,6 +2310,16 @@
       renderCan();
       updateStats();
       checkEnd();
+    }
+
+    function canInsight(can) {
+      if (!can || !can.chain) return "";
+      const chain = can.chain;
+      if (chain.rowdy >= 3) return `闹猫带起 ${chain.rowdy} 只，猫潮 ${can.caught} 只`;
+      if (chain.clingy >= 3) return `黏人猫拉来 ${chain.clingy} 只，猫潮 ${can.caught} 只`;
+      if (chain.calm >= 2) return `安静猫带出 ${chain.calm} 只胆小猫`;
+      if (can.caught >= 8) return `猫潮 ${can.caught} 只`;
+      return "";
     }
 
     function idleCats(time) {
@@ -2225,8 +2332,8 @@
 
     function placeCatElement(cat) {
       if (!cat.element) return;
-      cat.element.style.setProperty("--x", `${cat.x}%`);
-      cat.element.style.setProperty("--y", `${cat.y}%`);
+      cat.element.style.setProperty("--x", `${displayX(cat.x)}%`);
+      cat.element.style.setProperty("--y", `${displayY(cat.y)}%`);
       cat.element.style.setProperty("--s", cat.active ? "1.08" : "1");
     }
 
@@ -2241,16 +2348,16 @@
 
     function pixelDistance(ax, ay, bx, by) {
       const rect = yardEl.getBoundingClientRect();
-      const dx = (ax - bx) * rect.width / 100;
-      const dy = (ay - by) * rect.height / 100;
+      const dx = (ax - bx) * rect.width * .86 / 100;
+      const dy = (ay - by) * rect.height * .78 / 100;
       return Math.hypot(dx, dy);
     }
 
     function popAt(x, y, text, type = "") {
       const item = document.createElement("div");
       item.className = `pop ${type}`;
-      item.style.setProperty("--x", `${x}%`);
-      item.style.setProperty("--y", `${y}%`);
+      item.style.setProperty("--x", `${displayX(x)}%`);
+      item.style.setProperty("--y", `${displayY(y)}%`);
       item.textContent = text;
       fxLayerEl.appendChild(item);
       setTimeout(() => item.remove(), 850);
@@ -2269,7 +2376,9 @@
     function renderLevelHud() {
       levelStepEl.textContent = `第 ${levelIndex + 1}/${levels.length} 关`;
       levelNameEl.textContent = `${currentLevel.name} · 第 ${waveIndex + 1} 波`;
+      const starTarget = currentLevel.starBest || Math.max(8, currentLevel.minCatch + 2 || 9);
       goalPillEl.textContent = currentLevel.minCatch ? `目标${currentLevel.goal} 单≥${currentLevel.minCatch}` : `目标${currentLevel.goal}`;
+      levelStepEl.textContent = `第 ${levelIndex + 1}/${levels.length} 关｜三星: 猫潮${starTarget}+省罐`;
       routeEl.innerHTML = levels.map((_, index) => {
         const status = index < levelIndex ? "done" : index === levelIndex ? "now" : "";
         return `<span class="dot ${status}"></span>`;
@@ -2282,7 +2391,20 @@
     }
 
     function showStrategy() {
+      const point = currentWave?.hotspot || currentLevel.hotspot || { x: 50, y: 50, text: "这里" };
+      hotspotEl.textContent = point.text || "试这里";
+      hotspotEl.style.left = `${displayX(point.x)}%`;
+      hotspotEl.style.top = `${displayY(point.y)}%`;
+      hotspotEl.classList.remove("hide");
+      hotspotEl.classList.add("hint");
       say(currentLevel.hint);
+      popAt(point.x, point.y, "试这里", "hot");
+      setTimeout(() => {
+        hotspotEl.classList.remove("hint");
+        if (!(currentLevel.showHotspot && waveIndex === 0)) {
+          hotspotEl.classList.add("hide");
+        }
+      }, 1600);
     }
 
     function checkEnd() {
@@ -2349,8 +2471,9 @@
 
     function starCount() {
       let count = 1;
-      if (levelBest >= (currentLevel.starBest || Math.max(8, currentLevel.minCatch + 2 || 9))) count += 1;
-      if (cans > 0) count += 1;
+      const starBest = currentLevel.starBest || Math.max(8, currentLevel.minCatch + 2 || 9);
+      if (levelBest >= starBest) count += 1;
+      if (cans > 0 || levelBest >= (currentLevel.refundAt || 99)) count += 1;
       return count;
     }
 
@@ -2488,6 +2611,22 @@
       tipEl.classList.remove("tip-bump");
       void tipEl.offsetWidth;
       tipEl.classList.add("tip-bump");
+      showFieldToast(text, hot);
+    }
+
+    function showFieldToast(text, hot = false) {
+      if (!fieldToastEl || !text) return;
+      clearTimeout(toastTimer);
+      fieldToastEl.textContent = text.length > 22 ? `${text.slice(0, 22)}...` : text;
+      fieldToastEl.classList.toggle("hot", hot);
+      fieldToastEl.classList.add("visible");
+      fieldToastEl.style.opacity = "1";
+      fieldToastEl.style.transform = "translateY(0)";
+      toastTimer = setTimeout(() => {
+        fieldToastEl.classList.remove("visible", "hot");
+        fieldToastEl.style.opacity = "";
+        fieldToastEl.style.transform = "";
+      }, hot ? 1700 : 1400);
     }
 
     function clamp(value, min, max) {
