@@ -19,7 +19,8 @@
   <link rel="preload" as="image" href="assets/ui/icon-levels-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/icon-share-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/can-field.webp" type="image/webp">
-  <link rel="preload" as="image" href="assets/ui/menu-title-sign-trim.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/menu-title-sign-final.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/speech-bubble-cut-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/menu-resource-pill.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/icon-fish.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/icon-mint.webp" type="image/webp">
@@ -270,14 +271,14 @@
       justify-self: center;
       width: min(326px, 100%);
       min-width: 0;
-      aspect-ratio: 760 / 324;
+      aspect-ratio: 1024 / 604;
       padding: 0;
       border-radius: 0;
       color: #7a3d25;
-      background-image: url("assets/ui/menu-title-sign-trim.webp");
+      background-image: url("assets/ui/menu-title-sign-final.webp");
       background-image: image-set(
-        url("assets/ui/menu-title-sign-trim-small.webp") 1x,
-        url("assets/ui/menu-title-sign-trim.webp") 2x
+        url("assets/ui/menu-title-sign-final-small.webp") 1x,
+        url("assets/ui/menu-title-sign-final.webp") 2x
       );
       background-size: contain;
       background-repeat: no-repeat;
@@ -354,40 +355,36 @@
 
     .menu-speech {
       position: absolute;
-      right: -2px;
-      top: -12px;
-      max-width: 114px;
-      padding: 7px 9px;
-      border-radius: 15px 15px 15px 5px;
-      color: #744322;
-      background:
-        radial-gradient(circle at 22% 18%, rgba(255,255,255,.84), transparent 28%),
-        linear-gradient(180deg, #fffdf0, #ffeecb);
-      border: 2px solid rgba(255,255,255,.9);
-      box-shadow:
-        0 7px 0 rgba(197, 111, 45, .22),
-        0 13px 18px rgba(61, 35, 13, .13),
-        inset 0 -2px rgba(228, 154, 69, .1);
-      font-size: 11px;
+      right: -10px;
+      top: -32px;
+      width: 142px;
+      aspect-ratio: 927 / 707;
+      max-width: none;
+      padding: 31px 22px 20px 24px;
+      display: grid;
+      place-items: center;
+      color: #70401f;
+      background-image: url("assets/ui/speech-bubble-cut-small.webp");
+      background-image: image-set(
+        url("assets/ui/speech-bubble-cut-small.webp") 1x,
+        url("assets/ui/speech-bubble-cut.webp") 2x
+      );
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: center;
+      border: 0;
+      box-shadow: none;
+      font-size: 10px;
       font-weight: 1000;
-      line-height: 1.2;
+      line-height: 1.18;
+      text-align: center;
       z-index: 5;
       pointer-events: none;
+      filter: drop-shadow(0 9px 8px rgba(80, 45, 18, .12));
     }
 
     .menu-speech::after {
-      content: "";
-      position: absolute;
-      left: 12px;
-      bottom: -8px;
-      width: 16px;
-      height: 16px;
-      background: #ffeecb;
-      border-right: 2px solid rgba(255,255,255,.9);
-      border-bottom: 2px solid rgba(255,255,255,.9);
-      border-radius: 0 0 5px 0;
-      transform: rotate(45deg);
-      box-shadow: 4px 4px 0 rgba(197, 111, 45, .12);
+      display: none;
     }
 
     .start-wrap {
@@ -2355,7 +2352,7 @@
         font-size: 12px;
       }
       .menu-logo {
-        width: min(312px, 100%);
+        width: min(316px, 100%);
       }
       .menu-subtitle {
         font-size: 10px;
@@ -2426,7 +2423,7 @@
         padding-top: 4px;
       }
       .menu-logo {
-        width: min(302px, 100%);
+        width: min(296px, 100%);
         padding: 0;
         border-radius: 0;
       }
