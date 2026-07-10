@@ -19,7 +19,7 @@
   <link rel="preload" as="image" href="assets/ui/icon-levels-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/icon-share-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/can-field.webp" type="image/webp">
-  <link rel="preload" as="image" href="assets/ui/menu-title-sign.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/menu-title-sign-tight.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/menu-resource-pill.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/icon-fish.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/icon-mint.webp" type="image/webp">
@@ -151,26 +151,43 @@
 
     .menu-profile {
       flex: 0 0 auto;
-      width: 104px;
-      min-height: 43px;
-      padding: 5px 12px;
+      width: 108px;
+      min-height: 42px;
+      padding: 5px 10px 5px 13px;
       border-radius: 999px;
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 14px;
       align-items: center;
       justify-content: center;
-      gap: 0;
+      gap: 3px;
       color: #673914;
       background: url("assets/ui/menu-resource-pill.webp") center / 100% 100% no-repeat;
       border: 0;
       box-shadow: none;
       filter: drop-shadow(0 6px 5px rgba(110, 63, 20, .24));
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 1000;
+      cursor: pointer;
+    }
+
+    .menu-profile::after {
+      content: "✎";
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff8df;
+      background: linear-gradient(180deg, #ffb65d, #e97936);
+      box-shadow: inset 0 1px rgba(255,255,255,.5), 0 2px 2px rgba(108, 57, 20, .18);
+      font-size: 9px;
+      line-height: 1;
+      text-shadow: none;
     }
 
     .menu-profile #menuRank {
       min-width: 0;
-      width: 100%;
+      width: auto;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -251,16 +268,16 @@
 
     .menu-logo {
       justify-self: center;
-      width: min(344px, 100%);
+      width: min(322px, 100%);
       min-width: 0;
-      aspect-ratio: 760 / 462;
+      aspect-ratio: 760 / 280;
       padding: 0;
       border-radius: 0;
       color: #7a3d25;
-      background-image: url("assets/ui/menu-title-sign.webp");
+      background-image: url("assets/ui/menu-title-sign-tight.webp");
       background-image: image-set(
-        url("assets/ui/menu-title-sign-small.webp") 1x,
-        url("assets/ui/menu-title-sign.webp") 2x
+        url("assets/ui/menu-title-sign-tight-small.webp") 1x,
+        url("assets/ui/menu-title-sign-tight.webp") 2x
       );
       background-size: contain;
       background-repeat: no-repeat;
@@ -337,8 +354,8 @@
 
     .menu-speech {
       position: absolute;
-      right: 5px;
-      top: -2px;
+      right: 0;
+      top: -32px;
       max-width: 118px;
       padding: 8px 10px;
       border-radius: 16px 16px 16px 5px;
@@ -629,6 +646,56 @@
       color: var(--muted);
       font-size: 12px;
       font-weight: 900;
+    }
+
+    .profile-editor {
+      display: grid;
+      gap: 10px;
+    }
+
+    .nickname-row {
+      display: grid;
+      gap: 7px;
+      padding: 10px;
+      border-radius: 16px;
+      color: #704526;
+      background:
+        radial-gradient(circle at 20% 16%, rgba(255,255,255,.72), transparent 24%),
+        linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,231,174,.74));
+      border: 2px solid rgba(255,255,255,.76);
+      box-shadow: 0 7px 0 rgba(190, 113, 49, .42), 0 12px 16px rgba(68, 40, 16, .1);
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .nickname-input {
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 16px;
+      color: #633a18;
+      background: rgba(255, 251, 230, .96);
+      box-shadow: inset 0 0 0 2px rgba(219, 141, 52, .28), inset 0 -3px rgba(164, 92, 36, .08);
+      font: inherit;
+      font-size: 18px;
+      font-weight: 1000;
+      text-align: center;
+      outline: none;
+    }
+
+    .nickname-input:focus {
+      box-shadow:
+        inset 0 0 0 2px rgba(255, 125, 83, .52),
+        0 0 0 4px rgba(255, 220, 111, .28);
+    }
+
+    .profile-state {
+      min-height: 18px;
+      color: #8a5a2a;
+      font-size: 11px;
+      font-weight: 1000;
+      text-align: center;
     }
 
     .menu-panel-title {
@@ -2250,10 +2317,17 @@
         gap: 2px;
       }
       .menu-profile {
-        width: 96px;
+        width: 98px;
         min-width: 0;
         max-width: none;
-        padding: 5px 9px;
+        grid-template-columns: minmax(0, 1fr) 12px;
+        padding: 4px 8px 4px 11px;
+        font-size: 12px;
+      }
+      .menu-profile::after {
+        width: 12px;
+        height: 12px;
+        font-size: 8px;
       }
       .menu-resource {
         min-height: 39px;
@@ -2261,7 +2335,7 @@
         font-size: 12px;
       }
       .menu-logo {
-        width: min(334px, 100%);
+        width: min(310px, 100%);
       }
       .menu-subtitle {
         font-size: 10px;
@@ -2332,7 +2406,7 @@
         padding-top: 4px;
       }
       .menu-logo {
-        width: min(326px, 100%);
+        width: min(298px, 100%);
         padding: 0;
         border-radius: 0;
       }
@@ -2435,10 +2509,10 @@
 <body>
   <main class="menu-screen" id="menuScreen">
     <section class="menu-topbar" aria-label="玩家状态">
-      <div class="menu-profile">
+      <button class="menu-profile" id="profileBtn" data-menu-tab="profile" type="button" aria-label="编辑昵称">
         <span class="menu-avatar">🐱</span>
         <span id="menuRank">见习</span>
-      </div>
+      </button>
       <button class="menu-resource" data-menu-tab="book" type="button">📖 <span id="menuCollection">0/8</span></button>
       <button class="menu-resource" data-menu-tab="levels" type="button">⭐ <span id="menuStars">0/24</span></button>
       <button class="menu-resource" data-menu-tab="tools" type="button">🐟 <span id="menuFish">0</span></button>
@@ -2891,6 +2965,7 @@
 
     const saveKey = "chief-cat-officer-v3";
     const defaultProgress = {
+      nickname: "猫友",
       xp: 0,
       totalFish: 0,
       bestStars: {},
@@ -3082,6 +3157,25 @@
       localStorage.setItem(saveKey, JSON.stringify(progress));
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function normalizeNickname(value) {
+      const clean = String(value || "").trim().replace(/\s+/g, " ").slice(0, 8);
+      return clean || defaultProgress.nickname;
+    }
+
+    function playerNickname() {
+      return normalizeNickname(progress.nickname || defaultProgress.nickname);
+    }
+
     function totalStars() {
       return Object.values(progress.bestStars || {}).reduce((sum, value) => sum + value, 0);
     }
@@ -3112,7 +3206,7 @@
       if (!menuScreenEl || !menuPanelEl) return;
       const rank = rankState();
       const collectionCount = Object.keys(progress.collection || {}).length;
-      menuRankEl.textContent = rank.current.name.replace("吸猫官", "");
+      menuRankEl.textContent = playerNickname();
       menuCollectionEl.textContent = `${collectionCount}/${Object.keys(catBook).length}`;
       menuStarsEl.textContent = `${totalStars()}/${levels.length * 3}`;
       menuFishEl.textContent = progress.totalFish || 0;
@@ -3142,6 +3236,10 @@
 
     function renderMenuPanel() {
       menuPanelEl.classList.add("active-panel");
+      if (menuTab === "profile") {
+        renderProfilePanel();
+        return;
+      }
       if (menuTab === "book") {
         renderBookPanel();
         return;
@@ -3159,6 +3257,27 @@
         return;
       }
       renderPlayPanel();
+    }
+
+    function renderProfilePanel(state = "") {
+      const rank = rankState();
+      const collectionCount = Object.keys(progress.collection || {}).length;
+      menuPanelEl.innerHTML = `
+        ${panelHead("个人资料", rank.current.name)}
+        <div class="profile-editor">
+          <label class="nickname-row">
+            <span>昵称</span>
+            <input class="nickname-input" id="nicknameInput" type="text" maxlength="8" value="${escapeHtml(playerNickname())}" placeholder="输入昵称">
+            <small>最多 8 个字，显示在首页左上角。</small>
+          </label>
+          <div class="menu-card primary">
+            <strong>${escapeHtml(rank.current.name)}</strong>
+            <small>图鉴 ${collectionCount}/${Object.keys(catBook).length}，最高猫潮 ${progress.bestTide || 0}，鱼干 ${progress.totalFish || 0}。</small>
+          </div>
+          <button class="share-copy" id="saveNicknameBtn" type="button">保存昵称</button>
+          <div class="profile-state">${state ? escapeHtml(state) : "点击保存后会自动记住。"}</div>
+        </div>
+      `;
     }
 
     function renderPlayPanel() {
@@ -4271,7 +4390,20 @@
       }
       if (event.target.closest("#shareBtn")) {
         shareGame();
+        return;
       }
+      if (event.target.closest("#saveNicknameBtn")) {
+        const input = document.getElementById("nicknameInput");
+        progress.nickname = normalizeNickname(input?.value);
+        saveProgress();
+        renderMenu();
+        renderProfilePanel("已保存。");
+      }
+    });
+    menuPanelEl.addEventListener("keydown", event => {
+      if (event.key !== "Enter" || event.target?.id !== "nicknameInput") return;
+      event.preventDefault();
+      document.getElementById("saveNicknameBtn")?.click();
     });
     toolbeltEl.addEventListener("click", event => {
       const button = event.target.closest(".tool-btn");
