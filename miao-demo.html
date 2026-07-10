@@ -19,7 +19,7 @@
   <link rel="preload" as="image" href="assets/ui/icon-levels-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/icon-share-small.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/can-field.webp" type="image/webp">
-  <link rel="preload" as="image" href="assets/ui/menu-title-sign-tight.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/ui/menu-title-sign-trim.webp" type="image/webp">
   <link rel="preload" as="image" href="assets/ui/menu-resource-pill.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/icon-fish.webp" type="image/webp">
   <link rel="prefetch" as="image" href="assets/ui/icon-mint.webp" type="image/webp">
@@ -268,16 +268,16 @@
 
     .menu-logo {
       justify-self: center;
-      width: min(322px, 100%);
+      width: min(326px, 100%);
       min-width: 0;
-      aspect-ratio: 760 / 280;
+      aspect-ratio: 760 / 324;
       padding: 0;
       border-radius: 0;
       color: #7a3d25;
-      background-image: url("assets/ui/menu-title-sign-tight.webp");
+      background-image: url("assets/ui/menu-title-sign-trim.webp");
       background-image: image-set(
-        url("assets/ui/menu-title-sign-tight-small.webp") 1x,
-        url("assets/ui/menu-title-sign-tight.webp") 2x
+        url("assets/ui/menu-title-sign-trim-small.webp") 1x,
+        url("assets/ui/menu-title-sign-trim.webp") 2x
       );
       background-size: contain;
       background-repeat: no-repeat;
@@ -354,20 +354,40 @@
 
     .menu-speech {
       position: absolute;
-      right: 0;
-      top: -32px;
-      max-width: 118px;
-      padding: 8px 10px;
-      border-radius: 16px 16px 16px 5px;
+      right: -2px;
+      top: -12px;
+      max-width: 114px;
+      padding: 7px 9px;
+      border-radius: 15px 15px 15px 5px;
       color: #744322;
-      background: rgba(255, 252, 235, .98);
-      border: 2px solid rgba(255,255,255,.8);
-      box-shadow: 0 10px 18px rgba(61, 35, 13, .14);
-      font-size: 12px;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255,255,255,.84), transparent 28%),
+        linear-gradient(180deg, #fffdf0, #ffeecb);
+      border: 2px solid rgba(255,255,255,.9);
+      box-shadow:
+        0 7px 0 rgba(197, 111, 45, .22),
+        0 13px 18px rgba(61, 35, 13, .13),
+        inset 0 -2px rgba(228, 154, 69, .1);
+      font-size: 11px;
       font-weight: 1000;
       line-height: 1.2;
       z-index: 5;
       pointer-events: none;
+    }
+
+    .menu-speech::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      bottom: -8px;
+      width: 16px;
+      height: 16px;
+      background: #ffeecb;
+      border-right: 2px solid rgba(255,255,255,.9);
+      border-bottom: 2px solid rgba(255,255,255,.9);
+      border-radius: 0 0 5px 0;
+      transform: rotate(45deg);
+      box-shadow: 4px 4px 0 rgba(197, 111, 45, .12);
     }
 
     .start-wrap {
@@ -2335,7 +2355,7 @@
         font-size: 12px;
       }
       .menu-logo {
-        width: min(310px, 100%);
+        width: min(312px, 100%);
       }
       .menu-subtitle {
         font-size: 10px;
@@ -2406,7 +2426,7 @@
         padding-top: 4px;
       }
       .menu-logo {
-        width: min(298px, 100%);
+        width: min(302px, 100%);
         padding: 0;
         border-radius: 0;
       }
@@ -2427,7 +2447,7 @@
       }
       .menu-speech {
         display: none;
-        font-size: 11px;
+        font-size: 10px;
       }
       .start-btn {
         min-height: 58px;
