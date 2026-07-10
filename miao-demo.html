@@ -153,11 +153,12 @@
       flex: 0 0 auto;
       width: 104px;
       min-height: 43px;
-      padding: 5px 12px 5px 6px;
+      padding: 5px 12px;
       border-radius: 999px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      gap: 0;
       color: #673914;
       background: url("assets/ui/menu-resource-pill.webp") center / 100% 100% no-repeat;
       border: 0;
@@ -169,22 +170,16 @@
 
     .menu-profile #menuRank {
       min-width: 0;
+      width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      text-align: center;
       text-shadow: 0 1px rgba(255, 255, 255, .55);
     }
 
     .menu-avatar {
-      width: 29px;
-      height: 29px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: rgba(255, 248, 213, .82);
-      border: 2px solid rgba(151, 84, 20, .2);
-      box-shadow: inset 0 -2px rgba(135, 84, 28, .1);
-      font-size: 17px;
+      display: none;
     }
 
     .menu-resource {
@@ -343,9 +338,9 @@
     .menu-speech {
       position: absolute;
       right: 5px;
-      top: 6px;
-      max-width: 132px;
-      padding: 9px 11px;
+      top: -2px;
+      max-width: 118px;
+      padding: 8px 10px;
       border-radius: 16px 16px 16px 5px;
       color: #744322;
       background: rgba(255, 252, 235, .98);
@@ -2258,7 +2253,7 @@
         width: 96px;
         min-width: 0;
         max-width: none;
-        padding: 5px 8px 5px 5px;
+        padding: 5px 9px;
       }
       .menu-resource {
         min-height: 39px;
@@ -2357,9 +2352,7 @@
         height: 194px;
       }
       .menu-speech {
-        top: 2px;
-        right: 6px;
-        max-width: 116px;
+        display: none;
         font-size: 11px;
       }
       .start-btn {
